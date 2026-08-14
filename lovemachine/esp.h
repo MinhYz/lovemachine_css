@@ -99,10 +99,28 @@ namespace esp
 				return false;
 			}*/
 
-			if (class_id == CCSPlayer/* && !sets->visuals.fancy_w2s*/)
+			if (class_id == CCSPlayer)
 			{
-				if (!w2s(origin, screen) || !w2s(max_origin, max_screen))
+				bool w2s_origin = w2s(origin, screen);
+				bool w2s_head = w2s(max_origin, max_screen);
+
+				if (!w2s_origin && !w2s_head)
 					return false;
+
+				if (w2s_origin && !w2s_head)
+				{
+					max_screen.x = screen.x;
+					float dist = (origin - global::local->get_origin()).Length();
+					float estimated_height = (dist > 0.1f) ? (global::screen.bottom * 50.0f / dist) : 400.0f;
+					max_screen.y = screen.y - estimated_height;
+				}
+				else if (!w2s_origin && w2s_head)
+				{
+					screen.x = max_screen.x;
+					float dist = (origin - global::local->get_origin()).Length();
+					float estimated_height = (dist > 0.1f) ? (global::screen.bottom * 50.0f / dist) : 400.0f;
+					screen.y = max_screen.y + estimated_height;
+				}
 
 				height = screen.y - max_screen.y;
 				width = height / 4;
@@ -217,7 +235,7 @@ namespace esp
 					i--;
 					continue;
 				}
-				// TODO: ñäåëàòü òàê, ÷òîáû ëèíèÿ ñòàíîâèëàñü êğóãîì, óäëèíÿÿñü, à ïîñëå óêîğà÷èâàëàñü è èñ÷åçàëà
+				// TODO: Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã²Ã Ãª, Ã·Ã²Ã®Ã¡Ã» Ã«Ã¨Ã­Ã¨Ã¿ Ã±Ã²Ã Ã­Ã®Ã¢Ã¨Ã«Ã Ã±Ã¼ ÃªÃ°Ã³Ã£Ã®Ã¬, Ã³Ã¤Ã«Ã¨Ã­Ã¿Ã¿Ã±Ã¼, Ã  Ã¯Ã®Ã±Ã«Ã¥ Ã³ÃªÃ®Ã°Ã Ã·Ã¨Ã¢Ã Ã«Ã Ã±Ã¼ Ã¨ Ã¨Ã±Ã·Ã¥Ã§Ã Ã«Ã 
 				circle_3d(server::sounds.at(i).position,
 					5.f + abs(server::sounds.at(i).time - global::curtime) * 5.f, 14.f,
 					server::sounds.at(i).col.with_alpha(255.f - abs(server::sounds.at(i).time - global::curtime) * 127.5f));
@@ -258,8 +276,8 @@ namespace esp
 	}
 
 	//float oldx, oldy, dx, dy, lastx, lasty;
-	// î÷åíü ëàãàåò w2s, åñï íå áóäåò ïîêà w2s íå ïğèìåò õğèñòèóàíñòâî âíîâü
-	// âñå òàêè ïğèíÿëî, çà ğàáîòó
+	// Ã®Ã·Ã¥Ã­Ã¼ Ã«Ã Ã£Ã Ã¥Ã² w2s, Ã¥Ã±Ã¯ Ã­Ã¥ Ã¡Ã³Ã¤Ã¥Ã² Ã¯Ã®ÃªÃ  w2s Ã­Ã¥ Ã¯Ã°Ã¨Ã¬Ã¥Ã² ÃµÃ°Ã¨Ã±Ã²Ã¨Ã³Ã Ã­Ã±Ã²Ã¢Ã® Ã¢Ã­Ã®Ã¢Ã¼
+	// Ã¢Ã±Ã¥ Ã²Ã ÃªÃ¨ Ã¯Ã°Ã¨Ã­Ã¿Ã«Ã®, Ã§Ã  Ã°Ã Ã¡Ã®Ã²Ã³
 	void draw()
 	{
 		if (!sets->visuals.bomb_timer && !sets->visuals.esp_filter[0] && !sets->visuals.esp_filter[1] && !sets->visuals.esp_filter[2] && !sets->visuals.esp_filter[3] && !sets->visuals.esp_filter[4] && !sets->visuals.esp_filter[5])

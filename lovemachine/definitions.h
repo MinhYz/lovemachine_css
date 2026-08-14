@@ -1,7 +1,7 @@
 #pragma once
 #include "includes.h"
 
-#define LM_VER string("v1.2.4")
+#define LM_VER std::string("v1.2.4")
 
 typedef HWND hwnd;
 typedef HMODULE hmodule;
@@ -13,7 +13,7 @@ typedef WPARAM wparam;
 typedef LPARAM lparam;
 typedef RECT rect;
 typedef POINT point;
-typedef string str;
+typedef std::string str;
 typedef void sample_class;
 typedef void* sample_fn;
 
@@ -37,25 +37,20 @@ enum weap_type : short
 	weap_max
 };
 
+#ifdef _WIN32
 inline void send_mouse(int pos_x, int pos_y, DWORD key = 0, int which_xbutton = 0)
 {
-	/*if (key == MOUSEEVENTF_ABSOLUTE)
-	{
-		GetCursorPos(&mouse);
-	}*/
 	INPUT input;
 	MOUSEINPUT mouse_input;
 	input.type = INPUT_MOUSE;
-	mouse_input.dx = pos_x /*- mouse.x*/;
-	mouse_input.dy = pos_y /*- mouse.y*/;
+	mouse_input.dx = pos_x;
+	mouse_input.dy = pos_y;
 	mouse_input.mouseData = which_xbutton;
-	mouse_input.dwFlags = key;//key == MOUSEEVENTF_ABSOLUTE ? MOUSEEVENTF_MOVE : key;
+	mouse_input.dwFlags = key;
 	mouse_input.time = 0x0;
 	mouse_input.dwExtraInfo = 0x0;
 	input.mi = mouse_input;
 	SendInput(1, &input, sizeof(input));
-	//mouse.x = 0;
-	//mouse.y = 0;
 }
 
 inline void send_key(WORD key, bool on)
@@ -71,6 +66,7 @@ inline void send_key(WORD key, bool on)
 	input.ki = key_input;
 	SendInput(1, &input, sizeof(input));
 }
+#endif
 
 /*https://docs.microsoft.com/ru-ru/windows/win32/api/winuser/ns-winuser-mouseinput*/
 /*inline void mouse_input(DWORD flags)
@@ -89,7 +85,7 @@ inline char change_case(char c)
 	return std::isupper(c) ? std::tolower(c) : c;
 }
 
-// ïîëîìàâñÿ
+// Ã¯Ã®Ã«Ã®Ã¬Ã Ã¢Ã±Ã¿
 inline const char* upper_to_lower(const char* c, int size)
 {
 	char* sample = (char*)"";
@@ -133,8 +129,8 @@ static dword p_hwid = get_hwid();*/
 
 static const char* keynames[254] = 
 {
-	null, "mouse1", "mouse2", "ñancel", "mouse3", "mouse4", "mouse5", null,
-	"backspace", "tab", null, null, "clear", null /*ýòî enter*/, null, null, "shift",
+	null, "mouse1", "mouse2", "Ã±ancel", "mouse3", "mouse4", "mouse5", null,
+	"backspace", "tab", null, null, "clear", null /*Ã½Ã²Ã® enter*/, null, null, "shift",
 	"control", "alt", "pause", "caps", null, null, null, null, null, null,
 	"escape", null, null, null, null, "space", "page_up", "page_down", "end", "home",
 	"left", "up", "right", "down", null, null, null, "print", "insert", "delete", null,
@@ -149,7 +145,7 @@ static const char* keynames[254] =
 static char inputkeynames[254] =
 {
 	null, null, null, null, null, null, null, null,
-	null, null, null, null, null, null /*ýòî enter*/, null, null, null,
+	null, null, null, null, null, null /*Ã½Ã²Ã® enter*/, null, null, null,
 	null, null, null, null, null, null, null, null, null, null,
 	null, null, null, null, null, ' ', null, null, null, null,
 	null, null, null, null, null, null, null, null, null, null, null,

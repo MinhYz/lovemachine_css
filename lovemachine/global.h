@@ -1,43 +1,40 @@
 #pragma once
 #include "includes.h"
 #include "definitions.h"
-#include "game def's.h"
 #include "color.h"
 
+struct cvector { float x, y, z; };
 class cusercmd;
 class centity;
 class cweapon;
 
 namespace global
 {
-	hwnd window;
-	hmodule dll;
-	bool key[0xFE + 1]; // все кнопки (вкл/выкл удержание)
-	bool key_do[0xFE + 1]; // все кнопки (вкл/выкл нажатие)
-	bool key_click[0xFE + 1]; // все кнопки (на клик)
-	float key_timer[0xFE + 1]; // все кнопки (сколько по времени она была нажата)
-	point mouse; // позиция курсора
-	rect screen; // размер экрана
-	cusercmd* cmd;
-	bool map_changed;
-	bool* lock_cursor;
-	bool sendpacket;
-	int chocked_packets;
-	int local_id;
-	centity* local;
-	cweapon* weapon;
-	centity* local_observed;
-	//fileweaponinfo_t wpn_data = fileweaponinfo_t();
-	float curtime;
-	float realtime;
-	bool unhook = false;
-	//matrix4x4 w2s_matrix;
+	inline hwnd window;
+	inline hmodule dll;
+	inline bool key[0xFE + 1];
+	inline bool key_do[0xFE + 1];
+	inline bool key_click[0xFE + 1];
+	inline float key_timer[0xFE + 1];
+	inline point mouse;
+	inline rect screen;
+	inline cusercmd* cmd = nullptr;
+	inline bool map_changed = false;
+	inline bool* lock_cursor = nullptr;
+	inline bool sendpacket = false;
+	inline int chocked_packets = 0;
+	inline int local_id = 0;
+	inline centity* local = nullptr;
+	inline cweapon* weapon = nullptr;
+	inline centity* local_observed = nullptr;
+	inline float curtime = 0.0f;
+	inline float realtime = 0.0f;
+	inline bool unhook = false;
 }
 
 namespace server
 {
-	int max_players = 0;
-	//int max_entity = 0;
+	inline int max_players = 0;
 
 	struct sound
 	{
@@ -46,31 +43,16 @@ namespace server
 		color col;
 	};
 
-	deque<sound> sounds;
+	inline deque<sound> sounds;
 
-	struct
+	struct local_struct
 	{
 		int type = 0;
-	} local;
+	};
+	inline local_struct local;
 
-	struct
+	struct player_struct
 	{
-		//int health = 0;
-		//int type = 0;
-		//int clip = 0;
-		//int team = 0;
-		//int lifestate = 0;
-		//string weapon = "";
-		//string name = "";
-		//centity* spec_player = nullptr;
-		//float drawable_timer = 0.f;
-		//bool drawable = false;
-		//bool valid = false;
-	} players[64];//, local;
-
-	/*struct
-	{
-		matrix3x4_t coord_frame;
-		bool valid = false;
-	} entity[512];*/
+	};
+	inline player_struct players[64];
 }

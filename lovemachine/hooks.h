@@ -21,12 +21,24 @@
 using namespace d3d;
 using namespace game;
 
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 namespace hooks
 {	
 	wndproc o_wndproc;
 	LRESULT __stdcall wndproc_hook(hwnd wnd, uint msg, wparam w_param, lparam l_param)
 	{
 		global::realtime = (float)GetTickCount64() / 1000.f;
+
+		if (msg == WM_KEYDOWN && w_param == VK_INSERT)
+		{
+			Menu::show_menu = !Menu::show_menu;
+		}
+
+		if (Menu::show_menu && ImGui_ImplWin32_WndProcHandler(wnd, msg, w_param, l_param))
+		{
+			return true;
+		}
 
 		switch (msg)
 		{
@@ -112,19 +124,24 @@ namespace hooks
 		{
 			d3d::device = device;
 			console::write_hex("/d3d/ device", (dword)device, darkgreen);
-			font::setup(font::tab, "Gotham Pro Medium", 24, FW_DONTCARE); // smallest_pixel-7 24 bold
-			font::setup(font::cont, "Gotham Pro", 15, fw_medium); // smallest_pixel-7 14 bold // 15, FW_DONTCARE
+			font::setup(font::tab, "Gotham Pro Medium", 24, FW_DONTCARE);
+			font::setup(font::cont, "Gotham Pro", 15, fw_medium);
 			font::setup(font::hitmarker_big, "Gotham Pro Black", 30, FW_BOLD);
 			font::setup(font::hitmarker_small, "Gotham Pro Medium", 19, FW_BOLD);
 			font::setup(font::esp, "Gotham Pro Medium", 16, FW_DONTCARE);
-			//prim::generate_texture(&prim::primitive, D3DCOLOR_ARGB(255, 255, 255, 255));
 			font::reset();
 			global::screen = get_screen_size();
-			//ZeroMemory(global::w2s_matrix, sizeof(matrix4x4));
+
+			// Initialize ImGui DX9 & Win32 Backends
+			ImGui::CreateContext();
+			ImGui_ImplWin32_Init(global::window);
+			ImGui_ImplDX9_Init(device);
+			Menu::SetupStyle();
+
 			once = false;
 		}
 
-		d3d9->rehook(); // çà÷åì?
+		d3d9->rehook();
 
 		if (sets->menu.panic)
 		{
@@ -267,7 +284,15 @@ namespace hooks
 			events::on_draw();
 		}
 
-		menu::draw();
+		ImGui_ImplDX9_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
+		Menu::Render();
+
+		ImGui::EndFrame();
+		ImGui::Render();
+		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 
 		return o_endscene(device);
 	}
@@ -278,12 +303,13 @@ namespace hooks
 	{
 		console::write("d3d reset", darkred);
 
+		ImGui_ImplDX9_InvalidateDeviceObjects();
 		font::restore();
 		auto result = o_reset(device, pp);
+		ImGui_ImplDX9_CreateDeviceObjects();
 		font::reset();
 		surf::font::setup(surf::font::esp, "Gotham Pro", 17, fw_normal, ff_antialias | ff_dropshadow);
 		global::screen = get_screen_size();
-		//ZeroMemory(global::w2s_matrix, sizeof(matrix4x4));
 
 		return result;
 	}

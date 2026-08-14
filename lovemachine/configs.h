@@ -33,11 +33,11 @@ struct an_var
 
 namespace configs
 {
-	deque<an_var<int>> ints;
-	deque<an_var<bool>> bools;
-	deque<an_var<float>> floats;
+	inline deque<an_var<int>> ints;
+	inline deque<an_var<bool>> bools;
+	inline deque<an_var<float>> floats;
 
-	void on_inject()
+	inline void on_inject()
 	{
 		CreateDirectoryW(L"C:/lovemachine", NULL);
 		CreateDirectoryW(L"C:/lovemachine/configs", NULL);
@@ -161,11 +161,25 @@ namespace configs
 		bools.push_back(an_var<bool>(&sets->visuals.remove[0], "visuals.other", "remove_smoke"));
 		bools.push_back(an_var<bool>(&sets->visuals.remove[1], "visuals.other", "remove_flash"));
 
+		bools.push_back(an_var<bool>(&sets->legit.aim.auto_crouch, "legit.aim", "auto_crouch"));
+		bools.push_back(an_var<bool>(&sets->legit.aim.predicted_position, "legit.aim", "predicted_position"));
+		bools.push_back(an_var<bool>(&sets->legit.aim.norecoil, "legit.aim", "norecoil"));
+		bools.push_back(an_var<bool>(&sets->legit.aim.nospread, "legit.aim", "nospread"));
+		ints.push_back(an_var<int>(&sets->legit.aim.silent_mode, "legit.aim", "silent_mode"));
+		ints.push_back(an_var<int>(&sets->legit.aim.fov_selection, "legit.aim", "fov_selection"));
+		ints.push_back(an_var<int>(&sets->legit.aim.aim_usage, "legit.aim", "aim_usage"));
+
 		bools.push_back(an_var<bool>(&sets->misc.autopistol, "misc", "autopistol"));
 		bools.push_back(an_var<bool>(&sets->misc.autojump, "misc", "autojump"));
 		bools.push_back(an_var<bool>(&sets->misc.autostrafer, "misc", "autostrafer"));
 		ints.push_back(an_var<int>(&sets->misc.aj_percent, "misc", "aj_percent"));
 		bools.push_back(an_var<bool>(&sets->misc.killshot, "misc", "killshot"));
+
+		bools.push_back(an_var<bool>(&sets->misc.pure_bypass, "misc", "pure_bypass"));
+		bools.push_back(an_var<bool>(&sets->misc.fast_ladder, "misc", "fast_ladder"));
+		bools.push_back(an_var<bool>(&sets->misc.antismac, "misc", "antismac"));
+		bools.push_back(an_var<bool>(&sets->misc.circle_strafe, "misc", "circle_strafe"));
+		bools.push_back(an_var<bool>(&sets->misc.edge_jump, "misc", "edge_jump"));
 		bools.push_back(an_var<bool>(&sets->misc.fl_spam_always, "misc", "fl_spam_always"));
 		bools.push_back(an_var<bool>(&sets->misc.fl_spam.hold, "misc", "fl_spam.hold"));
 		ints.push_back(an_var<int>(&sets->misc.fl_spam.key, "misc", "fl_spam.key"));
@@ -184,7 +198,7 @@ namespace configs
 		//	floats.push_back(an_var<float>(&cvar.value, "console_variables", cvar.name));
 	}
 
-	bool write(string file)
+	inline bool write(string file)
 	{
 		if (file.empty()) return false;
 
@@ -209,7 +223,7 @@ namespace configs
 		return true;
 	}
 
-	bool parse(string file)
+	inline bool parse(string file)
 	{
 		if (file.empty()) return false;
 
@@ -238,7 +252,7 @@ namespace configs
 		return true;
 	}
 
-	vector<char*> parse_configs()
+	inline vector<char*> parse_configs()
 	{
 		vector<char*> configs;
 

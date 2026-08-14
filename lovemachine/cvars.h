@@ -117,6 +117,6 @@ public:
 	}
 };
 
-ccvars cvars;
+inline ccvars cvars;
 
 #define cvar(x) cvars.all_cvars.at(x)

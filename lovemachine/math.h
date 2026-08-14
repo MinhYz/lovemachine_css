@@ -1,4 +1,7 @@
 #pragma once
+#if defined(__GNUG__) || defined(__clang__)
+#include_next <math.h>
+#endif
 #include "includes.h"
 #include "vector.h"
 
@@ -62,7 +65,7 @@ qangle calc_angle(cvector src, cvector dst)
 	cvector delta = src - dst;
 	vectorangles(delta, angles);
 	delta.Normalize();
-	//normalize_angle(delta); // delta.Normalize(); зачем нужна эта функция здесь?
+	//normalize_angle(delta); // delta.Normalize(); Г§Г Г·ГҐГ¬ Г­ГіГ¦Г­Г  ГЅГІГ  ГґГіГ­ГЄГ¶ГЁГї Г§Г¤ГҐГ±Гј?
 	return angles;
 }
 

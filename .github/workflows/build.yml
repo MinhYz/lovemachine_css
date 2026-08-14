@@ -1,0 +1,32 @@
+name: Build Lovemachine CS:S Binaries
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build x86 Release (DLL & Injector)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild environment
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install Microsoft DirectX SDK (June 2010)
+        run: choco install directx-sdk -y
+
+      - name: Build Solution (lovemachine.sln)
+        run: msbuild lovemachine.sln /p:Configuration=Release /p:Platform=Win32 /m
+
+      - name: Upload Built Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lovemachine-release-x86
+          path: output/

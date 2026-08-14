@@ -1,5 +1,6 @@
 #pragma once
 #include "includes.h"
+#include "global.h"
 #include "color.h"
 #include "cvars.h"
 
@@ -31,14 +32,14 @@ public:
 	settings()
 	{
 		//cvars.setup();
-		//TODO : êîíôèãè
+		//TODO : ÃªÃ®Ã­Ã´Ã¨Ã£Ã¨
 		//CreateDirectory(L"C:/lovemachine", NULL);
 		//CreateDirectory(L"C:/lovemachine/configs", NULL);
 	}
 
 	struct
 	{
-		bool opened = false, hovered = false, console = false, panic = false; // TODO : âìåñòî panic ëó÷øå ñäåëàòü àíëîàä ÷èòà
+		bool opened = false, hovered = false, console = false, panic = false; // TODO : Ã¢Ã¬Ã¥Ã±Ã²Ã® panic Ã«Ã³Ã·Ã¸Ã¥ Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã Ã­Ã«Ã®Ã Ã¤ Ã·Ã¨Ã²Ã 
 		int cont_hovered = -1;
 		int x = 100, y = 100, cur_tab = 0;
 	} menu;
@@ -73,17 +74,26 @@ public:
 		struct
 		{
 			bool hitbox[5] = { true, true, true, false, false };
-			float fov = 4.f;//3;
-			float smooth[2] = { 37.9f, 38.5f };//{ 49.f, 50.f };
+			float fov = 4.f;
+			float smooth[2] = { 37.9f, 38.5f };
 			float rcs[2] = { 2.f, 2.f };
 			float humanize[2] = { 1.6f, 1.2f };
 			float kill_delay = 0.5f;
 			float shot_delay = 0.15f;
+
+			// Cranium Aimbot Extensions
+			bool auto_crouch = false;
+			bool predicted_position = false;
+			bool norecoil = false;
+			bool nospread = false;
+			int silent_mode = 0; // 0: Off, 1: Client Side, 2: Server Side, 3: Perfect Silent
+			int fov_selection = 0; // 0: Static, 1: Dynamic, 2: Distance-Based
+			int aim_usage = 0; // 0: Always, 1: On Key Hold, 2: On Attack
 		} aim;
 
 		struct
 		{
-			bool _enabled = false; // êîíôëèêòóåò ñ legit.enabled
+			bool _enabled = false;
 			bind_t bind = { false, 0 };
 			bool hitbox[5] = { true, true, true, false, false };
 			float delay = 0.07f;
@@ -100,11 +110,17 @@ public:
 		bool silent = false;
 		bool hitbox[5] = { true, false, true, false, false };
 		float hitchance = 0.f;
+
+		// Anti-Aim / Spinbot
+		bool spinbot = false;
+		float spin_speed = 25.0f;
+		int pitch_aa = 0;
+		int yaw_aa = 0;
 	} rage;
 
 	struct
 	{
-		bool enabled = false;
+		bool enabled = true;
 		bool friends = false;
 		int chams = 1;
 		bool chams_style[3] = { false, false, false };
@@ -113,15 +129,14 @@ public:
 		color chams_t = color(150, 255, 13);
 		color chams_ct = color(50, 255, 150);
 		int crosshair = 2;
-		bool esp_filter[6] = { false, false, false, false, false, false };
-		bool esp_show[6] = { false, false, false, false, false, false };
-		bool esp_bar[4] = { false, false, false, false };
-		bool esp_check[2] = { false, false };
+		bool esp_filter[6] = { true, false, false, false, false, false };
+		bool esp_show[6] = { true, true, true, false, false, false };
+		bool esp_bar[4] = { true, false, false, false };
+		bool esp_check[2] = { true, false };
 		color esp_t = color(210, 35, 16);
 		color esp_ct = color(50, 90, 210);
 		bool fade = true;
 		bool defuser_only_if_need = false;
-		//bool fancy_w2s = false;
 		int ak47_skin = 0;
 		int deagle_skin = 0;
 		int knife_skin = 0;
@@ -129,6 +144,17 @@ public:
 		bool remove[2] = { false, false };
 		bool hitmarker = false;
 		bool bomb_timer = false;
+
+		// Asian Hat (MÅ© Asian / Rice Hat)
+		bool asian_hat = false;
+		color asian_hat_color = color(255, 200, 50);
+		float asian_hat_size = 20.0f;
+		float asian_hat_height = 10.0f;
+
+		// Thirdperson & Inverted Angle (GÃ³c nhÃ¬n thá»© 3 nhÃ¬n ngÆ°á»£c láº¡i)
+		bool thirdperson = false;
+		float thirdperson_dist = 120.0f;
+		bool thirdperson_reverse = false;
 	} visuals;
 
 	struct
@@ -149,6 +175,16 @@ public:
 		int sm_speed = 4;
 		bind_t record = { false, VK_NUMPAD7 };
 		bind_t play = { false, VK_NUMPAD8 };
+
+		// Cranium Misc Extensions
+		bool pure_bypass = false;      // SV_Pure 1/2 Bypass
+		bool fast_ladder = false;      // Fast Ladder Climb
+		bool antismac = false;         // Anti SMAC Server Bypass
+		bool circle_strafe = false;    // Circle Strafe Helper
+		bind_t circle_strafe_bind = { false, 'T' };
+		bool edge_jump = false;        // Edge Jump Auto Helper
+		bind_t edge_jump_bind = { false, 0 };
+
 		int draw_mode = 0;
 		float draw_time = 0.1f;
 		color draw_color = color(0, 0, 120);
@@ -157,4 +193,4 @@ public:
 	} misc;
 };
 
-settings* sets = new settings();
+inline settings* sets = new settings();

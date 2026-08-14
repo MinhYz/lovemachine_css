@@ -1,7 +1,6 @@
 #pragma once
 #include "includes.h"
 #include "definitions.h"
-//#include "console.h"
 
 #define INRANGE(x,a,b)    (x >= a && x <= b)
 #define getBits( x )    (INRANGE((x&(~0x20)),'A','F') ? ((x&(~0x20)) - 'A' + 0xa) : (INRANGE(x,'0','9') ? x - '0' : 0))
@@ -9,7 +8,7 @@
 
 namespace memory
 {
-	// функция получения оффсета
+#ifdef _WIN32
 	inline dword pattern(std::string moduleName, std::string pattern)
 	{
 		const char* pat = pattern.c_str();
@@ -23,7 +22,7 @@ namespace memory
 			if (!*pat)
 				return firstMatch;
 
-			if (*(PBYTE)pat == '\?' || *(BYTE*)pCur == getByte(pat))
+			if (*(BYTE*)pat == '?' || *(BYTE*)pCur == getByte(pat))
 			{
 				if (!firstMatch)
 					firstMatch = pCur;
@@ -31,11 +30,10 @@ namespace memory
 				if (!pat[2])
 					return firstMatch;
 
-				if (*(PWORD)pat == '\?\?' || *(PBYTE)pat != '\?')
+				if (*(WORD*)pat == '??' || *(BYTE*)pat != '?')
 					pat += 3;
-
 				else
-					pat += 2; //one ?
+					pat += 2;
 			}
 			else
 			{
@@ -43,22 +41,17 @@ namespace memory
 				firstMatch = 0;
 			}
 		}
-		return NULL;
+		return 0;
 	}
 
-	// функция получения интерфейса
 	template< typename T >
 	T* pinterface(std::string strModule, std::string strInterface)
 	{
 		typedef T* (*CreateInterfaceFn)(const char* szName, int iReturn);
 		CreateInterfaceFn CreateInterface = (CreateInterfaceFn)GetProcAddress(GetModuleHandleA(strModule.c_str()), "CreateInterface");
-
-		//std::cout << ("/iface/ " + strModule + " : ") << std::hex << (dword)CreateInterface << endl;;
-
-		return CreateInterface(strInterface.c_str(), 0);
+		return CreateInterface ? CreateInterface(strInterface.c_str(), 0) : nullptr;
 	}
 
-	// класс для выполнения хуков
 	class vthook
 	{
 	public:
@@ -67,7 +60,7 @@ namespace memory
 			memset(this, 0, sizeof(vthook));
 		}
 
-		vthook(PDWORD* ppdwClassBase)
+		vthook(DWORD** ppdwClassBase)
 		{
 			initialize(ppdwClassBase);
 		}
@@ -77,7 +70,7 @@ namespace memory
 			unhook();
 		}
 
-		bool initialize(PDWORD* pp_class_base)
+		bool initialize(DWORD** pp_class_base)
 		{
 			class_base = pp_class_base;
 			oldvt = *pp_class_base;
@@ -86,11 +79,6 @@ namespace memory
 			memcpy(newvt, oldvt, sizeof(DWORD) * vtsize);
 			*pp_class_base = newvt;
 			return true;
-		}
-
-		bool initialize(PDWORD** pp_class_base) // fix for pp
-		{
-			return initialize(*pp_class_base);
 		}
 
 		void unhook()
@@ -120,10 +108,10 @@ namespace memory
 			{
 				return oldvt[Index];
 			}
-			return NULL;
+			return 0;
 		}
 
-		PDWORD get_oldvt()
+		DWORD* get_oldvt()
 		{
 			return oldvt;
 		}
@@ -135,15 +123,13 @@ namespace memory
 				newvt[iIndex] = dwNewFunc;
 				return oldvt[iIndex];
 			}
-
-			return NULL;
+			return 0;
 		}
 
 	private:
-		DWORD get_vt_count(PDWORD vmt)
+		DWORD get_vt_count(DWORD* vmt)
 		{
 			DWORD dwIndex = 0;
-
 			for (dwIndex = 0; vmt[dwIndex]; dwIndex++)
 			{
 				if (IsBadCodePtr((FARPROC)vmt[dwIndex]))
@@ -154,19 +140,15 @@ namespace memory
 			return dwIndex;
 		}
 
-		PDWORD* class_base;
-		PDWORD newvt, oldvt;
+		DWORD** class_base;
+		DWORD *newvt, *oldvt;
 		DWORD vtsize;
 	};
+#endif
 }
 
 template< typename T >
 T vfunc(void* vTable, int iIndex)
 {
 	return (*(T**)vTable)[iIndex];
-}
-
-template <typename Fn> __forceinline Fn CallVirtualFunction(void* pClassBase, int nFunctionIndex) // (c) гузей
-{
-	return (Fn)((PDWORD) * (PDWORD*)pClassBase)[nFunctionIndex];
 }
