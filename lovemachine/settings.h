@@ -103,6 +103,7 @@ public:
 	struct
 	{
 		bool enabled = false;
+		bool friends = false;
 		bool autowall = false;
 		bool autoscope = false;
 		bool autoshoot = false;
