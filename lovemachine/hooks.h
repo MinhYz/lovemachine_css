@@ -141,8 +141,6 @@ namespace hooks
 			once = false;
 		}
 
-		d3d9->rehook();
-
 		if (sets->menu.panic)
 		{
 			sets->menu.opened = false;
@@ -153,7 +151,7 @@ namespace hooks
 			return o_endscene(device);
 		}
 
-		if (!_engine->in_game() && !global::map_changed)
+		if (_engine && !_engine->in_game() && !global::map_changed)
 		{
 			events::bomb_timer::defuse_time = events::bomb_timer::explosion_time = events::hitmarker::timer = events::hitmarker::kill_timer = 0.f;
 			//ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records));
