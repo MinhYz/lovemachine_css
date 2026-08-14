@@ -530,6 +530,7 @@ namespace hooks
 			//	cout << "shot" << endl;
 		}*/
 
+		byte* p_sendpacket = nullptr;
 		DWORD* p_ebp = nullptr;
 		__asm mov p_ebp, ebp;
 
@@ -538,17 +539,23 @@ namespace hooks
 			DWORD ebp_val = *p_ebp;
 			if (ebp_val && !IsBadReadPtr((void*)(ebp_val - 0x1), sizeof(byte)))
 			{
-				byte* p_sendpacket = (byte*)(ebp_val - 0x1);
+				p_sendpacket = (byte*)(ebp_val - 0x1);
 				global::sendpacket = *p_sendpacket;
 			}
 		}
 
+		c_verified_usercmd* verified_usercmd = nullptr;
 		if (_input && !IsBadReadPtr((void*)((DWORD)_input + USERCMDOFFSET), sizeof(DWORD)))
 		{
 			DWORD usercmd_ptr = *(DWORD*)((DWORD)_input + USERCMDOFFSET);
 			if (usercmd_ptr && !IsBadReadPtr((void*)usercmd_ptr, sizeof(cusercmd) * MULTIPLAYER_BACKUP))
 			{
 				global::cmd = &((cusercmd*)usercmd_ptr)[sequence_number % MULTIPLAYER_BACKUP];
+			}
+			DWORD verified_ptr = *(DWORD*)((DWORD)_input + VERIFIEDCMDOFFSET);
+			if (verified_ptr && !IsBadReadPtr((void*)verified_ptr, sizeof(c_verified_usercmd) * MULTIPLAYER_BACKUP))
+			{
+				verified_usercmd = &((c_verified_usercmd*)verified_ptr)[sequence_number % MULTIPLAYER_BACKUP];
 			}
 		}
 
@@ -767,12 +774,16 @@ namespace hooks
 		}
 		else global::chocked_packets = 0;
 
-		verified_usercmd->m_cmd = *global::cmd;
-		verified_usercmd->m_crc = global::cmd->GetChecksum();
+		if (verified_usercmd && global::cmd)
+		{
+			verified_usercmd->m_cmd = *global::cmd;
+			verified_usercmd->m_crc = global::cmd->GetChecksum();
+		}
 
-		//cout << "sendpacket : " << (global::sendpacket ? "send" : "not send") << ", chocked_packets : " << global::chocked_packets << endl;
-
-		*p_sendpacket = global::sendpacket;
+		if (p_sendpacket)
+		{
+			*p_sendpacket = global::sendpacket;
+		}
 	}
 
 	/*using frame_stage_notify_fn = void(__stdcall*)(clientframestage_t stage);
