@@ -14,34 +14,51 @@ handle hthread = 0x0;
 
 void thread()
 {
-#ifdef DEBUG_LOG
-	console::create("lovemachine debug console");
-	myfile.open("c:/lovemachine/log.txt");
-	myfile << "welcome to lovemachine / text log open" << endl;
-#endif
-	game::find();
-	offsets::find_them();
-	models::on_inject();
-	configs::on_inject();
-	hooks::do_them();
-	ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records)); // TODO : Ð²ÑÑÐ°Ð²Ð¸ÑÑ ÐºÑÐ´Ð°-Ð½Ð¸Ð±ÑÐ´Ñ ÐµÑÐµ (legit::on_inject)
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+	SetConsoleTitleA("lovemachine debug console");
+	printf("[+] lovemachine injected successfully into hl2.exe!\n");
+	printf("[+] Initializing interfaces & hooks...\n");
+
+	std::ofstream log("C:/lovemachine_log.txt", std::ios::app);
+	log << "=== lovemachine inject log ===" << std::endl;
+
+	try {
+		game::find();
+		log << "[+] game::find() passed" << std::endl;
+		printf("[+] Interfaces found.\n");
+
+		offsets::find_them();
+		log << "[+] offsets::find_them() passed" << std::endl;
+
+		models::on_inject();
+		log << "[+] models::on_inject() passed" << std::endl;
+
+		configs::on_inject();
+		log << "[+] configs::on_inject() passed" << std::endl;
+
+		hooks::do_them();
+		log << "[+] hooks::do_them() passed" << std::endl;
+		printf("[+] Hooks initialized successfully!\n");
+	}
+	catch (const std::exception& e) {
+		log << "[!] Exception: " << e.what() << std::endl;
+		printf("[!] Exception during init: %s\n", e.what());
+	}
+	catch (...) {
+		log << "[!] Unknown exception during injection!" << std::endl;
+		printf("[!] Unknown crash during injection!\n");
+	}
+
+	ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records));
 	console::write("/ / / DONE SUCCESFULLY / / /", darkwhite);
-	//_cvar->ConsoleColorPrintf(color::lm(), "welcome to lovemachine\nbruh bruh bruh bruh");
 	Sleep(10);
-	_engine->clientcmd_unrestricted(u8"echo ZDAROVA CHMO");
-	//_engine->clientcmd_unrestricted(u8"echo ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââââââââââââââââââââââââ\necho ââââââââââââââââââââââ\n");
+	if (_engine) {
+		_engine->clientcmd_unrestricted("echo [lovemachine] Loaded successfully!");
+	}
 
 	global::unhook = false;
 	return;
-
-	while (true) { if (global::unhook) break; }
-
-	hooks::remove();
-	console::remove();
-
-	console::write("removing the library from the game");
-	CloseHandle(hthread);
-	FreeLibraryAndExitThread(global::dll, 0);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)

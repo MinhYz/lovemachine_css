@@ -958,12 +958,23 @@ namespace hooks
 		client = new memory::vthook((dword**)_client);
 		console::write_hex("/vthook/ client", (dword)client, darkgreen);
 
-		_input = (cinput*) * *(PDWORD*)(client->get_func_address(21) + INPUTOFFSET); // INPUTOFFSET
-		console::write_hex("/interface/ input", (dword)_input, darkgreen);
-		input = new memory::vthook((dword**)_input);
-		console::write_hex("/vthook/ input", (dword)input, darkgreen);
-		o_get_usercmd = (get_usercmd_fn)input->hook_function((dword)get_usercmd_hook, 8);
-		console::write_hex("/hook/ o_get_usercmd", (dword)o_get_usercmd, darkgreen);
+		PDWORD func_addr = (PDWORD)client->get_func_address(21);
+		if (func_addr && !IsBadReadPtr(func_addr, sizeof(DWORD)))
+		{
+			DWORD input_ptr_addr = *(PDWORD)((DWORD)func_addr + INPUTOFFSET);
+			if (input_ptr_addr && !IsBadReadPtr((void*)input_ptr_addr, sizeof(DWORD)))
+			{
+				_input = *(cinput**)input_ptr_addr;
+				if (_input)
+				{
+					console::write_hex("/interface/ input", (dword)_input, darkgreen);
+					input = new memory::vthook((dword**)_input);
+					console::write_hex("/vthook/ input", (dword)input, darkgreen);
+					o_get_usercmd = (get_usercmd_fn)input->hook_function((dword)get_usercmd_hook, 8);
+					console::write_hex("/hook/ o_get_usercmd", (dword)o_get_usercmd, darkgreen);
+				}
+			}
+		}
 
 		o_create_move = (create_move_fn)client->hook_function((dword)create_move_hook, 21);
 		console::write_hex("/hook/ o_create_move", (dword)o_create_move, darkgreen);
