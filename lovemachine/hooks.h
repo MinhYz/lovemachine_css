@@ -93,28 +93,6 @@ namespace hooks
 		return CallWindowProc(o_wndproc, wnd, msg, w_param, l_param);
 	}
 
-		/*if (_engine)
-		{
-			static bool do_it = false;
-
-			if (_engine->is_connected() && _engine->in_game() && sets->misc.autojump && global::key[VK_SPACE])
-			{
-				_engine->clientcmd_unrestricted(GetTickCount64() % 2 ? "+jump" : "-jump");
-				do_it = true;
-			}
-			else
-			{
-				if (do_it)
-				{
-					_engine->clientcmd_unrestricted("-jump");
-					do_it = false;
-				}
-			}
-		}*/
-		
-		return CallWindowProc(o_wndproc, wnd, msg, w_param, l_param);
-	}
-
 	bool key[0xFE + 1];
 	memory::vthook* d3d9;
 	using endscene_fn = long(__stdcall*)(IDirect3DDevice9* device);
