@@ -89,10 +89,11 @@ namespace console
 	{
 		if (type == window)
 		{
-			AllocConsole(); // ââîäèì êîíñîëü
-			freopen("CONIN$", "r", stdin); // ââîä
-			freopen("CONOUT$", "w", stdout); // âûâîä
-			freopen("CONOUT$", "w", stderr); // âûâîä îøèáîê
+			AllocConsole();
+			FILE* fp = nullptr;
+			freopen_s(&fp, "CONIN$", "r", stdin);
+			freopen_s(&fp, "CONOUT$", "w", stdout);
+			freopen_s(&fp, "CONOUT$", "w", stderr);
 
 			SetConsoleTitleA(name.c_str()); // óñòàíîâêà èìåíè
 

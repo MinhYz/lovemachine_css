@@ -1,3 +1,6 @@
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
 #include <windows.h>
 #include <dbghelp.h>
 #include "includes.h"
@@ -78,8 +81,10 @@ DWORD WINAPI MainInitThread(LPVOID lpParam)
 {
 	// 3. Console & File Realtime Logger
 	AllocConsole();
-	freopen("CONOUT$", "w", stdout);
-	freopen("CONOUT$", "w", stderr);
+	FILE* fp = nullptr;
+	freopen_s(&fp, "CONOUT$", "w", stdout);
+	freopen_s(&fp, "CONOUT$", "w", stderr);
+	freopen_s(&fp, "CONIN$", "r", stdin);
 	SetConsoleTitleA("[DEBUG CONSOLE] Lovemachine Diagnostic Trace");
 
 	LogTrace("=============================================================");
