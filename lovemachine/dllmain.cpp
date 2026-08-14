@@ -1,4 +1,3 @@
-// dllmain.cpp : ÐÐ¿ÑÐµÐ´ÐµÐ»ÑÐµÑ ÑÐ¾ÑÐºÑ Ð²ÑÐ¾Ð´Ð° Ð´Ð»Ñ Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ DLL.
 #include "includes.h"
 #include "definitions.h"
 #include "global.h"
@@ -10,72 +9,182 @@
 #include "events.h"
 #include "configs.h"
 
-handle hthread = 0x0;
+#include <dbghelp.h>
+#pragma comment(lib, "dbghelp.lib")
 
-void thread()
+static std::ofstream g_DebugLog;
+
+void LogTrace(const std::string& msg)
 {
+	printf("%s\n", msg.c_str());
+	if (!g_DebugLog.is_open())
+	{
+		g_DebugLog.open("lovemachine_debug.txt", std::ios::app);
+	}
+	if (g_DebugLog.is_open())
+	{
+		g_DebugLog << msg << std::endl;
+		g_DebugLog.flush(); // BẮT BUỘC: Unbuffered write to guarantee log line saved on crash
+	}
+}
+
+// 2. DLL Core: Vectored Exception Handler (VEH) & Minidump Generator
+LONG WINAPI SafeCrashHandler(PEXCEPTION_POINTERS pExceptionInfo)
+{
+	DWORD code = pExceptionInfo->ExceptionRecord->ExceptionCode;
+	PVOID addr = pExceptionInfo->ExceptionRecord->ExceptionAddress;
+
+	// Ignore non-fatal debug breakpoints or RPC exceptions
+	if (code == DBG_PRINTEXCEPTION_C || code == 0x406D1388)
+		return EXCEPTION_CONTINUE_SEARCH;
+
+	char crashBuf[512];
+	sprintf_s(crashBuf, sizeof(crashBuf), "\n=============================================================\n[CRASH DETECTED] Exception Code: 0x%08X | Faulting Address: 0x%p\n=============================================================", code, addr);
+	LogTrace(crashBuf);
+
+	// Generate MiniDump file (crash_dump.dmp) for Visual Studio debugging
+	HANDLE hDumpFile = CreateFileA("crash_dump.dmp", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hDumpFile != INVALID_HANDLE_VALUE)
+	{
+		MINIDUMP_EXCEPTION_INFORMATION mei;
+		mei.ThreadId = GetCurrentThreadId();
+		mei.ExceptionPointers = pExceptionInfo;
+		mei.ClientPointers = TRUE;
+
+		BOOL dumpSuccess = MiniDumpWriteDump(
+			GetCurrentProcess(),
+			GetCurrentProcessId(),
+			hDumpFile,
+			MiniDumpWithNormal,
+			&mei,
+			NULL,
+			NULL
+		);
+
+		if (dumpSuccess)
+			LogTrace("[+] MiniDump written successfully to 'crash_dump.dmp'!");
+		else
+			LogTrace("[-] Failed to write MiniDump.");
+
+		CloseHandle(hDumpFile);
+	}
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
+// 4. DLL Lifecycle & Module Synchronization
+DWORD WINAPI MainInitThread(LPVOID lpParam)
+{
+	// 3. Console & File Realtime Logger
 	AllocConsole();
 	freopen("CONOUT$", "w", stdout);
-	SetConsoleTitleA("lovemachine debug console");
-	printf("[+] lovemachine injected successfully into hl2.exe!\n");
-	printf("[+] Initializing interfaces & hooks...\n");
+	freopen("CONOUT$", "w", stderr);
+	SetConsoleTitleA("[DEBUG CONSOLE] Lovemachine Diagnostic Trace");
 
-	std::ofstream log("C:/lovemachine_log.txt", std::ios::app);
-	log << "=== lovemachine inject log ===" << std::endl;
-	log.flush();
+	LogTrace("=============================================================");
+	LogTrace("   LOVEMACHINE CS:S DEEP DIAGNOSTIC TRACE INITIALIZED        ");
+	LogTrace("=============================================================");
+
+	// Polling loop for game module availability (Timeout 30s)
+	const char* requiredModules[] = {
+		"client.dll",
+		"engine.dll",
+		"vguimatsurface.dll",
+		"shaderapidx9.dll",
+		"tier0.dll"
+	};
+
+	LogTrace("[+] Waiting for game modules to settle...");
+	DWORD startTime = GetTickCount();
+	bool allModulesLoaded = false;
+
+	while (GetTickCount() - startTime < 30000)
+	{
+		bool missingModule = false;
+		for (const char* mod : requiredModules)
+		{
+			if (!GetModuleHandleA(mod))
+			{
+				missingModule = true;
+				break;
+			}
+		}
+
+		if (!missingModule)
+		{
+			allModulesLoaded = true;
+			break;
+		}
+
+		Sleep(200);
+	}
+
+	if (!allModulesLoaded)
+	{
+		LogTrace("[-] ERROR: Timed out waiting for game modules to load (30s). Cancelling injection.");
+		if (g_DebugLog.is_open()) g_DebugLog.close();
+		FreeLibraryAndExitThread(global::dll, 0);
+		return 0;
+	}
+
+	LogTrace("[+] All required game modules present. Waiting 1000ms for VTables to settle...");
+	Sleep(1000);
+
+	while (!(global::window = FindWindowA("Valve001", NULL)))
+		Sleep(200);
+
+	LogTrace("[+] Found game window (Valve001): 0x" + std::to_string((DWORD_PTR)global::window));
 
 	try {
-		printf("[1/5] Finding interfaces...\n");
+		LogTrace("[1/5] Capturing Source Engine Interfaces...");
 		game::find();
-		log << "[+] game::find() passed" << std::endl; log.flush();
-		printf("[+] Interfaces found successfully!\n");
+		LogTrace("[+] Interfaces captured successfully!");
 
-		printf("[2/5] Scanning netvar offsets...\n");
+		LogTrace("[2/5] Scanning Netvar Offsets & Signatures...");
 		offsets::find_them();
-		log << "[+] offsets::find_them() passed" << std::endl; log.flush();
+		LogTrace("[+] Netvar offsets scanned successfully!");
 
-		printf("[3/5] Loading models...\n");
+		LogTrace("[3/5] Initializing Models & Materials...");
 		models::on_inject();
-		log << "[+] models::on_inject() passed" << std::endl; log.flush();
+		LogTrace("[+] Models initialized!");
 
-		printf("[4/5] Loading configs...\n");
+		LogTrace("[4/5] Initializing Cheat Configurations...");
 		configs::on_inject();
-		log << "[+] configs::on_inject() passed" << std::endl; log.flush();
+		LogTrace("[+] Configs initialized!");
 
-		printf("[5/5] Hooking game VMT functions...\n");
+		LogTrace("[5/5] Hooking VMT Game Functions...");
 		hooks::do_them();
-		log << "[+] hooks::do_them() passed" << std::endl; log.flush();
-		printf("[+] ALL HOOKS INSTALLED SUCCESSFULLY!\n");
+		LogTrace("[+] ALL HOOKS INSTALLED SUCCESSFULLY!");
 	}
 	catch (const std::exception& e) {
-		log << "[!] Exception: " << e.what() << std::endl; log.flush();
-		printf("[!] Exception during init: %s\n", e.what());
+		LogTrace(std::string("[!] C++ Exception during initialization: ") + e.what());
 	}
 	catch (...) {
-		log << "[!] Unknown exception during injection!" << std::endl; log.flush();
-		printf("[!] Unknown crash during injection!\n");
+		LogTrace("[!] Unknown exception caught during initialization!");
 	}
 
 	ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records));
-	printf("\n=========================================\n");
-	printf("   LOVEMACHINE CS:S LOADED SUCCESSFULLY! \n");
-	printf("   PRESS [INSERT] IN-GAME TO TOGGLE MENU \n");
-	printf("=========================================\n\n");
+	LogTrace("\n=============================================================");
+	LogTrace("   LOVEMACHINE CS:S LOADED SAFELY WITH FULL CRASH PROTECTION  ");
+	LogTrace("   PRESS [INSERT] IN-GAME TO TOGGLE THE IMGUI MENU            ");
+	LogTrace("=============================================================\n");
 
 	global::unhook = false;
-	return;
+	return 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
-		while (!(global::window = FindWindowA("Valve001", NULL)))
-			Sleep(200);
-
-		hthread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)thread, NULL, NULL, NULL);
-
+		DisableThreadLibraryCalls(hModule);
 		global::dll = hModule;
+
+		// 2. Register Vectored Exception Handler on line 1 of DllMain
+		AddVectoredExceptionHandler(1, SafeCrashHandler);
+
+		// 4. Spawn background thread safely detached from DllMain Loader Lock
+		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MainInitThread, NULL, 0, NULL);
 
 		return TRUE;
 	}
@@ -83,4 +192,5 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	{
 		return TRUE;
 	}
+	return TRUE;
 }

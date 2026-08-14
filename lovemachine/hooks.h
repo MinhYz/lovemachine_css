@@ -282,6 +282,12 @@ namespace hooks
 			events::on_draw();
 		}
 
+		IDirect3DStateBlock9* stateBlock = nullptr;
+		if (device && SUCCEEDED(device->CreateStateBlock(D3DSBT_ALL, &stateBlock)) && stateBlock)
+		{
+			stateBlock->Capture();
+		}
+
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
@@ -291,6 +297,12 @@ namespace hooks
 		ImGui::EndFrame();
 		ImGui::Render();
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+
+		if (stateBlock)
+		{
+			stateBlock->Apply();
+			stateBlock->Release();
+		}
 
 		return o_endscene(device);
 	}

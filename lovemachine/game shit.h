@@ -28,68 +28,51 @@ namespace game
 		cinput* input;
 		iphysicssurfaceprops* physics;
 
+		template<typename T>
+		T* CaptureInterface(const char* moduleName, const char* interfaceName)
+		{
+			T* ptr = memory::pinterface<T>(moduleName, interfaceName);
+			if (!ptr)
+			{
+				console::write("[-] ERROR: Failed to capture interface '" + std::string(interfaceName) + "' from '" + std::string(moduleName) + "'", darkred);
+			}
+			else
+			{
+				console::write_hex("[+] " + std::string(interfaceName), (dword)ptr, darkgreen);
+			}
+			return ptr;
+		}
+
 		void find_them()
 		{
-			panel = memory::pinterface<ivpanel>("vgui2.dll", "VGUI_Panel009");
-			console::write_hex("/interface/ panel", (dword)panel, darkgreen);
-
-			surface = memory::pinterface<isurface>("vguimatsurface.dll", "VGUI_Surface030");
-			console::write_hex("/interface/ surface", (dword)surface, darkgreen);
-
-			ent_list = memory::pinterface<icliententitylist>("client.dll", "VClientEntityList003");
-			console::write_hex("/interface/ ent_list", (dword)ent_list, darkgreen);
-
-			engine = memory::pinterface<ivengineclient>("engine.dll", "VEngineClient014");
-			console::write_hex("/interface/ engine", (dword)engine, darkgreen);
-
-			client = memory::pinterface<ibaseclientdll>("client.dll", "VClient017");
-			console::write_hex("/interface/ client", (dword)client, darkgreen);
+			panel = CaptureInterface<ivpanel>("vgui2.dll", "VGUI_Panel009");
+			surface = CaptureInterface<isurface>("vguimatsurface.dll", "VGUI_Surface030");
+			ent_list = CaptureInterface<icliententitylist>("client.dll", "VClientEntityList003");
+			engine = CaptureInterface<ivengineclient>("engine.dll", "VEngineClient014");
+			client = CaptureInterface<ibaseclientdll>("client.dll", "VClient017");
 
 			if (client) console::write_hex("/function/ client->get_all_classes()", (dword)client->get_all_classes(), darkgreen);
 
-			debug_overlay = memory::pinterface<ivdebugoverlay>("engine.dll", "VDebugOverlay003");
-			console::write_hex("/interface/ debug_overlay", (dword)debug_overlay, darkgreen);
-
-			mat_sys = memory::pinterface<imaterialsystem>("materialsystem.dll", "VMaterialSystem080");
-			console::write_hex("/interface/ mat_sys", (dword)mat_sys, darkgreen);
-
-			model_render = memory::pinterface<ivmodelrender>("engine.dll", "VEngineModel016");
-			console::write_hex("/interface/ model_render", (dword)model_render, darkgreen);
-
-			model_info = memory::pinterface<ivmodelinfo>("engine.dll", "VModelInfoClient006");
-			console::write_hex("/interface/ model_info", (dword)model_info, darkgreen);
-
-			render_view = memory::pinterface<ivrenderview>("engine.dll", "VEngineRenderView014");
-			console::write_hex("/interface/ render_view", (dword)render_view, darkgreen);
-
-			pl_info_manager = memory::pinterface<iplayerinfomanager>("server.dll", "PlayerInfoManager002");
-			console::write_hex("/interface/ player_info_manager", (dword)pl_info_manager, darkgreen);
-
-			engine_trace = memory::pinterface<ienginetrace>("engine.dll", "EngineTraceClient003");
-			console::write_hex("/interface/ engine_trace", (dword)engine_trace, darkgreen);
-
-			cvar = memory::pinterface<icvar>("vstdlib.dll", "VEngineCvar004");
-			console::write_hex("/interface/ cvar", (dword)cvar, darkgreen);
-
-			engine_sound = memory::pinterface<ienginesound>("engine.dll", "IEngineSoundClient003");
-			console::write_hex("/interface/ engine_sound", (dword)engine_sound, darkgreen);
-
-			event_manager = memory::pinterface<igameeventmanager>("engine.dll", "GAMEEVENTSMANAGER002");
-			console::write_hex("/interface/ event_manager", (dword)event_manager, darkgreen);
-
-			physics = memory::pinterface<iphysicssurfaceprops>("vphysics.dll", "VPhysicsSurfaceProps001");
-			console::write_hex("/interface/ physics", (dword)physics, darkgreen);
+			debug_overlay = CaptureInterface<ivdebugoverlay>("engine.dll", "VDebugOverlay003");
+			mat_sys = CaptureInterface<imaterialsystem>("materialsystem.dll", "VMaterialSystem080");
+			model_render = CaptureInterface<ivmodelrender>("engine.dll", "VEngineModel016");
+			model_info = CaptureInterface<ivmodelinfo>("engine.dll", "VModelInfoClient006");
+			render_view = CaptureInterface<ivrenderview>("engine.dll", "VEngineRenderView014");
+			pl_info_manager = CaptureInterface<iplayerinfomanager>("server.dll", "PlayerInfoManager002");
+			engine_trace = CaptureInterface<ienginetrace>("engine.dll", "EngineTraceClient003");
+			cvar = CaptureInterface<icvar>("vstdlib.dll", "VEngineCvar004");
+			engine_sound = CaptureInterface<ienginesound>("engine.dll", "IEngineSoundClient003");
+			event_manager = CaptureInterface<igameeventmanager>("engine.dll", "GAMEEVENTSMANAGER002");
+			physics = CaptureInterface<iphysicssurfaceprops>("vphysics.dll", "VPhysicsSurfaceProps001");
 		}
 	}
 
 	namespace signatures
 	{
 		dword d3d9_device;
-		//iclientmode* clientmode;
 		dword clientmode;
 		dword bullet_params;
 		get_data_fn get_wpn_data;
-		//get_bullet_type_fn get_bullet_type;
 		cclientstate* clientstate;
 
 		typedef void (*ClipTraceToPlayers_t)(const Vector&, const Vector&, unsigned int, itracefilter*, trace_t*);
@@ -97,38 +80,52 @@ namespace game
 
 		void find_them()
 		{
-			d3d9_device = **reinterpret_cast<dword**>(memory::pattern("shaderapidx9.dll", "A1 ? ? ? ? 8D 53 08") + 0x1);
-			console::write_hex("/signature/ d3d9_device", d3d9_device, darkgreen);
+			dword pat_d3d = memory::pattern("shaderapidx9.dll", "A1 ? ? ? ? 8D 53 08");
+			if (pat_d3d && !IsBadReadPtr((void*)(pat_d3d + 0x1), sizeof(DWORD)))
+			{
+				DWORD ptr1 = *(DWORD*)(pat_d3d + 0x1);
+				if (ptr1 && !IsBadReadPtr((void*)ptr1, sizeof(DWORD)))
+				{
+					d3d9_device = *(DWORD*)ptr1;
+					console::write_hex("[+] d3d9_device", d3d9_device, darkgreen);
+				}
+			}
 
-			clientmode = **reinterpret_cast<dword**>(memory::pattern("client.dll", "8B 0D ? ? ? ? 8B 01 5D FF 60 28 CC") + 0x2);
-			console::write_hex("/signature/ clientmode", clientmode, darkgreen);
+			dword pat_cm = memory::pattern("client.dll", "8B 0D ? ? ? ? 8B 01 5D FF 60 28 CC");
+			if (pat_cm && !IsBadReadPtr((void*)(pat_cm + 0x2), sizeof(DWORD)))
+			{
+				DWORD ptr2 = *(DWORD*)(pat_cm + 0x2);
+				if (ptr2 && !IsBadReadPtr((void*)ptr2, sizeof(DWORD)))
+				{
+					clientmode = *(DWORD*)ptr2;
+					console::write_hex("[+] clientmode", clientmode, darkgreen);
+				}
+			}
 
-			// (c) mr-nv <3
 			bullet_params = memory::pattern("client.dll", "55 8B EC 56 8B 75 08 68 ? ? ? ? 56 E8 ? ? ? ? 83 C4 08 84 C0");
-			console::write_hex("/signature/ bullet_params", bullet_params, darkgreen);
-
-			// TODO: ÎÁÍÎÂÈÒÜ È ÂÅÐÍÓÒÜ
-			// thx catalindragan22 (c) // uc
-			//clientstate = *reinterpret_cast<cclientstate**>(memory::pattern("engine.dll", "B9 ? ? ? ? E8 ? ? ? ? E8 ? ? ? ? 83 78 14 00") + 0x1);
-			console::write_hex("/signature/ clientstate", (dword)clientstate, darkgreen);
-			//console::write_hex("netchannel", (dword)clientstate->m_NetChannel, darkgreen);
+			console::write_hex("[+] bullet_params", bullet_params, darkgreen);
 
 			dword weapon_data = memory::pattern("client.dll", "0F B7 81 ? ? ? ? 50 E8 ? ? ? ? 83 C4 04 C3");
-			console::write_hex("/signature/ weapon_data", weapon_data, darkgreen);
-			get_wpn_data = (get_data_fn)(weapon_data);
-			console::write_hex("/signature/ get_wpn_data", (dword)get_wpn_data, darkgreen);
+			console::write_hex("[+] weapon_data", weapon_data, darkgreen);
+			if (weapon_data) get_wpn_data = (get_data_fn)(weapon_data);
 
-			dword lock_cursor = memory::pattern("vguimatsurface.dll", "A3 ? ? ? ? C6 05") + 0x7;
-			global::lock_cursor = *(bool**)(lock_cursor);
-			console::write_hex("/signature/ lock_cursor", (dword)global::lock_cursor, darkgreen);
+			dword lock_cursor_pat = memory::pattern("vguimatsurface.dll", "A3 ? ? ? ? C6 05");
+			if (lock_cursor_pat && !IsBadReadPtr((void*)(lock_cursor_pat + 0x7), sizeof(DWORD)))
+			{
+				dword lock_cursor = lock_cursor_pat + 0x7;
+				if (lock_cursor && !IsBadReadPtr((void*)lock_cursor, sizeof(DWORD)))
+				{
+					global::lock_cursor = *(bool**)(lock_cursor);
+					console::write_hex("[+] lock_cursor", (dword)global::lock_cursor, darkgreen);
+				}
+			}
 
 			dword cliptracetoplayers = memory::pattern("client.dll", "53 8B DC 83 EC 08 83 E4 F0 83 C4 04 55 8B 6B 04 89 6C 24 04 8B EC 81 EC ? ? ? ? 8B 43 18");
-			ClipTraceToPlayers = (ClipTraceToPlayers_t)(cliptracetoplayers);
-			console::write_hex("/signature/ ClipTraceToPlayers", (dword)ClipTraceToPlayers, darkgreen);
-
-			/*dword bullet_type = memory::pattern("server.dll", "E8 ? ? ? ? F3 0F 10 43 ? F3 0F 10 A5 ? ? ? ?") + 0x7;
-			get_bullet_type = (get_bullet_type_fn)(bullet_type);
-			console::write_hex("/signature/ lock_cursor", (dword)get_bullet_type, darkgreen);*/
+			if (cliptracetoplayers)
+			{
+				ClipTraceToPlayers = (ClipTraceToPlayers_t)(cliptracetoplayers);
+				console::write_hex("[+] ClipTraceToPlayers", (dword)ClipTraceToPlayers, darkgreen);
+			}
 		}
 	}
 
