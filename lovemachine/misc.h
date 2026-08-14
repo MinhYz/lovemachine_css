@@ -384,7 +384,7 @@ namespace misc
 		if (sets->misc.fl_spam_always || sets->misc.fl_spam.is() == bind_true)
 			_engine->clientcmd_unrestricted("impulse 100");
 
-		bool lag_bind = sets->misc.lag_spam.is();
+		short lag_bind = sets->misc.lag_spam.is();
 		if (sets->misc.lag_factor > 0 && (lag_bind == bind_no_key || lag_bind == bind_true))
 			lag();
 		else

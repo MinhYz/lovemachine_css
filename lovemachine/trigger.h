@@ -78,7 +78,7 @@ namespace legit
 		// TODO: óëó÷øèòü distance (ðàçíàÿ äàëüíîñòü ïîðàæåíèÿ ó êàæäîãî îðóæèÿ)
 		void end()
 		{
-			bool bind = sets->legit.trigger.bind.is();
+			short bind = sets->legit.trigger.bind.is();
 			if (!sets->legit.trigger._enabled || (bind != bind_no_key && bind != bind_true) || global::weapon->get_weaponid() == weapon_knife || global::weapon->next_primary_attack() > global::curtime)
 				return;
 
@@ -107,7 +107,7 @@ namespace legit
 
 		void draw()
 		{
-			bool bind = sets->legit.trigger.bind.is();
+			short bind = sets->legit.trigger.bind.is();
 			if (!sets->legit.trigger._enabled || (bind != bind_no_key && bind != bind_true))
 				return;
 
