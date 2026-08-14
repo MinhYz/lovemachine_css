@@ -56,7 +56,6 @@ public:
 	float	Dot(const Vector& vOther) const;
 	float	Length2D(void) const;
 	float	Length2DSqr(void) const;
-	Vector& operator=(const Vector& vOther);
 	Vector	operator-(void) const;
 	Vector	operator+(const Vector& v) const;
 	Vector	operator-(const Vector& v) const;
@@ -88,13 +87,6 @@ inline void Vector::Zero()
 inline void VectorClear(Vector& a)
 {
 	a.x = a.y = a.z = 0.0f;
-}
-//===============================================
-inline Vector& Vector::operator=(const Vector& vOther)
-{
-	CHECK_VALID(vOther);
-	x = vOther.x; y = vOther.y; z = vOther.z;
-	return *this;
 }
 //===============================================
 inline float& Vector::operator[](int i)
