@@ -24,7 +24,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Install Microsoft DirectX SDK (June 2010)
-        run: choco install directx-sdk -y
+        run: choco install directx-sdk --yes --no-progress --accept-license
 
       - name: Build Solution (lovemachine.sln)
         run: msbuild lovemachine.sln /p:Configuration=Release /p:Platform=Win32 /m
