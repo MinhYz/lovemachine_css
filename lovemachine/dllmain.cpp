@@ -22,40 +22,45 @@ void thread()
 
 	std::ofstream log("C:/lovemachine_log.txt", std::ios::app);
 	log << "=== lovemachine inject log ===" << std::endl;
+	log.flush();
 
 	try {
+		printf("[1/5] Finding interfaces...\n");
 		game::find();
-		log << "[+] game::find() passed" << std::endl;
-		printf("[+] Interfaces found.\n");
+		log << "[+] game::find() passed" << std::endl; log.flush();
+		printf("[+] Interfaces found successfully!\n");
 
+		printf("[2/5] Scanning netvar offsets...\n");
 		offsets::find_them();
-		log << "[+] offsets::find_them() passed" << std::endl;
+		log << "[+] offsets::find_them() passed" << std::endl; log.flush();
 
+		printf("[3/5] Loading models...\n");
 		models::on_inject();
-		log << "[+] models::on_inject() passed" << std::endl;
+		log << "[+] models::on_inject() passed" << std::endl; log.flush();
 
+		printf("[4/5] Loading configs...\n");
 		configs::on_inject();
-		log << "[+] configs::on_inject() passed" << std::endl;
+		log << "[+] configs::on_inject() passed" << std::endl; log.flush();
 
+		printf("[5/5] Hooking game VMT functions...\n");
 		hooks::do_them();
-		log << "[+] hooks::do_them() passed" << std::endl;
-		printf("[+] Hooks initialized successfully!\n");
+		log << "[+] hooks::do_them() passed" << std::endl; log.flush();
+		printf("[+] ALL HOOKS INSTALLED SUCCESSFULLY!\n");
 	}
 	catch (const std::exception& e) {
-		log << "[!] Exception: " << e.what() << std::endl;
+		log << "[!] Exception: " << e.what() << std::endl; log.flush();
 		printf("[!] Exception during init: %s\n", e.what());
 	}
 	catch (...) {
-		log << "[!] Unknown exception during injection!" << std::endl;
+		log << "[!] Unknown exception during injection!" << std::endl; log.flush();
 		printf("[!] Unknown crash during injection!\n");
 	}
 
 	ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records));
-	console::write("/ / / DONE SUCCESFULLY / / /", darkwhite);
-	Sleep(10);
-	if (_engine) {
-		_engine->clientcmd_unrestricted("echo [lovemachine] Loaded successfully!");
-	}
+	printf("\n=========================================\n");
+	printf("   LOVEMACHINE CS:S LOADED SUCCESSFULLY! \n");
+	printf("   PRESS [INSERT] IN-GAME TO TOGGLE MENU \n");
+	printf("=========================================\n\n");
 
 	global::unhook = false;
 	return;

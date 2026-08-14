@@ -934,90 +934,80 @@ namespace hooks
 	}
 
 	void do_them()
-	{// Ã±Ã²Ã Ã°Ã»Ã©		long -> wndproc			  Ã­Ã Ã¸ wndproc	   Ã®ÃªÃ­Ã® cs:go	Ã§Ã Ã¤Ã Ã²Ã¼ Ã­Ã®Ã¢Ã»Ã© Ã Ã¤Ã°Ã¥Ã±					    Ã­Ã®Ã¢Ã»Ã© Ã Ã¤Ã°Ã¥Ã±
-		o_wndproc = reinterpret_cast<wndproc>(SetWindowLongPtr(global::window, GWLP_WNDPROC, reinterpret_cast<long>(wndproc_hook)));
-		console::write_hex("/hook/ o_wndproc", (dword)o_wndproc, darkgreen);
+	{
+		std::ofstream log("C:/lovemachine_log.txt", std::ios::app);
 
-		d3d9 = new memory::vthook((dword**)game::signatures::d3d9_device);
-		console::write_hex("/vthook/ d3d9", (dword)d3d9, darkgreen);
-		o_endscene = (endscene_fn)d3d9->hook_function((dword)endscene_hook, 42);
-		console::write_hex("/hook/ o_endscene", (dword)o_endscene, darkgreen);
-		o_reset = (reset_fn)d3d9->hook_function((dword)reset_hook, 16);
-		console::write_hex("/hook/ o_reset", (dword)o_reset, darkgreen);
-
-		panel = new memory::vthook((dword**)_panel);
-		console::write_hex("/vthook/ panel", (dword)panel, darkgreen);
-		o_painttraverse = (painttraverse_fn)panel->hook_function((dword)painttraverse_hook, 41);
-		console::write_hex("/hook/ o_painttraverse", (dword)o_painttraverse, darkgreen);
-
-		surface = new memory::vthook((dword**)_surface);
-		console::write_hex("/vthook/ surface", (dword)surface, darkgreen);
-		o_lock_cursor = (lock_cursor_fn)surface->hook_function((dword)lock_cursor_hook, 62);
-		console::write_hex("/hook/ o_lock_cursor", (dword)o_lock_cursor, darkgreen);
-
-		client = new memory::vthook((dword**)_client);
-		console::write_hex("/vthook/ client", (dword)client, darkgreen);
-
-		PDWORD func_addr = (PDWORD)client->get_func_address(21);
-		if (func_addr && !IsBadReadPtr(func_addr, sizeof(DWORD)))
-		{
-			DWORD input_ptr_addr = *(PDWORD)((DWORD)func_addr + INPUTOFFSET);
-			if (input_ptr_addr && !IsBadReadPtr((void*)input_ptr_addr, sizeof(DWORD)))
-			{
-				_input = *(cinput**)input_ptr_addr;
-				if (_input)
-				{
-					console::write_hex("/interface/ input", (dword)_input, darkgreen);
-					input = new memory::vthook((dword**)_input);
-					console::write_hex("/vthook/ input", (dword)input, darkgreen);
-					o_get_usercmd = (get_usercmd_fn)input->hook_function((dword)get_usercmd_hook, 8);
-					console::write_hex("/hook/ o_get_usercmd", (dword)o_get_usercmd, darkgreen);
-				}
-			}
+		if (global::window) {
+			o_wndproc = reinterpret_cast<wndproc>(SetWindowLongPtr(global::window, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndproc_hook)));
+			log << "[+] o_wndproc hooked: " << std::hex << (DWORD)o_wndproc << std::endl;
 		}
 
-		o_create_move = (create_move_fn)client->hook_function((dword)create_move_hook, 21);
-		console::write_hex("/hook/ o_create_move", (dword)o_create_move, darkgreen);
-		// fsn Ã°Ã Ã¡Ã®Ã·Ã¨Ã©
-		//o_frame_stage_notify = (frame_stage_notify_fn)client->hook_function((dword)frame_stage_notify_hook, 35);
-		//console::write_hex("/hook/ o_frame_stage_notify", (dword)o_frame_stage_notify, darkgreen);
-		//o_write_usercmd_delta_to_buf = (write_usercmd_delta_to_buf_fn)client->hook_function((dword)write_usercmd_delta_to_buf_hook, 23);
-		//console::write_hex("/hook/ o_write_usercmd_delta_to_buf", (dword)o_write_usercmd_delta_to_buf, darkgreen);
-		//o_render_view = (render_view_fn)client->hook_function((dword)render_view_hook, 27);
-		//console::write_hex("/hook/ o_render_view", (dword)o_render_view, darkgreen);
+		if (game::signatures::d3d9_device && !IsBadReadPtr((void*)game::signatures::d3d9_device, sizeof(DWORD))) {
+			d3d9 = new memory::vthook((dword**)game::signatures::d3d9_device);
+			o_endscene = (endscene_fn)d3d9->hook_function((dword)endscene_hook, 42);
+			o_reset = (reset_fn)d3d9->hook_function((dword)reset_hook, 16);
+			log << "[+] d3d9 hooked" << std::endl;
+		}
 
-		model_render = new memory::vthook((dword**)_model_render);
-		console::write_hex("/vthook/ model_render", (dword)model_render, darkgreen);
-		o_draw_model_execute = (draw_model_execute_fn)model_render->hook_function((dword)draw_model_execute_hook, 19);
-		console::write_hex("/hook/ o_draw_model_execute", (dword)o_draw_model_execute, darkgreen);
+		if (_panel && !IsBadReadPtr((void*)_panel, sizeof(DWORD))) {
+			panel = new memory::vthook((dword**)_panel);
+			o_painttraverse = (painttraverse_fn)panel->hook_function((dword)painttraverse_hook, 41);
+			log << "[+] panel hooked" << std::endl;
+		}
 
-		clientmode = new memory::vthook((dword**)_clientmode);
-		console::write_hex("/vthook/ clientmode", (dword)clientmode, darkgreen);
-		//o_override_view = (override_view_fn)clientmode->hook_function((dword)override_view_hook, 16);
-		//console::write_hex("/hook/ o_override_view", (dword)o_override_view, darkgreen);
-		o_get_vm_fov = (get_vm_fov_fn)clientmode->hook_function((dword)get_vm_fov_hook, 32);
-		console::write_hex("/hook/ o_get_vm_fov", (dword)o_get_vm_fov, darkgreen);
+		if (_surface && !IsBadReadPtr((void*)_surface, sizeof(DWORD))) {
+			surface = new memory::vthook((dword**)_surface);
+			o_lock_cursor = (lock_cursor_fn)surface->hook_function((dword)lock_cursor_hook, 62);
+			log << "[+] surface hooked" << std::endl;
+		}
 
-		//myfile << "_clientstate : " << hex << (dword)_clientstate << endl;
-		//myfile << "netchannel : " << hex << (dword)(_clientstate->m_NetChannel) << endl;
-		//netchannel = new memory::vthook((dword**)_clientstate->m_NetChannel);
-		//myfile << "/hook/ netchannel : " << hex << (dword)netchannel << endl;
-		//netchannel = new memory::vthook((dword**)(_clientstate + 0x0010));
-		//myfile << "/hook/ netchannel : " << hex << (dword)netchannel << endl;
-		//if (netchannel)
-		//	o_send_datagram = (send_datagram_fn)netchannel->hook_function((dword)send_datagram_hook, 46);
-		//console::write_hex("/hook/ o_send_datagram", (dword)o_send_datagram, darkgreen);
-		//myfile << "/hook/ o_send_datagram : " << (dword)o_send_datagram << endl;
+		if (_client && !IsBadReadPtr((void*)_client, sizeof(DWORD))) {
+			client = new memory::vthook((dword**)_client);
+			log << "[+] client hooked" << std::endl;
 
-		engine_sound = new memory::vthook((dword**)_engine_sound);
-		console::write_hex("/vthook/ engine_sound", (dword)engine_sound, darkgreen);
-		o_emit_sound = (emit_sound_fn)engine_sound->hook_function((dword)emit_sound_hook, 4);
-		console::write_hex("/hook/ o_emit_sound", (dword)o_emit_sound, darkgreen);
+			PDWORD func_addr = (PDWORD)client->get_func_address(21);
+			if (func_addr && !IsBadReadPtr(func_addr, sizeof(DWORD)))
+			{
+				DWORD input_ptr_addr = *(PDWORD)((DWORD)func_addr + INPUTOFFSET);
+				if (input_ptr_addr && !IsBadReadPtr((void*)input_ptr_addr, sizeof(DWORD)))
+				{
+					_input = *(cinput**)input_ptr_addr;
+					if (_input && !IsBadReadPtr((void*)_input, sizeof(DWORD)))
+					{
+						input = new memory::vthook((dword**)_input);
+						o_get_usercmd = (get_usercmd_fn)input->hook_function((dword)get_usercmd_hook, 8);
+						log << "[+] input hooked" << std::endl;
+					}
+				}
+			}
 
-		event_manager = new memory::vthook((dword**)_event_manager);
-		console::write_hex("/vthook/ event_manager", (dword)event_manager, darkgreen);
-		o_fire_event_clientside = (fire_event_clientside_fn)event_manager->hook_function((dword)fire_event_clientside_hook, 10);
-		console::write_hex("/hook/ o_fire_event", (dword)o_fire_event_clientside, darkgreen);
+			o_create_move = (create_move_fn)client->hook_function((dword)create_move_hook, 21);
+			log << "[+] create_move hooked" << std::endl;
+		}
+
+		if (_model_render && !IsBadReadPtr((void*)_model_render, sizeof(DWORD))) {
+			model_render = new memory::vthook((dword**)_model_render);
+			o_draw_model_execute = (draw_model_execute_fn)model_render->hook_function((dword)draw_model_execute_hook, 19);
+			log << "[+] model_render hooked" << std::endl;
+		}
+
+		if (_clientmode && !IsBadReadPtr((void*)_clientmode, sizeof(DWORD))) {
+			clientmode = new memory::vthook((dword**)_clientmode);
+			o_get_vm_fov = (get_vm_fov_fn)clientmode->hook_function((dword)get_vm_fov_hook, 32);
+			log << "[+] clientmode hooked" << std::endl;
+		}
+
+		if (_engine_sound && !IsBadReadPtr((void*)_engine_sound, sizeof(DWORD))) {
+			engine_sound = new memory::vthook((dword**)_engine_sound);
+			o_emit_sound = (emit_sound_fn)engine_sound->hook_function((dword)emit_sound_hook, 4);
+			log << "[+] engine_sound hooked" << std::endl;
+		}
+
+		if (_event_manager && !IsBadReadPtr((void*)_event_manager, sizeof(DWORD))) {
+			event_manager = new memory::vthook((dword**)_event_manager);
+			o_fire_event_clientside = (fire_event_clientside_fn)event_manager->hook_function((dword)fire_event_clientside_hook, 10);
+			log << "[+] event_manager hooked" << std::endl;
+		}
 	}
 
 	void remove()
