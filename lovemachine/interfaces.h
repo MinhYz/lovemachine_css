@@ -470,6 +470,7 @@ public:
 	virtual bool needs_software_skinning(void) = 0;
 	virtual void alpha_modulate(float alpha) = 0;
 	virtual void colour_modulate(float r, float g, float b) = 0;
+	void color_modulate(float r, float g, float b) { colour_modulate(r, g, b); }
 	virtual void set_materialvar_flag(mat_var_flags flag, bool on) = 0;
 	virtual bool get_materialvar_flag(mat_var_flags flag) = 0;
 	virtual void get_reflectivity(Vector& reflect) = 0;

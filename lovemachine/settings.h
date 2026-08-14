@@ -147,13 +147,17 @@ public:
 		bool hitmarker = false;
 		bool bomb_timer = false;
 
-		// Asian Hat (MÅ© Asian / Rice Hat)
+		// Asian Hat (Mũ Asian / Rice Hat)
 		bool asian_hat = false;
 		color asian_hat_color = color(255, 200, 50);
 		float asian_hat_size = 20.0f;
 		float asian_hat_height = 10.0f;
 
-		// Thirdperson & Inverted Angle (GÃ³c nhÃ¬n thá»© 3 nhÃ¬n ngÆ°á»£c láº¡i)
+		// Skeleton & Nightmode
+		bool skeleton = true;
+		bool nightmode = false;
+
+		// Thirdperson & Inverted Angle
 		bool thirdperson = false;
 		float thirdperson_dist = 120.0f;
 		bool thirdperson_reverse = false;
@@ -179,6 +183,7 @@ public:
 		bind_t play = { false, VK_NUMPAD8 };
 
 		// Cranium Misc Extensions
+		bool norecoil = false;
 		bool pure_bypass = false;      // SV_Pure 1/2 Bypass
 		bool fast_ladder = false;      // Fast Ladder Climb
 		bool antismac = false;         // Anti SMAC Server Bypass
@@ -193,6 +198,12 @@ public:
 		bind_t draw_start = { false, VK_XBUTTON1 };
 		bind_t draw_clear = { false, VK_XBUTTON2 };
 	} misc;
+
+	struct
+	{
+		bool panic = false;
+		int menu_key = VK_INSERT;
+	} menu;
 };
 
 inline settings* sets = new settings();

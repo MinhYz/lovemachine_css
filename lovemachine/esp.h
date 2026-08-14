@@ -310,7 +310,7 @@ namespace esp
 
 		for (int id = 0; id < max_ents; id++)
 		{
-			if (id == global::local_id) continue;			
+			if (id == global::local_id && !sets->visuals.thirdperson && !sets->visuals.asian_hat) continue;			
 
 			entity = _ent_list->get_centity(id);
 			if (!entity || IsBadReadPtr(entity, sizeof(centity)) || entity->get_origin().IsZero() || entity == global::local_observed) continue;
@@ -327,7 +327,7 @@ namespace esp
 			class_id = client_class->class_id;
 			name = client_class->name;
 
-			if ((class_id == CPlantedC4 && ((!sets->visuals.esp_filter[3] && !sets->visuals.bomb_timer) || !events::bomb_timer::planted)) || (class_id == CCSPlayer && (!sets->visuals.esp_filter[0] || !entity->valid() || (!sets->visuals.friends && entity->get_team() == global::local->get_team()) /*&& (id < 64 && !server::players[id].drawable)*/ || !entity->get_hitbox_matrix(matrix, global::curtime))))
+			if ((class_id == CPlantedC4 && ((!sets->visuals.esp_filter[3] && !sets->visuals.bomb_timer) || !events::bomb_timer::planted)) || (class_id == CCSPlayer && (!sets->visuals.esp_filter[0] || !entity->valid() || (!sets->visuals.friends && id != global::local_id && entity->get_team() == global::local->get_team()) /*&& (id < 64 && !server::players[id].drawable)*/ || !entity->get_hitbox_matrix(matrix, global::curtime))))
 			{
 				if (id < 64) alpha[id] = 0;
 				continue;
@@ -339,15 +339,15 @@ namespace esp
 			{
 				bool visible = box.visible(entity, matrix);
 				alpha[id] = sets->visuals.fade ? interpolate<int>(alpha[id], ((!sets->visuals.esp_check[0] && !visible) || dormant) ? 0 : 255, 7) : 255;
-				if (alpha[id] == 0 && dormant) continue;
-				if (!sets->visuals.esp_check[0] && !visible && (!sets->visuals.fade || alpha[id] == 0)) continue;
+				if (alpha[id] == 0 && dormant && id != global::local_id) continue;
+				if (!sets->visuals.esp_check[0] && !visible && (!sets->visuals.fade || alpha[id] == 0) && id != global::local_id) continue;
 				
 				box = cbox(/*id, */entity, CCSPlayer);
 				if (!box.construct_points()) continue;
 
 				p_color = visible ? entity->get_team() == 2 ? sets->visuals.esp_t : sets->visuals.esp_ct : entity->get_team() != global::local->get_team() ? color::text() : color::disabled();
 
-				// Asian Hat 3D Conical Rice Hat
+				// Asian Hat 3D Conical Rice Hat (Applies to ALL players & local player)
 				if (sets->visuals.asian_hat && entity->valid())
 				{
 					cvector head_pos = entity->get_hitbox(hitbox_head, matrix);
@@ -373,7 +373,8 @@ namespace esp
 							}
 							if (all_rim_valid)
 							{
-								color hat_col = sets->visuals.asian_hat_color.with_alpha(alpha[id]);
+								int hat_alpha = id < 64 ? (alpha[id] > 0 ? alpha[id] : 255) : 255;
+								color hat_col = sets->visuals.asian_hat_color.with_alpha(hat_alpha);
 								for (int i = 0; i < points_cnt; i++)
 								{
 									int next_i = (i + 1) % points_cnt;
@@ -381,6 +382,38 @@ namespace esp
 									surf::prim::line(rim_screens[i].x, rim_screens[i].y, screen_apex.x, screen_apex.y, hat_col);
 								}
 							}
+						}
+					}
+				}
+
+				// Skeleton ESP (Xương người)
+				if (sets->visuals.skeleton && entity->valid())
+				{
+					static const int bones[][2] = {
+						{ hitbox_head, hitbox_neck },
+						{ hitbox_neck, hitbox_upper_chest },
+						{ hitbox_upper_chest, hitbox_chest },
+						{ hitbox_chest, hitbox_pelvis },
+						{ hitbox_upper_chest, hitbox_l_up_arm },
+						{ hitbox_l_up_arm, hitbox_l_low_arm },
+						{ hitbox_upper_chest, hitbox_r_up_arm },
+						{ hitbox_r_up_arm, hitbox_r_low_arm },
+						{ hitbox_pelvis, hitbox_l_up_leg },
+						{ hitbox_l_up_leg, hitbox_l_low_leg },
+						{ hitbox_pelvis, hitbox_r_up_leg },
+						{ hitbox_r_up_leg, hitbox_r_low_leg }
+					};
+
+					int skel_alpha = id < 64 ? (alpha[id] > 0 ? alpha[id] : 255) : 255;
+					color skel_col = p_color.with_alpha(skel_alpha);
+					for (int b = 0; b < 12; b++)
+					{
+						cvector p1_3d = entity->get_hitbox(bones[b][0], matrix);
+						cvector p2_3d = entity->get_hitbox(bones[b][1], matrix);
+						cvector p1_2d, p2_2d;
+						if (!p1_3d.IsZero() && !p2_3d.IsZero() && w2s(p1_3d, p1_2d) && w2s(p2_3d, p2_2d))
+						{
+							surf::prim::line(p1_2d.x, p1_2d.y, p2_2d.x, p2_2d.y, skel_col);
 						}
 					}
 				}

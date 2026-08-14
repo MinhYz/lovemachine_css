@@ -73,6 +73,11 @@ namespace hooks
 			break;
 		case WM_KEYDOWN:
 			global::key[w_param] = true;
+			if (w_param == static_cast<WPARAM>(sets->menu.menu_key))
+			{
+				Menu::show_menu = !Menu::show_menu;
+				sets->menu.opened = Menu::show_menu;
+			}
 			if (w_param == VK_F5 || w_param == VK_SNAPSHOT)
 				return CallWindowProc(o_wndproc, wnd, msg, w_param, l_param);
 			break;
@@ -88,7 +93,7 @@ namespace hooks
 		default: break;
 		}
 
-		if (sets->menu.opened && !sets->menu.panic)
+		if (Menu::show_menu && !sets->menu.panic)
 			return true;
 
 		/*if (_engine)

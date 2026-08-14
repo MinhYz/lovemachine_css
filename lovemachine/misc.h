@@ -219,39 +219,13 @@ namespace misc
 
 	void autojump()
 	{
-		static bool last_jumped = false;
-		static bool should_fake = false;
-		static bool disable = false;
-
-		if (!last_jumped && should_fake)
+		if (!global::cmd || !global::local || !global::local->valid()) return;
+		if (global::cmd->buttons & IN_JUMP)
 		{
-			should_fake = false;
-			disable = true;
-			//global::cmd->buttons |= IN_JUMP;
-			_engine->clientcmd_unrestricted("+jump");
-		}
-		else if (global::cmd->buttons & IN_JUMP && global::key[VK_SPACE])
-		{
-			if ((global::local->get_flags() & FL_ONGROUND) && 
-				(sets->misc.aj_percent >= 97 || ((rand() % 100) > (100 - sets->misc.aj_percent))))
-			{
-				last_jumped = true;
-				should_fake = true;
-			}
-			else
+			if (!(global::local->get_flags() & FL_ONGROUND))
 			{
 				global::cmd->buttons &= ~IN_JUMP;
-				last_jumped = false;
 			}
-
-			disable = true;
-		}
-		else if (disable)
-		{
-			last_jumped = false;
-			should_fake = false;
-			disable = false;
-			_engine->clientcmd_unrestricted("-jump");
 		}
 	}
 
@@ -287,39 +261,32 @@ namespace misc
 
 	void nightmode()
 	{
-		static int st_value = cvar(cvar_ids::nightmode).value;
-		float value;
-
-		if (st_value != cvar(cvar_ids::nightmode).value || global::map_changed)
+		static bool in_nm = false;
+		if (in_nm != sets->visuals.nightmode || global::map_changed)
 		{
-			_engine->clientcmd_unrestricted("r_DrawSpecificStaticProp 0"); // :thinking:			
+			in_nm = sets->visuals.nightmode;
+			if (!_mat_sys) return;
 
 			for (auto handle = _mat_sys->first_material(); handle != _mat_sys->invalid_material(); handle = _mat_sys->next_material(handle))
 			{
 				auto material = _mat_sys->get_material(handle);
-				auto name = material->get_name();
+				if (!material || IsBadReadPtr(material, sizeof(imaterial))) continue;
+
 				auto group = material->get_texture_group_name();
+				if (!group || IsBadReadPtr((void*)group, 1)) continue;
 
-				//myfile << name << " ||| " << group << endl;
-
-				if (!strstr(group, "World") && !strstr(group, "Model") && !strstr(group, "SkyBox") && !strstr(group, "ClientEffect"))
-					continue;
-
-				value = 1.f - (cvar(cvar_ids::nightmode).value / 100.f);
-
-				if (strstr(group, "World")) value = min(1.f, (value + 0.15f));
-				else if (strstr(group, "Model"))
+				if (strstr(group, "World") || strstr(group, "StaticProp") || strstr(group, "SkyBox"))
 				{
-					if (strstr(name, "player")) value = min(1.f, (value + 0.7f));
-					else value = min(1.f, (value + 0.15f));
+					if (in_nm)
+					{
+						material->colour_modulate(0.15f, 0.15f, 0.25f);
+					}
+					else
+					{
+						material->colour_modulate(1.0f, 1.0f, 1.0f);
+					}
 				}
-				else if (strstr(group, "SkyBox")) value = min(1.f, (value + 0.5f));
-				else if (strstr(group, "ClientEffect")) value = min(1.f, (value + 0.7f));
-					
-				material->colour_modulate(value, value, value);
 			}
-
-			st_value = cvar(cvar_ids::nightmode).value;
 		}
 	}
 

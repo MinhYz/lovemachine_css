@@ -15,6 +15,17 @@ namespace rage
 		if (!global::cmd || !global::local || !global::local->valid() || !_ent_list || !_engine)
 			return;
 
+		if (global::cmd->buttons & IN_RELOAD)
+			return;
+
+		auto weapon = global::local->get_weapon();
+		if (!weapon || weapon->get_clip1() <= 0)
+			return;
+
+		// Trigger magic bullet on manual IN_ATTACK or autoshoot
+		if (!(global::cmd->buttons & IN_ATTACK) && !sets->rage.autoshoot)
+			return;
+
 		cvector local_eye = global::local->get_eye_pos();
 		int max_clients = _engine->get_max_clients();
 
@@ -38,6 +49,17 @@ namespace rage
 			global::cmd->viewangles.y = aim_angle.y;
 			global::cmd->buttons |= IN_ATTACK;
 			break;
+		}
+	}
+
+	inline void norecoil()
+	{
+		if (!sets->misc.norecoil || !global::local || !global::cmd) return;
+		if (global::cmd->buttons & IN_ATTACK)
+		{
+			qangle punch = global::local->get_punch();
+			global::cmd->viewangles.x -= punch.x * 2.0f;
+			global::cmd->viewangles.y -= punch.y * 2.0f;
 		}
 	}
 	inline void normalize_angles(Vector& angles)

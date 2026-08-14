@@ -257,6 +257,7 @@ namespace Menu
 			ImGui::TextDisabled("ESP Elements & Indicators");
 			ImGui::Checkbox("Player Names", &sets->visuals.esp_show[0]);
 			ImGui::Checkbox("Bounding Box (2D)", &sets->visuals.esp_show[1]);
+			ImGui::Checkbox("Skeleton ESP (Bones)", &sets->visuals.skeleton);
 			ImGui::Checkbox("Active Weapon", &sets->visuals.esp_show[2]);
 			ImGui::Checkbox("Snaplines to Enemies", &sets->visuals.esp_show[3]);
 			ImGui::Checkbox("Footstep Indicators", &sets->visuals.esp_show[4]);
@@ -275,7 +276,7 @@ namespace Menu
 			ImGui::Checkbox("Enable Thirdperson Camera", &sets->visuals.thirdperson);
 			ImGui::SetNextItemWidth(170);
 			ImGui::SliderFloat("Camera Distance", &sets->visuals.thirdperson_dist, 30.0f, 300.0f, "%.0f px");
-			ImGui::Checkbox("Reverse Camera Angle (180Â° Look Backward)", &sets->visuals.thirdperson_reverse);
+			ImGui::Checkbox("Reverse Camera Angle (180° Look Backward)", &sets->visuals.thirdperson_reverse);
 
 			ImGui::EndChild();
 			ImGui::NextColumn();
@@ -286,7 +287,7 @@ namespace Menu
 			// Asian Hat Section
 			ImGui::TextColored(ImVec4(0.98f, 0.82f, 0.35f, 1.00f), "Asian Hat (3D Conical / Rice Hat)");
 			ImGui::Separator();
-			ImGui::Checkbox("Enable Asian Hat (Conical Rice Hat)", &sets->visuals.asian_hat);
+			ImGui::Checkbox("Enable Asian Hat (All Players & Self)", &sets->visuals.asian_hat);
 			ColorEdit3Custom("Hat Color", sets->visuals.asian_hat_color);
 			ImGui::SetNextItemWidth(170);
 			ImGui::SliderFloat("Hat Radius Size", &sets->visuals.asian_hat_size, 5.0f, 40.0f, "%.1f");
@@ -309,15 +310,10 @@ namespace Menu
 			ImGui::Checkbox("Glow Outline Effect", &sets->visuals.chams_style[2]);
 
 			ImGui::Spacing();
-			ImGui::TextDisabled("Removals & Skins");
+			ImGui::TextDisabled("Removals & FX");
 			ImGui::Checkbox("Remove Smoke Effect", &sets->visuals.remove[0]);
 			ImGui::Checkbox("Remove Flash Effect", &sets->visuals.remove[1]);
 			ImGui::Checkbox("Hitmarker Indicator", &sets->visuals.hitmarker);
-
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("AK-47 Skin ID", &sets->visuals.ak47_skin, 0, 15);
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("Knife Skin ID", &sets->visuals.knife_skin, 0, 15);
 
 			ImGui::EndChild();
 			ImGui::Columns(1);
@@ -332,14 +328,13 @@ namespace Menu
 
 			// --- Card 1: Movement Automations ---
 			ImGui::BeginChild("MovementCard", ImVec2(0, 0), true);
-			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "Movement Automations");
+			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "Movement & Recoil Assists");
 			ImGui::Separator();
 
 			ImGui::Checkbox("Auto Pistol Firing", &sets->misc.autopistol);
-			ImGui::Checkbox("BunnyHop (Auto Jump)", &sets->misc.autojump);
+			ImGui::Checkbox("BunnyHop (Max Speed Auto Jump)", &sets->misc.autojump);
 			ImGui::Checkbox("Auto Strafer Helper", &sets->misc.autostrafer);
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("BunnyHop Accuracy %", &sets->misc.aj_percent, 0, 100);
+			ImGui::Checkbox("No Recoil (No Spread / Pitch Recoil Control)", &sets->misc.norecoil);
 			ImGui::Checkbox("Killshot Announcement", &sets->misc.killshot);
 
 			ImGui::Spacing();
@@ -359,16 +354,6 @@ namespace Menu
 			ImGui::Checkbox("Pure Bypass (SV_Pure 1/2)", &sets->misc.pure_bypass);
 			ImGui::Checkbox("Anti SMAC (Server Anti-Cheat Protection)", &sets->misc.antismac);
 
-			ImGui::Spacing();
-			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "On-Screen Canvas Drawing");
-			ImGui::Separator();
-			const char* draw_modes[] = { "Disabled", "Freehand Line", "Bounding Box", "Circle Radius" };
-			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("Canvas Draw Mode", &sets->misc.draw_mode, draw_modes, IM_ARRAYSIZE(draw_modes));
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Line Duration", &sets->misc.draw_time, 0.1f, 10.0f, "%.1f s");
-			ColorEdit3Custom("Canvas Draw Color", sets->misc.draw_color);
-
 			ImGui::EndChild();
 			ImGui::Columns(1);
 		}
@@ -382,47 +367,20 @@ namespace Menu
 
 			// --- Card 1: Atmosphere ---
 			ImGui::BeginChild("AtmosphereCard", ImVec2(0, 0), true);
-			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "Atmosphere & Lighting");
+			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "Atmosphere & World Lighting");
 			ImGui::Separator();
 
-			float nightmode_val = cvar(nightmode).value;
-			ImGui::SetNextItemWidth(170);
-			if (ImGui::SliderFloat("Nightmode Intensity", &nightmode_val, 0.0f, 100.0f, "%.0f %%"))
-			{
-				cvar(nightmode).value = nightmode_val;
-			}
-
-			static float world_color[3] = { 0.15f, 0.15f, 0.22f };
-			ImGui::ColorEdit3("World Ambient Tint Color", world_color);
-
-			static int skybox_combo = 1;
-			const char* skybox_items[] = { "Default (Game Map)", "Baggage Night", "Embassy Sunset", "Grim Night", "Clear Blue Sky" };
-			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("Skybox Texture Override", &skybox_combo, skybox_items, IM_ARRAYSIZE(skybox_items));
+			ImGui::Checkbox("Enable Nightmode & Skybox Modulation", &sets->visuals.nightmode);
 
 			ImGui::EndChild();
 			ImGui::NextColumn();
 
 			// --- Card 2: Geometry & Fog ---
 			ImGui::BeginChild("GeometryCard", ImVec2(0, 0), true);
-			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "World Geometry & ASUS Walls");
+			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "World Geometry Modulation");
 			ImGui::Separator();
 
-			static bool asus_walls = true;
-			ImGui::Checkbox("ASUS Wall Transparency (Glass Walls)", &asus_walls);
-
-			static float wall_alpha = 0.65f;
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Wall Opacity / Alpha", &wall_alpha, 0.1f, 1.0f, "%.2f");
-
-			static bool prop_transparency = false;
-			ImGui::Checkbox("Props & Entity Transparency", &prop_transparency);
-
-			static bool fog_override = false;
-			ImGui::Checkbox("Override World Fog", &fog_override);
-
-			static float fog_color[3] = { 0.10f, 0.08f, 0.15f };
-			ImGui::ColorEdit3("Custom Fog Tint Color", fog_color);
+			ImGui::TextDisabled("World & StaticProp Texture Modulation Active.");
 
 			ImGui::EndChild();
 			ImGui::Columns(1);
@@ -437,8 +395,18 @@ namespace Menu
 
 			// --- Card 1: Manager ---
 			ImGui::BeginChild("ManagerCard", ImVec2(0, 0), true);
-			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "Profile Manager");
+			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "Profile & Hotkey Manager");
 			ImGui::Separator();
+
+			const char* key_names[] = { "INSERT", "DELETE", "HOME", "END", "F11" };
+			const int key_codes[] = { VK_INSERT, VK_DELETE, VK_HOME, VK_END, VK_F11 };
+			static int current_key_idx = 0;
+
+			ImGui::SetNextItemWidth(170);
+			if (ImGui::Combo("Menu Toggle Key", &current_key_idx, key_names, IM_ARRAYSIZE(key_names)))
+			{
+				sets->menu.menu_key = key_codes[current_key_idx];
+			}
 
 			static char config_name_buf[64] = "default_preset";
 			ImGui::SetNextItemWidth(200);
