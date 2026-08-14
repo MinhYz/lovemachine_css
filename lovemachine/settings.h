@@ -120,22 +120,22 @@ public:
 
 	struct
 	{
-		bool enabled = true;
+		bool enabled = false;
 		bool friends = false;
-		int chams = 1;
+		int chams = 0;
 		bool chams_style[3] = { false, false, false };
 		bool other_chams[3] = { false, false, false };
-		bool other_style[5] = { true, true, false, false, false };
+		bool other_style[5] = { false, false, false, false, false };
 		color chams_t = color(150, 255, 13);
 		color chams_ct = color(50, 255, 150);
-		int crosshair = 2;
-		bool esp_filter[6] = { true, false, false, false, false, false };
-		bool esp_show[6] = { true, true, true, false, false, false };
-		bool esp_bar[4] = { true, false, false, false };
-		bool esp_check[2] = { true, false };
+		int crosshair = 0;
+		bool esp_filter[6] = { false, false, false, false, false, false };
+		bool esp_show[6] = { false, false, false, false, false, false };
+		bool esp_bar[4] = { false, false, false, false };
+		bool esp_check[2] = { false, false };
 		color esp_t = color(210, 35, 16);
 		color esp_ct = color(50, 90, 210);
-		bool fade = true;
+		bool fade = false;
 		bool defuser_only_if_need = false;
 		int ak47_skin = 0;
 		int deagle_skin = 0;

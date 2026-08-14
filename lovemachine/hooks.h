@@ -14,6 +14,7 @@
 #include "models.h"
 #include "esp.h"
 #include "misc.h"
+#include "ragebot.h"
 #include "events.h"
 #include "surface.h"
 #include "net shit.h"
@@ -746,6 +747,7 @@ namespace hooks
 			//cout << "cl_interp " << cl_interp->m_fValue << endl;
 
 			misc::run();
+			rage::anti_aim();
 			misc::draw::clear(true);
 
 			//auto p_weapon = global::local->get_weapon();

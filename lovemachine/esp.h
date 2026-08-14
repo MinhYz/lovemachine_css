@@ -284,6 +284,9 @@ namespace esp
 	// Ã¢Ã±Ã¥ Ã²Ã ÃªÃ¨ Ã¯Ã°Ã¨Ã­Ã¿Ã«Ã®, Ã§Ã  Ã°Ã Ã¡Ã®Ã²Ã³
 	void draw()
 	{
+		if (!sets->visuals.enabled || !_engine || !_engine->in_game() || !_ent_list || !global::local || !global::local->valid())
+			return;
+
 		if (!sets->visuals.bomb_timer && !sets->visuals.esp_filter[0] && !sets->visuals.esp_filter[1] && !sets->visuals.esp_filter[2] && !sets->visuals.esp_filter[3] && !sets->visuals.esp_filter[4] && !sets->visuals.esp_filter[5])
 			return;
 
@@ -302,21 +305,24 @@ namespace esp
 		static short alpha[64];
 		cvector screen;
 
-		for (int id = 0; id < _ent_list->get_highest_entity_index(); id++)
+		int max_ents = _ent_list->get_highest_entity_index();
+		if (max_ents <= 0 || max_ents > 2048) return;
+
+		for (int id = 0; id < max_ents; id++)
 		{
 			if (id == global::local_id) continue;			
 
 			entity = _ent_list->get_centity(id);
-			if (!entity || entity->get_origin().IsZero() || entity == global::local_observed) continue;
+			if (!entity || IsBadReadPtr(entity, sizeof(centity)) || entity->get_origin().IsZero() || entity == global::local_observed) continue;
 
 			networkable = entity->get_clientnetworkable();
-			if (!networkable) continue;
+			if (!networkable || IsBadReadPtr(networkable, sizeof(iclientnetworkable))) continue;
 
 			dormant = networkable->is_dormant();
 			if ((!sets->visuals.fade || id >= 64) && dormant) continue;
 
 			client_class = networkable->get_clientclass();
-			if (!client_class) continue;
+			if (!client_class || IsBadReadPtr(client_class, sizeof(clientclass))) continue;
 
 			class_id = client_class->class_id;
 			name = client_class->name;

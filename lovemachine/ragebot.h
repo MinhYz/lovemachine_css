@@ -1,27 +1,82 @@
 #pragma once
-// TODO : ñäåëàòü ïàïêè è ïåðåèìåíîâàòü â aimbot.h
 #include "game def's.h"
 #include "game shit.h"
+#include "settings.h"
+#include "global.h"
 
 namespace rage
 {
+	inline void normalize_angles(Vector& angles)
+	{
+		while (angles.x > 89.0f) angles.x -= 180.0f;
+		while (angles.x < -89.0f) angles.x += 180.0f;
+		while (angles.y > 180.0f) angles.y -= 360.0f;
+		while (angles.y < -180.0f) angles.y += 360.0f;
+		angles.z = 0.0f;
+	}
+
+	inline void anti_aim()
+	{
+		if (!sets->rage.enabled && !sets->rage.spinbot && sets->rage.pitch_aa == 0 && sets->rage.yaw_aa == 0)
+			return;
+
+		if (!global::cmd || !global::local || !global::local->valid())
+			return;
+
+		if (global::cmd->buttons & IN_ATTACK)
+			return;
+
+		// Pitch Anti-Aim
+		if (sets->rage.pitch_aa == 1) // Emotion (89°)
+			global::cmd->viewangles.x = 89.0f;
+		else if (sets->rage.pitch_aa == 2) // Up (-89°)
+			global::cmd->viewangles.x = -89.0f;
+		else if (sets->rage.pitch_aa == 3) // Zero (0°)
+			global::cmd->viewangles.x = 0.0f;
+
+		// Yaw Anti-Aim / Spinbot
+		if (sets->rage.spinbot || sets->rage.yaw_aa == 2) // Spinbot
+		{
+			static float spin_angle = 0.0f;
+			spin_angle += sets->rage.spin_speed;
+			if (spin_angle > 180.0f) spin_angle -= 360.0f;
+			if (spin_angle < -180.0f) spin_angle += 360.0f;
+			global::cmd->viewangles.y = spin_angle;
+		}
+		else if (sets->rage.yaw_aa == 1) // Backward (180°)
+		{
+			global::cmd->viewangles.y += 180.0f;
+		}
+		else if (sets->rage.yaw_aa == 3) // Jitter
+		{
+			static bool jitter_flip = false;
+			jitter_flip = !jitter_flip;
+			global::cmd->viewangles.y += jitter_flip ? 90.0f : -90.0f;
+		}
+		else if (sets->rage.yaw_aa == 4) // Sideways (90°)
+		{
+			global::cmd->viewangles.y += 90.0f;
+		}
+
+		normalize_angles(global::cmd->viewangles);
+	}
+
 	namespace aimbot
 	{
-		int best_id = -1;
-		float best_fov = 180.f;
-		vector<int> points;
+		inline int best_id = -1;
+		inline float best_fov = 180.f;
 		
-		void start()
+		inline void start()
 		{
 
 		}
 
-		void loop(int id, centity* entity)
+		inline void loop(int id, centity* entity)
 		{
 
 		}
 
-		void end()
+		inline void end()
 		{
 
 		}

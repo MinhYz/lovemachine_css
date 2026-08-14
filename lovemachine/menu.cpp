@@ -134,6 +134,7 @@ namespace Menu
 		// MAIN CONTENT CANVAS
 		// =========================================================================
 		ImGui::BeginChild("MainCanvas", ImVec2(0, 0), false);
+		ImGui::PushID(current_tab);
 
 		// =========================================================================
 		// TAB 0: AIMBOT & RAGE (SPINBOT / ANTI-AIM / CRANIUM EXTENSIONS)
@@ -507,6 +508,7 @@ namespace Menu
 			ImGui::Columns(1);
 		}
 
+		ImGui::PopID();
 		ImGui::EndChild();
 
 		ImGui::End();
