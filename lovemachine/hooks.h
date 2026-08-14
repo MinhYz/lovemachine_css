@@ -516,7 +516,6 @@ namespace hooks
 
 		if (!_input)
 		{
-			console::write("/fail/ get input", red);
 			return;
 		}
 
@@ -531,14 +530,27 @@ namespace hooks
 			//	cout << "shot" << endl;
 		}*/
 
-		DWORD* p_ebp;
+		DWORD* p_ebp = nullptr;
 		__asm mov p_ebp, ebp;
-		byte* p_sendpacket = (byte*)(*p_ebp - 0x1);
 
-		global::sendpacket = *p_sendpacket;
+		if (p_ebp && !IsBadReadPtr(p_ebp, sizeof(DWORD)))
+		{
+			DWORD ebp_val = *p_ebp;
+			if (ebp_val && !IsBadReadPtr((void*)(ebp_val - 0x1), sizeof(byte)))
+			{
+				byte* p_sendpacket = (byte*)(ebp_val - 0x1);
+				global::sendpacket = *p_sendpacket;
+			}
+		}
 
-		global::cmd = &(*(cusercmd**)((DWORD)_input + USERCMDOFFSET))[sequence_number % MULTIPLAYER_BACKUP];
-		c_verified_usercmd* verified_usercmd = &(*(c_verified_usercmd**)((DWORD)_input + VERIFIEDCMDOFFSET))[sequence_number % MULTIPLAYER_BACKUP];
+		if (_input && !IsBadReadPtr((void*)((DWORD)_input + USERCMDOFFSET), sizeof(DWORD)))
+		{
+			DWORD usercmd_ptr = *(DWORD*)((DWORD)_input + USERCMDOFFSET);
+			if (usercmd_ptr && !IsBadReadPtr((void*)usercmd_ptr, sizeof(cusercmd) * MULTIPLAYER_BACKUP))
+			{
+				global::cmd = &((cusercmd*)usercmd_ptr)[sequence_number % MULTIPLAYER_BACKUP];
+			}
+		}
 
 		if (!sets->menu.panic && _engine->is_connected() && _engine->in_game() && global::cmd && global::cmd->command_number != 0 &&
 			(global::local_id = _engine->get_local_id()) > 0 && (global::local = _ent_list->get_centity(global::local_id)))
