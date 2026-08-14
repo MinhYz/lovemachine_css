@@ -6,36 +6,24 @@
 #include "surface.h"
 #include "d3d.h"
 
-using namespace surf;
-using namespace d3d;
-
 namespace events
 {
 	namespace hitmarker
 	{
-		int damage_did = 0;
-		int health_left = 0;
-		int killstreak = 0;
-		int killstreak2 = 0;
-		str text = "KILLED";
-		float timer = 0.f;
-		float kill_timer = 0.f;
+		inline int damage_did = 0;
+		inline int health_left = 0;
+		inline int killstreak = 0;
+		inline int killstreak2 = 0;
+		inline str text = "KILLED";
+		inline float timer = 0.f;
+		inline float kill_timer = 0.f;
 
-		void draw_box(int pos_x, int pos_y, string text, int alpha)
+		inline void draw_box(int pos_x, int pos_y, string text_str, int alpha)
 		{
-			//auto size = font::size(font::hitmarker_small, text.c_str());
-			//int x = pos_x - (size.right / 2);
-			//int y = pos_y - (size.bottom / 2);
-			//int x1 = pos_x + (size.right / 2);
-			//int y1 = pos_y + (size.bottom / 2);
-
-			//prim::filled_box(x - 4, y - 4, x1 + 4, y1 + 4, color(18, 18, 18, alpha));
-			//prim::bordered_box(x - 3, y - 3, x1 + 3, y1 + 3, color(9, 9, 9, alpha));
-			//prim::bordered_box(x - 5, y - 5, x1 + 5, y1 + 5, color(9, 9, 9, alpha));
-			font::draw(font::hitmarker_small, pos_x, pos_y, color(20, 255, 20, alpha), DT_CENTER | DT_VCENTER, text.c_str());
+			d3d::font::draw(d3d::font::hitmarker_small, pos_x, pos_y, color(20, 255, 20, alpha), DT_CENTER | DT_VCENTER, text_str.c_str());
 		}
 
-		void on_fire_event(igameevent* event, const char* name)
+		inline void on_fire_event(igameevent* event, const char* name)
 		{
 			if (strcmp(name, "player_hurt") != 0)
 				return;
@@ -52,7 +40,7 @@ namespace events
 			if (sets->misc.killshot && health_left == 0)
 			{
 				killstreak2++;
-				_engine->clientcmd_unrestricted(str(u8"say Îáîññàë è âûñòàâèë íà ìîðîç! Streak Of " + to_str(killstreak2) + u8"!").c_str());
+				_engine->clientcmd_unrestricted(str("say Streak Of " + to_str(killstreak2) + "!").c_str());
 			}
 
 			if (sets->visuals.enabled && sets->visuals.hitmarker)
@@ -78,7 +66,7 @@ namespace events
 			timer = global::realtime + 4.f;
 		}
 		
-		void on_draw()
+		inline void on_draw()
 		{
 			if (!sets->misc.killshot)
 			{
@@ -107,6 +95,16 @@ namespace events
 				string s_did = "did " + to_string(damage_did) + " hp";
 				string s_left = "left " + to_string(health_left) + " hp";
 				draw_box(centerx - 150, centery, s_did, alpha);
+				draw_box(centerx + 150, centery, s_left, alpha);
+			}
+			else
+			{
+				damage_did = 0;
+				health_left = 0;
+				killstreak = 0;
+				timer = 0.f;
+			}
+
 			if ((kill_timer - global::realtime + 0.1f) > 0.f)
 			{
 				float percent = kill_timer - global::realtime + 1.f;
@@ -135,7 +133,7 @@ namespace events
 				planted = true;
 				explosion_time = 0.f;
 				defuse_time = 0.f;
-			} else if (strcmp(name, "bomb_exploded") == 0 || strcmp(name, "bomb_defused") == 0) { // end
+			} else if (strcmp(name, "bomb_exploded") == 0 || strcmp(name, "bomb_defused") == 0) {
 				planted = false;
 				explosion_time = 0.f;
 				defuse_time = 0.f;
@@ -174,7 +172,6 @@ namespace events
 		{
 			hitmarker::killstreak2 = hitmarker::timer = hitmarker::kill_timer = bomb_timer::defuse_time = bomb_timer::explosion_time = legit::aimbot::kill_delay = 0.f;
 			bomb_timer::planted = false;
-			misc::draw::clear(false);
 			server::sounds.clear();
 		}
 
@@ -182,7 +179,7 @@ namespace events
 		bomb_timer::on_fire_event(event, name);
 	}
 
-	void on_draw()
+	inline void on_draw()
 	{
 		hitmarker::on_draw();
 		bomb_timer::on_draw();
