@@ -416,6 +416,21 @@ public:
 		typedef cusercmd*(__thiscall* get_usercmd_fn)(void*, int);
 		return vfunc< get_usercmd_fn >(this, 8)(this, sequence_number);
 	}
+
+	bool* m_fCameraInThirdPerson()
+	{
+		return (bool*)((DWORD)this + 0xAD);
+	}
+
+	Vector* m_vecCameraOffset()
+	{
+		return (Vector*)((DWORD)this + 0xB0);
+	}
+
+	BYTE pad_00[0xAD];
+	bool m_fCameraInThirdPerson_field;
+	BYTE pad_01[0x02];
+	Vector m_vecCameraOffset_field;
 };
 
 class imaterial_var;

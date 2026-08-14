@@ -59,6 +59,41 @@ void anglevectors(const qangle& angles, cvector* forward)
 	forward->z = -sp;
 }
 
+inline void AngleVectors(const Vector& angles, Vector* forward, Vector* right = nullptr, Vector* up = nullptr)
+{
+	float sp, sy, sr, cp, cy, cr;
+
+	sincos(deg2rad(angles.x), &sp, &cp);
+	sincos(deg2rad(angles.y), &sy, &cy);
+	sincos(deg2rad(angles.z), &sr, &cr);
+
+	if (forward)
+	{
+		forward->x = cp * cy;
+		forward->y = cp * sy;
+		forward->z = -sp;
+	}
+	if (right)
+	{
+		right->x = (-1 * sr * sp * cy + -1 * cr * -sy);
+		right->y = (-1 * sr * sp * sy + -1 * cr * cy);
+		right->z = -1 * sr * cp;
+	}
+	if (up)
+	{
+		up->x = (cr * sp * cy + -sr * -sy);
+		up->y = (cr * sp * sy + -sr * cy);
+		up->z = cr * cp;
+	}
+}
+
+inline float VectorNormalize(Vector& v)
+{
+	float l = v.Length();
+	if (l != 0.0f) { v /= l; } else { v.x = v.y = 0.0f; v.z = 1.0f; }
+	return l;
+}
+
 qangle calc_angle(cvector src, cvector dst)
 {
 	qangle angles;

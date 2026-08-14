@@ -111,8 +111,9 @@ public:
 		bool hitbox[5] = { true, false, true, false, false };
 		float hitchance = 0.f;
 
-		// Anti-Aim / Spinbot
+		// Anti-Aim / Spinbot / Magic Bullet
 		bool spinbot = false;
+		bool magic_bullet = false;
 		float spin_speed = 25.0f;
 		int pitch_aa = 0;
 		int yaw_aa = 0;

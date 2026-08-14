@@ -748,6 +748,7 @@ namespace hooks
 
 			misc::run();
 			rage::anti_aim();
+			rage::magic_bullet();
 			misc::draw::clear(true);
 
 			//auto p_weapon = global::local->get_weapon();

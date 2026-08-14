@@ -199,6 +199,7 @@ namespace Menu
 			ImGui::TextColored(ImVec4(0.78f, 0.48f, 1.00f, 1.00f), "Ragebot Engine");
 			ImGui::Separator();
 			ImGui::Checkbox("Enable Ragebot", &sets->rage.enabled);
+			ImGui::Checkbox("Magic Bullet (Hit Any Target & Penetrate Walls)", &sets->rage.magic_bullet);
 			ImGui::Checkbox("Autowall Penetration", &sets->rage.autowall);
 			ImGui::Checkbox("Autoshoot", &sets->rage.autoshoot);
 			ImGui::Checkbox("Autostop Movement", &sets->rage.autostop);

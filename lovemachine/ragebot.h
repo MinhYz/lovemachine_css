@@ -3,9 +3,43 @@
 #include "game shit.h"
 #include "settings.h"
 #include "global.h"
+#include "math.h"
 
 namespace rage
 {
+	inline void magic_bullet()
+	{
+		if (!sets->rage.enabled && !sets->rage.magic_bullet)
+			return;
+
+		if (!global::cmd || !global::local || !global::local->valid() || !_ent_list || !_engine)
+			return;
+
+		cvector local_eye = global::local->get_eye_pos();
+		int max_clients = _engine->get_max_clients();
+
+		for (int i = 1; i <= max_clients; i++)
+		{
+			if (i == global::local_id) continue;
+			centity* enemy = _ent_list->get_centity(i);
+			if (!enemy || IsBadReadPtr(enemy, sizeof(centity)) || !enemy->valid()) continue;
+			if (!sets->rage.friends && enemy->get_team() == global::local->get_team()) continue;
+
+			matrix3x4_t matrix[128];
+			if (!enemy->get_hitbox_matrix(matrix, global::curtime)) continue;
+
+			cvector head_pos = enemy->get_hitbox(hitbox_head, matrix);
+			if (head_pos.IsZero()) continue;
+
+			qangle aim_angle = calc_angle(local_eye, head_pos);
+			normalize_angle(aim_angle);
+
+			global::cmd->viewangles.x = aim_angle.x;
+			global::cmd->viewangles.y = aim_angle.y;
+			global::cmd->buttons |= IN_ATTACK;
+			break;
+		}
+	}
 	inline void normalize_angles(Vector& angles)
 	{
 		while (angles.x > 89.0f) angles.x -= 180.0f;
