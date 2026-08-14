@@ -1,4 +1,4 @@
-ï»¿// dllmain.cpp : ÐÐ¿ÑÐµÐ´ÐµÐ»ÑÐµÑ ÑÐ¾ÑÐºÑ Ð²ÑÐ¾Ð´Ð° Ð´Ð»Ñ Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ DLL.
+// dllmain.cpp : ÐÐ¿ÑÐµÐ´ÐµÐ»ÑÐµÑ ÑÐ¾ÑÐºÑ Ð²ÑÐ¾Ð´Ð° Ð´Ð»Ñ Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ DLL.
 #include "includes.h"
 #include "definitions.h"
 #include "global.h"

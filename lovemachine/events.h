@@ -107,22 +107,12 @@ namespace events
 				string s_did = "did " + to_string(damage_did) + " hp";
 				string s_left = "left " + to_string(health_left) + " hp";
 				draw_box(centerx - 150, centery, s_did, alpha);
-				draw_box(centerx + 150, centery, s_left, alpha);
-			}
-			else
-			{
-				damage_did = 0;
-				health_left = 0;
-				killstreak = 0;
-				timer = 0.f;
-			}
-
 			if ((kill_timer - global::realtime + 0.1f) > 0.f)
 			{
 				float percent = kill_timer - global::realtime + 1.f;
 				int alpha = 127 * percent;
 				int y = (centery / 10 * percent) - (centery / 4);
-				font::draw(font::hitmarker_big, centerx, y, color(255, 20, 20, alpha), DT_CENTER | DT_VCENTER, text.c_str());
+				d3d::font::draw(d3d::font::hitmarker_big, centerx, y, color(255, 20, 20, alpha), DT_CENTER | DT_VCENTER, text.c_str());
 			}
 			else
 			{
@@ -133,11 +123,11 @@ namespace events
 
 	namespace bomb_timer
 	{
-		bool planted = false;
-		float explosion_time = 0.f;
-		float defuse_time = 0.f;
-		float f_exp_time = 0.f;
-		float f_def_time = 0.f;
+		inline bool planted = false;
+		inline float explosion_time = 0.f;
+		inline float defuse_time = 0.f;
+		inline float f_exp_time = 0.f;
+		inline float f_def_time = 0.f;
 
 		inline void on_fire_event(igameevent* event, const char* name)
 		{
@@ -157,15 +147,15 @@ namespace events
 			}
 		}
 
-		void on_draw()
+		inline void on_draw()
 		{
 			if (!sets->visuals.enabled || !sets->visuals.bomb_timer || explosion_time == 0.f || !planted) return;
 
 			float percent = ((explosion_time - global::curtime) / f_exp_time);
 			int x = global::screen.right * percent;
 
-			prim::filled_box(0, 0, x, 20, color(255 - (255 * percent), 255 * percent, 0));
-			font::draw(font::hitmarker_small, x + 5, 20, color(255 * percent, 255 - (255 * percent), 0), DT_CENTER, explosion_time > 0.f ? "%.1f" : "exploded", (explosion_time - global::curtime));
+			d3d::prim::filled_box(0, 0, x, 20, color(255 - (255 * percent), 255 * percent, 0));
+			d3d::font::draw(d3d::font::hitmarker_small, x + 5, 20, color(255 * percent, 255 - (255 * percent), 0), DT_CENTER, explosion_time > 0.f ? "%.1f" : "exploded", (explosion_time - global::curtime));
 			
 			if (defuse_time == 0.f) return;
 
@@ -173,8 +163,8 @@ namespace events
 			percent = ((defuse_time - global::curtime) / f_exp_time);
 			x = global::screen.right * percent;
 
-			prim::filled_box(0, 0, x, 20, color(0, 255 - (255 * percent2), 255 * percent2));
-			font::draw(font::hitmarker_small, x + 5, 10, color(0, 255 * percent2, 255 - (255 * percent2)), DT_CENTER | DT_VCENTER, "%.1f", (defuse_time - global::curtime));
+			d3d::prim::filled_box(0, 0, x, 20, color(0, 255 - (255 * percent2), 255 * percent2));
+			d3d::font::draw(d3d::font::hitmarker_small, x + 5, 10, color(0, 255 * percent2, 255 - (255 * percent2)), DT_CENTER | DT_VCENTER, "%.1f", (defuse_time - global::curtime));
 		}
 	}
 
@@ -186,8 +176,6 @@ namespace events
 			bomb_timer::planted = false;
 			misc::draw::clear(false);
 			server::sounds.clear();
-			//ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records));
-			//ZeroMemory(server::players, sizeof(server::players));
 		}
 
 		hitmarker::on_fire_event(event, name);

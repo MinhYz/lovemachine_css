@@ -124,12 +124,12 @@ namespace hooks
 		{
 			d3d::device = device;
 			console::write_hex("/d3d/ device", (dword)device, darkgreen);
-			font::setup(font::tab, "Gotham Pro Medium", 24, FW_DONTCARE);
-			font::setup(font::cont, "Gotham Pro", 15, fw_medium);
-			font::setup(font::hitmarker_big, "Gotham Pro Black", 30, FW_BOLD);
-			font::setup(font::hitmarker_small, "Gotham Pro Medium", 19, FW_BOLD);
-			font::setup(font::esp, "Gotham Pro Medium", 16, FW_DONTCARE);
-			font::reset();
+			d3d::font::setup(d3d::font::tab, "Gotham Pro Medium", 24, FW_DONTCARE);
+			d3d::font::setup(d3d::font::cont, "Gotham Pro", 15, fw_medium);
+			d3d::font::setup(d3d::font::hitmarker_big, "Gotham Pro Black", 30, FW_BOLD);
+			d3d::font::setup(d3d::font::hitmarker_small, "Gotham Pro Medium", 19, FW_BOLD);
+			d3d::font::setup(d3d::font::esp, "Gotham Pro Medium", 16, FW_DONTCARE);
+			d3d::font::reset();
 			global::screen = get_screen_size();
 
 			// Initialize ImGui DX9 & Win32 Backends
@@ -304,10 +304,10 @@ namespace hooks
 		console::write("d3d reset", darkred);
 
 		ImGui_ImplDX9_InvalidateDeviceObjects();
-		font::restore();
+		d3d::font::restore();
 		auto result = o_reset(device, pp);
 		ImGui_ImplDX9_CreateDeviceObjects();
-		font::reset();
+		d3d::font::reset();
 		surf::font::setup(surf::font::esp, "Gotham Pro", 17, fw_normal, ff_antialias | ff_dropshadow);
 		global::screen = get_screen_size();
 
@@ -899,19 +899,11 @@ namespace hooks
 
 			if (sets->visuals.esp_show[4] && strstr(sample, "footstep"))
 			{
-				server::sound s;
-				s.position = cvector(origin->x, origin->y, origin->z);
-				s.time = global::curtime;
-				s.col = color(255, 100, 0);
-				server::sounds.push_back(s);
+				server::sounds.push_back({ *origin, global::curtime, color(255, 100, 0) });
 			}
 			else if (sets->visuals.esp_show[5] && sample[0] == ')' && sample[1] == 'w' && sample[2] == 'e' && player->is_dormant()) // shot
 			{
-				server::sound s;
-				s.position = player->get_abs_origin();
-				s.time = global::curtime;
-				s.col = color(255, 0, 0);
-				server::sounds.push_back(s);
+				server::sounds.push_back({ player->get_abs_origin(), global::curtime, color(255, 0, 0) });
 			}
 		}
 

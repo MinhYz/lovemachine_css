@@ -111,7 +111,7 @@ namespace legit
 			if (!sets->legit.trigger._enabled || (bind != bind_no_key && bind != bind_true))
 				return;
 
-			font::draw(font::hitmarker_big, global::screen.right - 5, 35, color(255, 0, 0), DT_TOP | DT_RIGHT, "TRIGGER");
+			d3d::font::draw(d3d::font::hitmarker_big, global::screen.right - 5, 35, color(255, 0, 0), DT_TOP | DT_RIGHT, "TRIGGER");
 		}
 	}
 }
