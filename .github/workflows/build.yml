@@ -23,21 +23,17 @@ jobs:
       - name: Setup MSBuild environment
         uses: microsoft/setup-msbuild@v2
 
-      - name: Install Microsoft DirectX SDK (June 2010)
+      - name: Download and Install Microsoft DirectX SDK (June 2010)
         shell: powershell
         run: |
-          try {
-            Write-Host "Installing DirectX SDK via Chocolatey..."
-            choco install directx-sdk --yes --no-progress --accept-license --execution-timeout=600 --retries=3
-          } catch {
-            Write-Host "Chocolatey feed failed (503 Service Unavailable). Downloading DirectX SDK directly from Microsoft Archive..."
-            $url = "https://download.microsoft.com/download/A/E/7/AE743F96-6377-472C-8209-67990176D02A/DXSDK_Jun10.exe"
-            $output = "$env:TEMP\DXSDK_Jun10.exe"
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Invoke-WebRequest -Uri $url -OutFile $output
-            Write-Host "Installing DXSDK_Jun10.exe silently..."
-            Start-Process -FilePath $output -ArgumentList "/U /F" -Wait
-          }
+          $url = "https://download.microsoft.com/download/A/E/7/AE743F96-6377-472C-8209-67990176D02A/DXSDK_Jun10.exe"
+          $output = "$env:TEMP\DXSDK_Jun10.exe"
+          Write-Host "[+] Downloading DirectX SDK (June 2010) directly from Microsoft Download Center..."
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+          (New-Object System.Net.WebClient).DownloadFile($url, $output)
+          Write-Host "[+] Installing DirectX SDK silently..."
+          Start-Process -FilePath $output -ArgumentList "/U /F" -Wait
+          Write-Host "[+] DirectX SDK installed successfully!"
 
       - name: Build Solution (lovemachine.sln)
         run: msbuild lovemachine.sln /p:Configuration=Release /p:Platform=Win32 /m
