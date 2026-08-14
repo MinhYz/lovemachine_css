@@ -86,7 +86,7 @@ void vector_transform(cvector in, matrix3x4_t transform, cvector& out)
 }
 
 template<typename t>
-t clamp(t pmin, t val, t pmax)
+t math_clamp(t pmin, t val, t pmax)
 {
 	return max(pmin, min(val, pmax));
 }

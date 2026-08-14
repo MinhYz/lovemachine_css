@@ -56,7 +56,7 @@ namespace legit
 				{
 					float yaw_correction = 20 - (10 * i);
 					float pitch_correction = 10 - (10 * j);
-					qangle viewangle = qangle(clamp<float>(-89.f, global::cmd->viewangles.x + pitch_correction, 89.f), global::cmd->viewangles.y + yaw_correction, 0.f);
+					qangle viewangle = qangle(math_clamp<float>(-89.f, global::cmd->viewangles.x + pitch_correction, 89.f), global::cmd->viewangles.y + yaw_correction, 0.f);
 					normalize_angle(viewangle);
 					trace_t trace;
 					trigger::trace_forward(viewangle, global::local->get_eye_pos(), global::local, &trace, cvar(kb_range).value + 10.f);

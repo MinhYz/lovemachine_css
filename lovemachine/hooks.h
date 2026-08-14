@@ -239,8 +239,8 @@ namespace hooks
 			int centerx = global::screen.right / 2;
 			int centery = global::screen.bottom / 2;
 
-			prim::filled_box(centerx - 5, centery, centerx + 6, centery + 1, color::lm());
-			prim::filled_box(centerx, centery - 5, centerx + 1, centery + 6, color::lm());
+			d3d::prim::filled_box(centerx - 5, centery, centerx + 6, centery + 1, color::lm());
+			d3d::prim::filled_box(centerx, centery - 5, centerx + 1, centery + 6, color::lm());
 		}
 		else
 		{
