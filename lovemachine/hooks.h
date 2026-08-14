@@ -899,11 +899,11 @@ namespace hooks
 
 			if (sets->visuals.esp_show[4] && strstr(sample, "footstep"))
 			{
-				server::sounds.push_back({ *origin, global::curtime, color(255, 100, 0) });
+				server::sounds.push_back(server::sound(*origin, global::curtime, color(255, 100, 0)));
 			}
 			else if (sets->visuals.esp_show[5] && sample[0] == ')' && sample[1] == 'w' && sample[2] == 'e' && player->is_dormant()) // shot
 			{
-				server::sounds.push_back({ player->get_abs_origin(), global::curtime, color(255, 0, 0) });
+				server::sounds.push_back(server::sound(player->get_abs_origin(), global::curtime, color(255, 0, 0)));
 			}
 		}
 
