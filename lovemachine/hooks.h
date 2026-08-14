@@ -35,7 +35,7 @@ namespace hooks
 			Menu::show_menu = !Menu::show_menu;
 		}
 
-		if (Menu::show_menu && ImGui_ImplWin32_WndProcHandler(wnd, msg, w_param, l_param))
+		if (Menu::show_menu && ImGui::GetCurrentContext() && ImGui_ImplWin32_WndProcHandler(wnd, msg, w_param, l_param))
 		{
 			return true;
 		}

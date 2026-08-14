@@ -47,12 +47,14 @@ namespace d3d
 		{
 			for (int font_id = 0; font_id < max_fonts; font_id++)
 			{
-				while (!fonts[font_id])
+				if (!fonts[font_id])
 				{
-					D3DXCreateFontA(device, fonts_info[font_id].scale, 0/*øèðèíó îïðåäåëèò ñàì*/, fonts_info[0].flags, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fonts_info[font_id].name, &fonts[font_id]);
+					D3DXCreateFontA(device, fonts_info[font_id].scale, 0, fonts_info[font_id].flags, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fonts_info[font_id].name, &fonts[font_id]);
 				}
 
-				console::write_hex("/d3d/ fonts[" + to_str(font_id) + "]", (dword)fonts[font_id], green);
+				if (fonts[font_id]) {
+					console::write_hex("/d3d/ fonts[" + to_str(font_id) + "]", (dword)fonts[font_id], green);
+				}
 			}
 
 			return S_OK;
