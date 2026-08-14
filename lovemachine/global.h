@@ -41,6 +41,8 @@ namespace server
 		cvector position;
 		float time;
 		color col;
+
+		sound(const cvector& pos, float t, const color& c) : position(pos), time(t), col(c) {}
 	};
 
 	inline deque<sound> sounds;
