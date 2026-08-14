@@ -22,8 +22,8 @@ namespace rage
 		if (!weapon || weapon->get_clip1() <= 0)
 			return;
 
-		// Trigger magic bullet on manual IN_ATTACK or autoshoot
-		if (!(global::cmd->buttons & IN_ATTACK) && !sets->rage.autoshoot)
+		// Strictly require manual IN_ATTACK (Left Click)
+		if (!(global::cmd->buttons & IN_ATTACK))
 			return;
 
 		cvector local_eye = global::local->get_eye_pos();
