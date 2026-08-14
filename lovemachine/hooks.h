@@ -900,7 +900,9 @@ namespace hooks
 			if (sets->visuals.esp_show[4] && strstr(sample, "footstep"))
 			{
 				server::sound snd;
-				snd.position = *origin;
+				snd.position.x = origin->x;
+				snd.position.y = origin->y;
+				snd.position.z = origin->z;
 				snd.time = global::curtime;
 				snd.col = color(255, 100, 0);
 				server::sounds.push_back(snd);
@@ -908,7 +910,10 @@ namespace hooks
 			else if (sets->visuals.esp_show[5] && sample[0] == ')' && sample[1] == 'w' && sample[2] == 'e' && player->is_dormant()) // shot
 			{
 				server::sound snd;
-				snd.position = player->get_abs_origin();
+				auto p_org = player->get_abs_origin();
+				snd.position.x = p_org.x;
+				snd.position.y = p_org.y;
+				snd.position.z = p_org.z;
 				snd.time = global::curtime;
 				snd.col = color(255, 0, 0);
 				server::sounds.push_back(snd);

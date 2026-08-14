@@ -7,6 +7,12 @@ class Vector
 {
 public:
 	float x, y, z;
+	Vector(const Vector& other) : x(other.x), y(other.y), z(other.z) {}
+	Vector& operator=(const Vector& other)
+	{
+		x = other.x; y = other.y; z = other.z;
+		return *this;
+	}
 	Vector(void);
 	Vector(float X, float Y, float Z);
 	Vector(float* v)
