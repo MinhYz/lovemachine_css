@@ -23,16 +23,22 @@ jobs:
       - name: Setup MSBuild environment
         uses: microsoft/setup-msbuild@v2
 
-      - name: Download and Install Microsoft DirectX SDK (June 2010)
+      - name: Install Microsoft DirectX SDK (June 2010)
         shell: powershell
         run: |
-          $url = "https://download.microsoft.com/download/A/E/7/AE743F96-6377-472C-8209-67990176D02A/DXSDK_Jun10.exe"
-          $output = "$env:TEMP\DXSDK_Jun10.exe"
-          Write-Host "[+] Downloading DirectX SDK (June 2010) directly from Microsoft Download Center..."
-          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-          (New-Object System.Net.WebClient).DownloadFile($url, $output)
+          $localInstaller = "DXSDK_Jun10.exe"
+          $targetInstaller = "$env:TEMP\DXSDK_Jun10.exe"
+          if (Test-Path $localInstaller) {
+            Write-Host "[+] Found local installer $localInstaller in repository! Using local file..."
+            Copy-Item $localInstaller $targetInstaller -Force
+          } else {
+            Write-Host "[+] Local installer not found. Downloading DirectX SDK directly from Microsoft Download Center..."
+            $url = "https://download.microsoft.com/download/A/E/7/AE743F96-6377-472C-8209-67990176D02A/DXSDK_Jun10.exe"
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            (New-Object System.Net.WebClient).DownloadFile($url, $targetInstaller)
+          }
           Write-Host "[+] Installing DirectX SDK silently..."
-          Start-Process -FilePath $output -ArgumentList "/U /F" -Wait
+          Start-Process -FilePath $targetInstaller -ArgumentList "/U /F" -Wait
           Write-Host "[+] DirectX SDK installed successfully!"
 
       - name: Build Solution (lovemachine.sln)
