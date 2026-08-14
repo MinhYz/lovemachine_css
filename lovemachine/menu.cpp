@@ -10,6 +10,9 @@ namespace Menu
 	// Helper for ImGui ColorEdit3 mapped to custom color struct
 	static bool ColorEdit3Custom(const char* label, color& col)
 	{
+		col.r = max(0, min(col.r, 255));
+		col.g = max(0, min(col.g, 255));
+		col.b = max(0, min(col.b, 255));
 		float c[3] = { col.r / 255.0f, col.g / 255.0f, col.b / 255.0f };
 		if (ImGui::ColorEdit3(label, c))
 		{

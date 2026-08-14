@@ -347,6 +347,44 @@ namespace esp
 
 				p_color = visible ? entity->get_team() == 2 ? sets->visuals.esp_t : sets->visuals.esp_ct : entity->get_team() != global::local->get_team() ? color::text() : color::disabled();
 
+				// Asian Hat 3D Conical Rice Hat
+				if (sets->visuals.asian_hat && entity->valid())
+				{
+					cvector head_pos = entity->get_hitbox(hitbox_head, matrix);
+					if (!head_pos.IsZero())
+					{
+						head_pos.z += 8.0f;
+						cvector apex = head_pos + cvector(0, 0, sets->visuals.asian_hat_height);
+						cvector screen_apex;
+						if (w2s(apex, screen_apex))
+						{
+							const int points_cnt = 12;
+							cvector rim_screens[12];
+							bool all_rim_valid = true;
+							for (int i = 0; i < points_cnt; i++)
+							{
+								float angle_rad = (float)i * (2.0f * M_PI / points_cnt);
+								cvector rim_pos = head_pos + cvector(cos(angle_rad) * sets->visuals.asian_hat_size, sin(angle_rad) * sets->visuals.asian_hat_size, 0);
+								if (!w2s(rim_pos, rim_screens[i]))
+								{
+									all_rim_valid = false;
+									break;
+								}
+							}
+							if (all_rim_valid)
+							{
+								color hat_col = sets->visuals.asian_hat_color.with_alpha(alpha[id]);
+								for (int i = 0; i < points_cnt; i++)
+								{
+									int next_i = (i + 1) % points_cnt;
+									surf::prim::line(rim_screens[i].x, rim_screens[i].y, rim_screens[next_i].x, rim_screens[next_i].y, hat_col);
+									surf::prim::line(rim_screens[i].x, rim_screens[i].y, screen_apex.x, screen_apex.y, hat_col);
+								}
+							}
+						}
+					}
+				}
+
 				player_info_t info;
 				if (sets->visuals.esp_show[0] && _engine->get_playerinfo(id, &info))
 				{

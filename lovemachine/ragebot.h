@@ -15,6 +15,23 @@ namespace rage
 		angles.z = 0.0f;
 	}
 
+	inline void fix_movement(cusercmd* cmd, Vector old_angles)
+	{
+		Vector forward, right, up;
+		AngleVectors(old_angles, &forward, &right, &up);
+		forward.z = 0.f; right.z = 0.f;
+		VectorNormalize(forward); VectorNormalize(right);
+
+		Vector fwd_new, right_new, up_new;
+		AngleVectors(cmd->viewangles, &fwd_new, &right_new, &up_new);
+		fwd_new.z = 0.f; right_new.z = 0.f;
+		VectorNormalize(fwd_new); VectorNormalize(right_new);
+
+		Vector wish_dir = forward * cmd->forwardmove + right * cmd->sidemove;
+		cmd->forwardmove = wish_dir.Dot(fwd_new);
+		cmd->sidemove = wish_dir.Dot(right_new);
+	}
+
 	inline void anti_aim()
 	{
 		if (!sets->rage.enabled && !sets->rage.spinbot && sets->rage.pitch_aa == 0 && sets->rage.yaw_aa == 0)
@@ -25,6 +42,8 @@ namespace rage
 
 		if (global::cmd->buttons & IN_ATTACK)
 			return;
+
+		Vector old_angles = global::cmd->viewangles;
 
 		// Pitch Anti-Aim
 		if (sets->rage.pitch_aa == 1) // Emotion (89°)
@@ -59,6 +78,7 @@ namespace rage
 		}
 
 		normalize_angles(global::cmd->viewangles);
+		fix_movement(global::cmd, old_angles);
 	}
 
 	namespace aimbot

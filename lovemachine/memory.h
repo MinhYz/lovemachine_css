@@ -130,9 +130,13 @@ namespace memory
 		DWORD get_vt_count(DWORD* vmt)
 		{
 			DWORD dwIndex = 0;
+			if (!vmt || IsBadReadPtr(vmt, sizeof(DWORD))) return 0;
+
 			for (dwIndex = 0; vmt[dwIndex]; dwIndex++)
 			{
-				if (IsBadCodePtr((FARPROC)vmt[dwIndex]))
+				MEMORY_BASIC_INFORMATION mbi;
+				if (!VirtualQuery((LPCVOID)vmt[dwIndex], &mbi, sizeof(mbi)) ||
+					!(mbi.Protect & (PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)))
 				{
 					break;
 				}

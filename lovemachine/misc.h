@@ -405,6 +405,21 @@ namespace misc
 
 		misc::draw::run();
 
+		// Thirdperson logic
+		if (sets->visuals.thirdperson && _input)
+		{
+			*_input->m_fCameraInThirdPerson() = true;
+			_input->m_vecCameraOffset()->z = sets->visuals.thirdperson_dist;
+			if (sets->visuals.thirdperson_reverse)
+			{
+				_input->m_vecCameraOffset()->y = 180.0f;
+			}
+		}
+		else if (_input)
+		{
+			*_input->m_fCameraInThirdPerson() = false;
+		}
+
 		nightmode();
 	}
 }
