@@ -421,7 +421,7 @@ namespace misc
 			}
 			if (cam_idealdist)
 			{
-				cam_idealdist->set_value(sets->visuals.thirdperson_dist);
+				cam_idealdist->SetValue(sets->visuals.thirdperson_dist);
 			}
 
 			if (_input)

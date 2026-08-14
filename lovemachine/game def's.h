@@ -885,6 +885,10 @@ public:
 	virtual void				SetValue(float value);
 	virtual void				SetValue(int value);
 
+	void set_value(const char* value) { SetValue(value); }
+	void set_value(float value) { SetValue(value); }
+	void set_value(int value) { SetValue(value); }
+
 	const char* GetDefault(void) const;
 
 private:
