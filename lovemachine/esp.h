@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include "game shit.h"
 #include "game def's.h"
 #include "game classes.h"
@@ -252,7 +253,7 @@ namespace esp
 		surf::prim::filled_box(left - 1, top - 1, right + 1, bottom + 1, color::outline().with_alpha(front.a));
 		surf::prim::filled_box(left, top, right, bottom, back);
 
-		const auto amount = vertical ? max(top, bottom - ((bottom - top) * (float)(value / vmax))) : min(right, left + ((right - left) * (float)(value / vmax)));
+		const auto amount = vertical ? std::max<int>(top, static_cast<int>(bottom - ((bottom - top) * (float)(value / vmax)))) : std::min<int>(right, static_cast<int>(left + ((right - left) * (float)(value / vmax))));
 
 		surf::prim::filled_box(left, vertical ? amount : top, vertical ? right : amount, bottom, front);
 		if (value != vmax)
