@@ -63,7 +63,7 @@ public:
 				return true;
 				break;
 			case hg_head:
-				// TODO: найти как определить наличие шлемака
+				// TODO: Г­Г Г©ГІГЁ ГЄГ ГЄ Г®ГЇГ°ГҐГ¤ГҐГ«ГЁГІГј Г­Г Г«ГЁГ·ГЁГҐ ГёГ«ГҐГ¬Г ГЄГ 
 				if (true)//if (bHasHelmet())
 				{
 					return true;
@@ -151,7 +151,7 @@ public:
 	}
 
 	// (c) interwebz css kolo <3
-	// ток че то не работает нихуя
+	// ГІГ®ГЄ Г·ГҐ ГІГ® Г­ГҐ Г°Г ГЎГ®ГІГ ГҐГІ Г­ГЁГµГіГї
 	bool is_dormant()
 	{
 		/*return true;
@@ -304,7 +304,7 @@ public:
 		//return *(matrix3x4_t*)((dword)this + offsets::coord_frame);
 	}*/
 
-	//максимум 128 костей
+	//Г¬Г ГЄГ±ГЁГ¬ГіГ¬ 128 ГЄГ®Г±ГІГҐГ©
 	//BONE_USED_BY_HITBOX 0x00000100
 	bool get_hitbox_matrix(matrix3x4_t* bone_to_world_out, float current_time = global::curtime)
 	{
@@ -353,7 +353,7 @@ public:
 		return weapon;
 	}
 
-	//AUTOWALL: фикс ошибок
+	//AUTOWALL: ГґГЁГЄГ± Г®ГёГЁГЎГ®ГЄ
 	/*void get_bullettype_parameters(
 		int iBulletType,
 		float& fPenetrationPower,
@@ -484,9 +484,9 @@ public:
 		return *(float*)((dword)this + offsets::next_sec_attack);
 	}
 
-	// TODO: переработать все эти is_%weapon_name% в один get_type, а лучше найти vfunc
+	// TODO: ГЇГҐГ°ГҐГ°Г ГЎГ®ГІГ ГІГј ГўГ±ГҐ ГЅГІГЁ is_%weapon_name% Гў Г®Г¤ГЁГ­ get_type, Г  Г«ГіГ·ГёГҐ Г­Г Г©ГІГЁ vfunc
 	//
-	//хз что с названием, но каждый раз в начале непонятные символы (2-6 штук)
+	//ГµГ§ Г·ГІГ® Г± Г­Г Г§ГўГ Г­ГЁГҐГ¬, Г­Г® ГЄГ Г¦Г¤Г»Г© Г°Г Г§ Гў Г­Г Г·Г Г«ГҐ Г­ГҐГЇГ®Г­ГїГІГ­Г»ГҐ Г±ГЁГ¬ГўГ®Г«Г» (2-6 ГёГІГіГЄ)
 	// q??weapon_%name%
 	//bool is_pistol(/*fileweaponinfo_t& p_data*/)
 	/*{
@@ -558,7 +558,7 @@ public:
 		return *(int*)((dword)this + offsets::clip1);
 	}
 
-	// поскольку wpndata ебнутая будет так
+	// ГЇГ®Г±ГЄГ®Г«ГјГЄГі wpndata ГҐГЎГ­ГіГІГ Гї ГЎГіГ¤ГҐГІ ГІГ ГЄ
 	int get_maxclip1()
 	{
 		if (!this || this->get_weaponid() == weapon_none || this->get_type() == weap_misc) return -1;

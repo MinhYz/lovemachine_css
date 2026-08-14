@@ -3,7 +3,7 @@
 #include "global.h"
 #include "legit_misc.h"
 #include "autowall.h"
-//#include "aimbot.h" // TODO: ñäåëàòü ïàïêó äëÿ legit, ñäåëàòü ôàéë misc äëÿ set_points/get_point
+//#include "aimbot.h" // TODO: Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã¯Ã Ã¯ÃªÃ³ Ã¤Ã«Ã¿ legit, Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã´Ã Ã©Ã« misc Ã¤Ã«Ã¿ set_points/get_point
 
 #define tick_interval _globals->interval_per_tick
 #define time_to_ticks(dt) ((int)(0.5f + (float)(dt) / tick_interval))
@@ -79,7 +79,7 @@ namespace legit
 				// (c) mr-nv <3
 				/*entity->set_origin(this->origin); // SetAbsOrigin
 				entity->set_velocity(this->velocity); // SetAbsVelocity
-				entity->set_flags(this->flags); // ìá ñìåíèòü íà ôîðñ àíèìàöèé èëè îêîëî òîãî? õç
+				entity->set_flags(this->flags); // Ã¬Ã¡ Ã±Ã¬Ã¥Ã­Ã¨Ã²Ã¼ Ã­Ã  Ã´Ã®Ã°Ã± Ã Ã­Ã¨Ã¬Ã Ã¶Ã¨Ã© Ã¨Ã«Ã¨ Ã®ÃªÃ®Ã«Ã® Ã²Ã®Ã£Ã®? ÃµÃ§
 				entity->set_simulation_time(this->sim_time); // SetSimulationTime
 				entity->set_angles(this->angles); // SetAbsAngles*/
 
@@ -285,7 +285,7 @@ namespace legit
 			}
 		}
 
-		void end()//ïèñüêà
+		void end()//Ã¯Ã¨Ã±Ã¼ÃªÃ 
 		{
 			if (!sets->legit.backtrack.enabled || points.empty() || cvar(antismac).value)
 			{

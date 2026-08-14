@@ -85,7 +85,7 @@ inline char change_case(char c)
 	return std::isupper(c) ? std::tolower(c) : c;
 }
 
-// ïîëîìàâñÿ
+// Ã¯Ã®Ã«Ã®Ã¬Ã Ã¢Ã±Ã¿
 inline const char* upper_to_lower(const char* c, int size)
 {
 	char* sample = (char*)"";
@@ -129,8 +129,8 @@ static dword p_hwid = get_hwid();*/
 
 static const char* keynames[254] = 
 {
-	null, "mouse1", "mouse2", "ñancel", "mouse3", "mouse4", "mouse5", null,
-	"backspace", "tab", null, null, "clear", null /*ýòî enter*/, null, null, "shift",
+	null, "mouse1", "mouse2", "Ã±ancel", "mouse3", "mouse4", "mouse5", null,
+	"backspace", "tab", null, null, "clear", null /*Ã½Ã²Ã® enter*/, null, null, "shift",
 	"control", "alt", "pause", "caps", null, null, null, null, null, null,
 	"escape", null, null, null, null, "space", "page_up", "page_down", "end", "home",
 	"left", "up", "right", "down", null, null, null, "print", "insert", "delete", null,
@@ -145,7 +145,7 @@ static const char* keynames[254] =
 static char inputkeynames[254] =
 {
 	null, null, null, null, null, null, null, null,
-	null, null, null, null, null, null /*ýòî enter*/, null, null, null,
+	null, null, null, null, null, null /*Ã½Ã²Ã® enter*/, null, null, null,
 	null, null, null, null, null, null, null, null, null, null,
 	null, null, null, null, null, ' ', null, null, null, null,
 	null, null, null, null, null, null, null, null, null, null, null,

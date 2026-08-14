@@ -1,9 +1,13 @@
 #pragma once
-#include "includes.h"
-#include "definitions.h"
 #include "game shit.h"
+#include "game def's.h"
+#include "game classes.h"
 #include "settings.h"
-#include "draw.h"
+#include "surface.h"
+#include "d3d.h"
+
+using namespace surf;
+using namespace d3d;
 
 namespace events
 {
@@ -48,7 +52,7 @@ namespace events
 			if (sets->misc.killshot && health_left == 0)
 			{
 				killstreak2++;
-				_engine->clientcmd_unrestricted(str(u8"say Îáîññàë è âûñòàâèë íà ìîðîç! Streak Of " + to_str(killstreak2) + u8"!").c_str());
+				_engine->clientcmd_unrestricted(str(u8"say ÃŽÃ¡Ã®Ã±Ã±Ã Ã« Ã¨ Ã¢Ã»Ã±Ã²Ã Ã¢Ã¨Ã« Ã­Ã  Ã¬Ã®Ã°Ã®Ã§! Streak Of " + to_str(killstreak2) + u8"!").c_str());
 			}
 
 			if (sets->visuals.enabled && sets->visuals.hitmarker)

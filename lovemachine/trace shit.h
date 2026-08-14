@@ -93,7 +93,7 @@ private:
 class itracefilter
 {
 public:
-	// TODO : улучшить?
+	// TODO : ГіГ«ГіГ·ГёГЁГІГј?
 	virtual bool ShouldHitEntity(/*ihandleentity*/centity* entity, int contentsMask)
 	{
 		if (target && entity == target) return true;

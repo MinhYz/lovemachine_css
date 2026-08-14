@@ -7,10 +7,10 @@
 
 ofstream myfile;
 
-// TODO: сделать это дерьмо юзабельным
+// TODO: Г±Г¤ГҐГ«Г ГІГј ГЅГІГ® Г¤ГҐГ°ГјГ¬Г® ГѕГ§Г ГЎГҐГ«ГјГ­Г»Г¬
 namespace console
 {
-	// тип консоли
+	// ГІГЁГЇ ГЄГ®Г­Г±Г®Г«ГЁ
 	enum console_type : int
 	{
 		window,
@@ -18,7 +18,7 @@ namespace console
 	};
 	int type = window;
 
-	// цвета // TODO: добавить адаптацию цветов под ingame консоль
+	// Г¶ГўГҐГІГ  // TODO: Г¤Г®ГЎГ ГўГЁГІГј Г Г¤Г ГЇГІГ Г¶ГЁГѕ Г¶ГўГҐГІГ®Гў ГЇГ®Г¤ ingame ГЄГ®Г­Г±Г®Г«Гј
 	#define darkgreen 2
 	#define darkred 12
 	#define darkwhite 7
@@ -89,15 +89,15 @@ namespace console
 	{
 		if (type == window)
 		{
-			AllocConsole(); // вводим консоль
-			freopen("CONIN$", "r", stdin); // ввод
-			freopen("CONOUT$", "w", stdout); // вывод
-			freopen("CONOUT$", "w", stderr); // вывод ошибок
+			AllocConsole(); // ГўГўГ®Г¤ГЁГ¬ ГЄГ®Г­Г±Г®Г«Гј
+			freopen("CONIN$", "r", stdin); // ГўГўГ®Г¤
+			freopen("CONOUT$", "w", stdout); // ГўГ»ГўГ®Г¤
+			freopen("CONOUT$", "w", stderr); // ГўГ»ГўГ®Г¤ Г®ГёГЁГЎГ®ГЄ
 
-			SetConsoleTitleA(name.c_str()); // установка имени
+			SetConsoleTitleA(name.c_str()); // ГіГ±ГІГ Г­Г®ГўГЄГ  ГЁГ¬ГҐГ­ГЁ
 
-			hconsole = GetStdHandle(STD_OUTPUT_HANDLE); // хендл потока вывода
-			herror = GetStdHandle(STD_ERROR_HANDLE); // хендл потока ошибок
+			hconsole = GetStdHandle(STD_OUTPUT_HANDLE); // ГµГҐГ­Г¤Г« ГЇГ®ГІГ®ГЄГ  ГўГ»ГўГ®Г¤Г 
+			herror = GetStdHandle(STD_ERROR_HANDLE); // ГµГҐГ­Г¤Г« ГЇГ®ГІГ®ГЄГ  Г®ГёГЁГЎГ®ГЄ
 
 			SetConsoleTextAttribute(hconsole, defcolor);
 			SetConsoleTextAttribute(herror, red);

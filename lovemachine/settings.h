@@ -32,14 +32,14 @@ public:
 	settings()
 	{
 		//cvars.setup();
-		//TODO : êîíôèãè
+		//TODO : ÃªÃ®Ã­Ã´Ã¨Ã£Ã¨
 		//CreateDirectory(L"C:/lovemachine", NULL);
 		//CreateDirectory(L"C:/lovemachine/configs", NULL);
 	}
 
 	struct
 	{
-		bool opened = false, hovered = false, console = false, panic = false; // TODO : âìåñòî panic ëó÷øå ñäåëàòü àíëîàä ÷èòà
+		bool opened = false, hovered = false, console = false, panic = false; // TODO : Ã¢Ã¬Ã¥Ã±Ã²Ã® panic Ã«Ã³Ã·Ã¸Ã¥ Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã Ã­Ã«Ã®Ã Ã¤ Ã·Ã¨Ã²Ã 
 		int cont_hovered = -1;
 		int x = 100, y = 100, cur_tab = 0;
 	} menu;
@@ -145,13 +145,13 @@ public:
 		bool hitmarker = false;
 		bool bomb_timer = false;
 
-		// Asian Hat (Mũ Asian / Rice Hat)
+		// Asian Hat (MÅ© Asian / Rice Hat)
 		bool asian_hat = false;
 		color asian_hat_color = color(255, 200, 50);
 		float asian_hat_size = 20.0f;
 		float asian_hat_height = 10.0f;
 
-		// Thirdperson & Inverted Angle (Góc nhìn thứ 3 nhìn ngược lại)
+		// Thirdperson & Inverted Angle (GÃ³c nhÃ¬n thá»© 3 nhÃ¬n ngÆ°á»£c láº¡i)
 		bool thirdperson = false;
 		float thirdperson_dist = 120.0f;
 		bool thirdperson_reverse = false;

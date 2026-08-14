@@ -37,11 +37,11 @@ namespace obj
 			sets->spec.x = max(3, min(sets->spec.x, global::screen.right - sets->spec.mx - 3));
 			sets->spec.y = max(sets->spec.y - 11 - (size.bottom / 2), min(sets->spec.y, global::screen.bottom - sets->spec.my - 3));
 
-			// îñíîâà ñïåê ëèñòà
+			// Ã®Ã±Ã­Ã®Ã¢Ã  Ã±Ã¯Ã¥Ãª Ã«Ã¨Ã±Ã²Ã 
 			prim::filled_box(sets->spec.x - 2, sets->spec.y - 10 - (size.bottom / 2), sets->spec.x + sets->spec.mx + 2, sets->spec.y + sets->spec.my + 2, color::background());
 			prim::bordered_box(sets->spec.x - 1, sets->spec.y - 1, sets->spec.x + sets->spec.mx + 1, sets->spec.y + sets->spec.my + 1, color::outline());
 			prim::bordered_box(sets->spec.x - 3, sets->spec.y - 11 - (size.bottom / 2), sets->spec.x + sets->spec.mx + 3, sets->spec.y + sets->spec.my + 3, color::outline());
-			// îñíîâà ñïåê ëèñòà
+			// Ã®Ã±Ã­Ã®Ã¢Ã  Ã±Ã¯Ã¥Ãª Ã«Ã¨Ã±Ã²Ã 
 
 			font::draw(font::cont, sets->spec.x + (sets->spec.mx / 2), sets->spec.y - 10, color::enabled() + 65, DT_CENTER | DT_VCENTER, "spectators");
 			prim::filled_box(sets->spec.x - 2, sets->spec.y - 4, sets->spec.x + sets->spec.mx + 2, sets->spec.y - 1, color::enabled());

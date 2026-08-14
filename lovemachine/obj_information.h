@@ -33,11 +33,11 @@ namespace obj
 			sets->info.x = max(3, min(sets->info.x, global::screen.right - sets->info.mx - 3));
 			sets->info.y = max(sets->info.y - 11 - (size.bottom / 2), min(sets->info.y, global::screen.bottom - sets->info.my - 3));
 
-			// îñíîâà èíôî áîêñà
+			// Ã®Ã±Ã­Ã®Ã¢Ã  Ã¨Ã­Ã´Ã® Ã¡Ã®ÃªÃ±Ã 
 			prim::filled_box(sets->info.x - 2, sets->info.y - 10 - (size.bottom / 2), sets->info.x + sets->info.mx + 2, sets->info.y + sets->info.my + 2, color::background());
 			prim::bordered_box(sets->info.x - 1, sets->info.y - 1, sets->info.x + sets->info.mx + 1, sets->info.y + sets->info.my + 1, color::outline());
 			prim::bordered_box(sets->info.x - 3, sets->info.y - 11 - (size.bottom / 2), sets->info.x + sets->info.mx + 3, sets->info.y + sets->info.my + 3, color::outline());
-			// îñíîâà èíôî áîêñà
+			// Ã®Ã±Ã­Ã®Ã¢Ã  Ã¨Ã­Ã´Ã® Ã¡Ã®ÃªÃ±Ã 
 
 			font::draw(font::cont, sets->info.x + (sets->info.mx / 2), sets->info.y - 10, color::enabled() + 65, DT_CENTER | DT_VCENTER, "information");
 			prim::filled_box(sets->info.x - 2, sets->info.y - 4, sets->info.x + sets->info.mx + 2, sets->info.y - 1, color::enabled());

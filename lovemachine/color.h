@@ -62,17 +62,17 @@ struct color
 		return color(r, g, b, a);
 	}
 
-	// цвета для меню
-	static color background() { return color(18, 18, 18); } // задник
-	static color outline() { return color(9, 9, 9); } // обводка меню и контроллеров
-	static color closed_tab() { return color(30, 30, 30); } // закрытая вкладка
-	static color opened_tab() { return color(45, 45, 45); } // открытая вкладка
-	static color text() { return color(150, 150, 150); } // текст
-	static color ptext() { return color(200, 200, 200); } // выбранный текст
-	static color disabled() { return color(40, 40, 40); } // чекбокс выключен
-	static color enabled() { return color(152, 26, 152); } // чекбокс включен
+	// Г¶ГўГҐГІГ  Г¤Г«Гї Г¬ГҐГ­Гѕ
+	static color background() { return color(18, 18, 18); } // Г§Г Г¤Г­ГЁГЄ
+	static color outline() { return color(9, 9, 9); } // Г®ГЎГўГ®Г¤ГЄГ  Г¬ГҐГ­Гѕ ГЁ ГЄГ®Г­ГІГ°Г®Г«Г«ГҐГ°Г®Гў
+	static color closed_tab() { return color(30, 30, 30); } // Г§Г ГЄГ°Г»ГІГ Гї ГўГЄГ«Г Г¤ГЄГ 
+	static color opened_tab() { return color(45, 45, 45); } // Г®ГІГЄГ°Г»ГІГ Гї ГўГЄГ«Г Г¤ГЄГ 
+	static color text() { return color(150, 150, 150); } // ГІГҐГЄГ±ГІ
+	static color ptext() { return color(200, 200, 200); } // ГўГ»ГЎГ°Г Г­Г­Г»Г© ГІГҐГЄГ±ГІ
+	static color disabled() { return color(40, 40, 40); } // Г·ГҐГЄГЎГ®ГЄГ± ГўГ»ГЄГ«ГѕГ·ГҐГ­
+	static color enabled() { return color(152, 26, 152); } // Г·ГҐГЄГЎГ®ГЄГ± ГўГЄГ«ГѕГ·ГҐГ­
 
-	// мой любимый цвет
+	// Г¬Г®Г© Г«ГѕГЎГЁГ¬Г»Г© Г¶ГўГҐГІ
 	static color lm() { return color(49, 124, 230); }
 
 	int r, g, b, a;

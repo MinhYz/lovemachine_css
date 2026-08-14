@@ -209,11 +209,11 @@ namespace Menu
 			ImGui::SetNextItemWidth(170);
 			ImGui::SliderFloat("Spin Speed", &sets->rage.spin_speed, 1.0f, 100.0f, "%.0f deg");
 
-			const char* pitch_aa_items[] = { "Off", "Emotion (-89° Down)", "Up (89°)", "Zero (0°)" };
+			const char* pitch_aa_items[] = { "Off", "Emotion (-89Â° Down)", "Up (89Â°)", "Zero (0Â°)" };
 			ImGui::SetNextItemWidth(170);
 			ImGui::Combo("Pitch Anti-Aim", &sets->rage.pitch_aa, pitch_aa_items, IM_ARRAYSIZE(pitch_aa_items));
 
-			const char* yaw_aa_items[] = { "Off", "Backward (180°)", "Spinbot", "Jitter", "Sideways (90°)" };
+			const char* yaw_aa_items[] = { "Off", "Backward (180Â°)", "Spinbot", "Jitter", "Sideways (90Â°)" };
 			ImGui::SetNextItemWidth(170);
 			ImGui::Combo("Yaw Anti-Aim", &sets->rage.yaw_aa, yaw_aa_items, IM_ARRAYSIZE(yaw_aa_items));
 
@@ -270,7 +270,7 @@ namespace Menu
 			ImGui::Checkbox("Enable Thirdperson Camera", &sets->visuals.thirdperson);
 			ImGui::SetNextItemWidth(170);
 			ImGui::SliderFloat("Camera Distance", &sets->visuals.thirdperson_dist, 30.0f, 300.0f, "%.0f px");
-			ImGui::Checkbox("Reverse Camera Angle (180° Look Backward)", &sets->visuals.thirdperson_reverse);
+			ImGui::Checkbox("Reverse Camera Angle (180Â° Look Backward)", &sets->visuals.thirdperson_reverse);
 
 			ImGui::EndChild();
 			ImGui::NextColumn();
@@ -498,7 +498,7 @@ namespace Menu
 					if (ImGui::Selectable(available_configs[i], selected_cfg == i))
 					{
 						selected_cfg = i;
-						strncpy(config_name_buf, available_configs[i], sizeof(config_name_buf) - 1);
+						snprintf(config_name_buf, sizeof(config_name_buf), "%s", available_configs[i]);
 					}
 				}
 			}

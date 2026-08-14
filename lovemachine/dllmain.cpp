@@ -1,4 +1,4 @@
-﻿// dllmain.cpp : Определяет точку входа для приложения DLL.
+ï»¿// dllmain.cpp : ÐÐ¿ÑÐµÐ´ÐµÐ»ÑÐµÑ ÑÐ¾ÑÐºÑ Ð²ÑÐ¾Ð´Ð° Ð´Ð»Ñ Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ñ DLL.
 #include "includes.h"
 #include "definitions.h"
 #include "global.h"
@@ -24,12 +24,12 @@ void thread()
 	models::on_inject();
 	configs::on_inject();
 	hooks::do_them();
-	ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records)); // TODO : вставить куда-нибудь еще (legit::on_inject)
+	ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records)); // TODO : Ð²ÑÑÐ°Ð²Ð¸ÑÑ ÐºÑÐ´Ð°-Ð½Ð¸Ð±ÑÐ´Ñ ÐµÑÐµ (legit::on_inject)
 	console::write("/ / / DONE SUCCESFULLY / / /", darkwhite);
 	//_cvar->ConsoleColorPrintf(color::lm(), "welcome to lovemachine\nbruh bruh bruh bruh");
 	Sleep(10);
 	_engine->clientcmd_unrestricted(u8"echo ZDAROVA CHMO");
-	//_engine->clientcmd_unrestricted(u8"echo ▓▓▓▓▓▓▀▀░░░░░░▀▀▓▓▓▓▓▓\necho ▓▓▓▀░░░░░▄██▄░░░░░▀▓▓▓\necho ▓▓░░░░░▄▄██▀░░░░░░░░▓▓\necho ▓░░░░░▄██▀░░░▄█▄░░░░░▓▌░░░░░▀██▄▄▄█████▄░░░▐\necho ░░▄▄▄░░░▀████▀░▀▀██▄░░\necho ░░▀██▄░▄▄████▄░░░▀▀▀░░\necho ▌░░░▀█████▀▀▀██▄░░░░░▐\necho ▓░░░░░▀█▀░░░▄██▀░░░░░▓▓▓░░░░░░░░▄██▀░░░░░░▓▓\necho ▓▓▓▄░░░░░▀█▀▀░░░░░▄▓▓▓\n");
+	//_engine->clientcmd_unrestricted(u8"echo ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââ\necho ââââââââââââââââââââââââââââââââââââââââââââ\necho ââââââââââââââââââââââ\n");
 
 	global::unhook = false;
 	return;

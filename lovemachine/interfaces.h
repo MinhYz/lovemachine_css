@@ -215,8 +215,8 @@ public:
 		//return vfunc< w2s_matrix_fn >(this, 36)(this); //36 - 37
 	}
 
-	bool is_screenshoting() // ïî÷åìó-òî âñåãäà true (ñêîðåå âñåãî èç-çà òîãî, ÷òî ýòî íîíñòèì)
-	{ // upd. - õç êàêîé èíäåêñ, ìá ýòîãî äàæå íåò
+	bool is_screenshoting() // Ã¯Ã®Ã·Ã¥Ã¬Ã³-Ã²Ã® Ã¢Ã±Ã¥Ã£Ã¤Ã  true (Ã±ÃªÃ®Ã°Ã¥Ã¥ Ã¢Ã±Ã¥Ã£Ã® Ã¨Ã§-Ã§Ã  Ã²Ã®Ã£Ã®, Ã·Ã²Ã® Ã½Ã²Ã® Ã­Ã®Ã­Ã±Ã²Ã¨Ã¬)
+	{ // upd. - ÃµÃ§ ÃªÃ ÃªÃ®Ã© Ã¨Ã­Ã¤Ã¥ÃªÃ±, Ã¬Ã¡ Ã½Ã²Ã®Ã£Ã® Ã¤Ã Ã¦Ã¥ Ã­Ã¥Ã²
 		typedef bool(__thiscall* is_screenshoting_fn)(void*);
 		return vfunc< is_screenshoting_fn >(this, 77)(this); // 91 //114 - 12 = 102 //91 - 12 = 79
 	}

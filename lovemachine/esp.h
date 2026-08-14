@@ -5,6 +5,9 @@
 #include "events.h"
 #include "settings.h"
 #include "surface.h"
+#include "d3d.h"
+
+using namespace d3d;
 
 namespace esp
 {
@@ -235,8 +238,8 @@ namespace esp
 					i--;
 					continue;
 				}
-				// TODO: ñäåëàòü òàê, ÷òîáû ëèíèÿ ñòàíîâèëàñü êðóãîì, óäëèíÿÿñü, à ïîñëå óêîðà÷èâàëàñü è èñ÷åçàëà
-				circle_3d(server::sounds.at(i).position,
+				// TODO: Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã²Ã Ãª, Ã·Ã²Ã®Ã¡Ã» Ã«Ã¨Ã­Ã¨Ã¿ Ã±Ã²Ã Ã­Ã®Ã¢Ã¨Ã«Ã Ã±Ã¼ ÃªÃ°Ã³Ã£Ã®Ã¬, Ã³Ã¤Ã«Ã¨Ã­Ã¿Ã¿Ã±Ã¼, Ã  Ã¯Ã®Ã±Ã«Ã¥ Ã³ÃªÃ®Ã°Ã Ã·Ã¨Ã¢Ã Ã«Ã Ã±Ã¼ Ã¨ Ã¨Ã±Ã·Ã¥Ã§Ã Ã«Ã 
+				circle_3d(cvector(server::sounds.at(i).position.x, server::sounds.at(i).position.y, server::sounds.at(i).position.z),
 					5.f + abs(server::sounds.at(i).time - global::curtime) * 5.f, 14.f,
 					server::sounds.at(i).col.with_alpha(255.f - abs(server::sounds.at(i).time - global::curtime) * 127.5f));
 			}
@@ -276,8 +279,8 @@ namespace esp
 	}
 
 	//float oldx, oldy, dx, dy, lastx, lasty;
-	// î÷åíü ëàãàåò w2s, åñï íå áóäåò ïîêà w2s íå ïðèìåò õðèñòèóàíñòâî âíîâü
-	// âñå òàêè ïðèíÿëî, çà ðàáîòó
+	// Ã®Ã·Ã¥Ã­Ã¼ Ã«Ã Ã£Ã Ã¥Ã² w2s, Ã¥Ã±Ã¯ Ã­Ã¥ Ã¡Ã³Ã¤Ã¥Ã² Ã¯Ã®ÃªÃ  w2s Ã­Ã¥ Ã¯Ã°Ã¨Ã¬Ã¥Ã² ÃµÃ°Ã¨Ã±Ã²Ã¨Ã³Ã Ã­Ã±Ã²Ã¢Ã® Ã¢Ã­Ã®Ã¢Ã¼
+	// Ã¢Ã±Ã¥ Ã²Ã ÃªÃ¨ Ã¯Ã°Ã¨Ã­Ã¿Ã«Ã®, Ã§Ã  Ã°Ã Ã¡Ã®Ã²Ã³
 	void draw()
 	{
 		if (!sets->visuals.bomb_timer && !sets->visuals.esp_filter[0] && !sets->visuals.esp_filter[1] && !sets->visuals.esp_filter[2] && !sets->visuals.esp_filter[3] && !sets->visuals.esp_filter[4] && !sets->visuals.esp_filter[5])

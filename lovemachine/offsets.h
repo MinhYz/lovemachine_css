@@ -37,32 +37,32 @@ namespace offsets
 	dword usp_silencer;
 	dword m4a1_silencer;
 
-	// TODO : переработать cout в console::write
+	// TODO : ГЇГҐГ°ГҐГ°Г ГЎГ®ГІГ ГІГј cout Гў console::write
 	const char* initialize_tables()
 	{
-		tables.clear(); // очистка массива
+		tables.clear(); // Г®Г·ГЁГ±ГІГЄГ  Г¬Г Г±Г±ГЁГўГ 
 
 		auto p_client = game::interfaces::client;
 
 		if (!p_client)
 			return "/fail/ failed to get client";
 		
-		auto p_class = p_client->get_all_classes(); // все клиентские классы
+		auto p_class = p_client->get_all_classes(); // ГўГ±ГҐ ГЄГ«ГЁГҐГ­ГІГ±ГЄГЁГҐ ГЄГ«Г Г±Г±Г»
 		if (!p_class)
 			return "/fail/ failed to get classes";
 
 		while (p_class)
 		{
-			auto table = p_class->recv_table; // таблица класса
-			tables.push_back(table); // добавляем в список таблицу
+			auto table = p_class->recv_table; // ГІГ ГЎГ«ГЁГ¶Г  ГЄГ«Г Г±Г±Г 
+			tables.push_back(table); // Г¤Г®ГЎГ ГўГ«ГїГҐГ¬ Гў Г±ГЇГЁГ±Г®ГЄ ГІГ ГЎГ«ГЁГ¶Гі
 
-			p_class = p_class->next; // переходим к следующему классу
+			p_class = p_class->next; // ГЇГҐГ°ГҐГµГ®Г¤ГЁГ¬ ГЄ Г±Г«ГҐГ¤ГіГѕГ№ГҐГ¬Гі ГЄГ«Г Г±Г±Гі
 		}
 
 		return "/tables/ succesfull";
 	}
 
-	//TODO : понять как работает эта рекурсивная функция
+	//TODO : ГЇГ®Г­ГїГІГј ГЄГ ГЄ Г°Г ГЎГ®ГІГ ГҐГІ ГЅГІГ  Г°ГҐГЄГіГ°Г±ГЁГўГ­Г Гї ГґГіГ­ГЄГ¶ГЁГї
 	dword get_property(RecvTable* table, const char* property_name, RecvProp** property = NULL)
 	{
 		int extraOffset = 0;
@@ -120,7 +120,7 @@ namespace offsets
 		return offset;
 	}
 
-	// TODO : доработать
+	// TODO : Г¤Г®Г°Г ГЎГ®ГІГ ГІГј
 	void dump()
 	{
 		for (auto table : tables)
@@ -171,7 +171,7 @@ namespace offsets
 		shots_fired = get_offset("DT_CSPlayer", "m_iShotsFired");
 		obs_target = get_offset("DT_CSPlayer", "m_hObserverTarget");
 		obs_mode = get_offset("DT_CSPlayer", "m_iObserverMode");
-		armor = get_offset("DT_CSPlayer", "m_ArmorValue"); // TODO: рядом есть m_iFrags и m_iDeaths, добавить в info
+		armor = get_offset("DT_CSPlayer", "m_ArmorValue"); // TODO: Г°ГїГ¤Г®Г¬ ГҐГ±ГІГј m_iFrags ГЁ m_iDeaths, Г¤Г®ГЎГ ГўГЁГІГј Гў info
 		c4_blow = get_offset("DT_PlantedC4", "m_flC4Blow");
 		c4_timer = get_offset("DT_PlantedC4", "m_flTimerLength");
 		//coord_frame = get_offset("DT_CSPlayer", "m_fFlags") - sizeof(Vector) - sizeof(Vector) - sizeof(matrix3x4_t);

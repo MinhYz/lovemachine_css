@@ -49,7 +49,7 @@ namespace d3d
 			{
 				while (!fonts[font_id])
 				{
-					D3DXCreateFontA(device, fonts_info[font_id].scale, 0/*ширину определит сам*/, fonts_info[0].flags, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fonts_info[font_id].name, &fonts[font_id]);
+					D3DXCreateFontA(device, fonts_info[font_id].scale, 0/*ГёГЁГ°ГЁГ­Гі Г®ГЇГ°ГҐГ¤ГҐГ«ГЁГІ Г±Г Г¬*/, fonts_info[0].flags, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fonts_info[font_id].name, &fonts[font_id]);
 				}
 
 				console::write_hex("/d3d/ fonts[" + to_str(font_id) + "]", (dword)fonts[font_id], green);
@@ -279,7 +279,7 @@ namespace d3d
 			filled_box(x1 - 1, y, x1, y1, p_color);// xy1._____.x1y1
 		}
 
-		// не работает цвет (всегда черный)
+		// Г­ГҐ Г°Г ГЎГ®ГІГ ГҐГІ Г¶ГўГҐГІ (ГўГ±ГҐГЈГ¤Г  Г·ГҐГ°Г­Г»Г©)
 		//void line(float x, float y, float x1, float y1, color p_color)
 		//{
 			/*vertex line_vertex[2];// = { { x, y, p_color.to_d3d()}, { x1, y1, p_color.to_d3d()} };

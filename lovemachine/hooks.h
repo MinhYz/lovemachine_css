@@ -65,10 +65,10 @@ namespace hooks
 			global::key[VK_MBUTTON] = false;
 			break;
 		case WM_XBUTTONDOWN:
-			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = true; // GET_XBUTTON_WPARAM = êàêàÿ ïî çíà÷åíèþ êíîïêà(áîêîâàÿ)
+			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = true; // GET_XBUTTON_WPARAM = ÃªÃ ÃªÃ Ã¿ Ã¯Ã® Ã§Ã­Ã Ã·Ã¥Ã­Ã¨Ã¾ ÃªÃ­Ã®Ã¯ÃªÃ (Ã¡Ã®ÃªÃ®Ã¢Ã Ã¿)
 			break;
 		case WM_XBUTTONUP:
-			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = false; // GET_XBUTTON_WPARAM = êàêàÿ ïî çíà÷åíèþ êíîïêà(áîêîâàÿ)
+			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = false; // GET_XBUTTON_WPARAM = ÃªÃ ÃªÃ Ã¿ Ã¯Ã® Ã§Ã­Ã Ã·Ã¥Ã­Ã¨Ã¾ ÃªÃ­Ã®Ã¯ÃªÃ (Ã¡Ã®ÃªÃ®Ã¢Ã Ã¿)
 			break;
 		case WM_KEYDOWN:
 			global::key[w_param] = true;
@@ -170,7 +170,7 @@ namespace hooks
 			global::map_changed = true;
 		}
 
-		//TODO : óñîâåðøåíñòâîâàòü
+		//TODO : Ã³Ã±Ã®Ã¢Ã¥Ã°Ã¸Ã¥Ã­Ã±Ã²Ã¢Ã®Ã¢Ã Ã²Ã¼
 		for (int key_id = 0; key_id < 0xFE + 1; key_id++)
 		{
 			if (key[key_id] != global::key[key_id])
@@ -453,7 +453,7 @@ namespace hooks
 			}
 		}*/
 
-		// ÿ ïûòàëñÿ, íî íè÷åãî íå âûøëî
+		// Ã¿ Ã¯Ã»Ã²Ã Ã«Ã±Ã¿, Ã­Ã® Ã­Ã¨Ã·Ã¥Ã£Ã® Ã­Ã¥ Ã¢Ã»Ã¸Ã«Ã®
 		/*static unsigned int correct_vgui = NULL;
 		if (correct_vgui == NULL)
 		{
@@ -484,7 +484,7 @@ namespace hooks
 	}
 
 	// thx catalinadragan22 (c) // uc
-	// TODO: èçó÷èòü ïîäðîáíåå
+	// TODO: Ã¨Ã§Ã³Ã·Ã¨Ã²Ã¼ Ã¯Ã®Ã¤Ã°Ã®Ã¡Ã­Ã¥Ã¥
 	memory::vthook* netchannel;
 	using send_datagram_fn = int(__thiscall*)(CNetChan*, /*void*,*/ void*);
 	send_datagram_fn o_send_datagram;
@@ -522,7 +522,7 @@ namespace hooks
 			return;
 		}
 
-		//âûçûâàåò îøèáêó èç-çà ñëèøêîì ÷àñòûõ çàïðîñîâ
+		//Ã¢Ã»Ã§Ã»Ã¢Ã Ã¥Ã² Ã®Ã¸Ã¨Ã¡ÃªÃ³ Ã¨Ã§-Ã§Ã  Ã±Ã«Ã¨Ã¸ÃªÃ®Ã¬ Ã·Ã Ã±Ã²Ã»Ãµ Ã§Ã Ã¯Ã°Ã®Ã±Ã®Ã¢
 		//cusercmd* cmd = _input->get_usercmd(sequence_number);
 
 		/*if (global::cmd && global::cmd->command_number != 0)
@@ -551,7 +551,7 @@ namespace hooks
 				netchannel = null;
 				o_send_datagram = null;
 			}
-			// TODO: ÎÁÍÎÂÈÒÜ È ÂÅÐÍÓÒÜ
+			// TODO: ÃÃÃÃÃÃÃÃ Ã ÃÃÃÃÃÃÃ
 			/*else if (_clientstate && _clientstate->m_NetChannel && !netchannel)
 			{
 				console::write_hex("netchannel", (dword)_clientstate->m_NetChannel, darkgreen);
@@ -561,7 +561,7 @@ namespace hooks
 				console::write_hex("/hook/ o_send_datagram", (dword)o_send_datagram, darkgreen);
 			}*/
 
-			// TODO: èçó÷èòü ïîäðîáíåå
+			// TODO: Ã¨Ã§Ã³Ã·Ã¨Ã²Ã¼ Ã¯Ã®Ã¤Ã°Ã®Ã¡Ã­Ã¥Ã¥
 			/*if (_clientstate)
 			{
 				if (_clientstate->m_NetChannel && global::map_changed)
@@ -606,7 +606,7 @@ namespace hooks
 			//css fix for head triggering (bbox_maxs z component is too small)
 			//credits: me, wav
 			// (c) iwebz kolo
-			// TODO: íå ðàáîòàåò, ëîìàåòñÿ âèç ÷åê, ñêîðåå âñåãî - ÷òî-òî óñòàðåëî
+			// TODO: Ã­Ã¥ Ã°Ã Ã¡Ã®Ã²Ã Ã¥Ã², Ã«Ã®Ã¬Ã Ã¥Ã²Ã±Ã¿ Ã¢Ã¨Ã§ Ã·Ã¥Ãª, Ã±ÃªÃ®Ã°Ã¥Ã¥ Ã¢Ã±Ã¥Ã£Ã® - Ã·Ã²Ã®-Ã²Ã® Ã³Ã±Ã²Ã Ã°Ã¥Ã«Ã®
 			/*for (INT ax = 1; ax <= _engine->get_max_clients(); ax++)
 			{
 				centity* pBaseEntity = _ent_list->get_centity(ax);
@@ -836,7 +836,7 @@ namespace hooks
 	memory::vthook* clientmode;
 	/*using override_view_fn = void(__stdcall*)(cviewsetup* p_setup);
 	override_view_fn o_override_view;
-	void __stdcall override_view_hook(cviewsetup* p_setup) // ïî÷åìó-òî íå ðàáîòàåò, ïðîáîâàë âñå
+	void __stdcall override_view_hook(cviewsetup* p_setup) // Ã¯Ã®Ã·Ã¥Ã¬Ã³-Ã²Ã® Ã­Ã¥ Ã°Ã Ã¡Ã®Ã²Ã Ã¥Ã², Ã¯Ã°Ã®Ã¡Ã®Ã¢Ã Ã« Ã¢Ã±Ã¥
 	{
 		cout << p_setup->fov << ", " << p_setup->fovViewmodel << endl;
 
@@ -899,13 +899,19 @@ namespace hooks
 
 			if (sets->visuals.esp_show[4] && strstr(sample, "footstep"))
 			{
-				//console::write(to_str(entity_index) + " " + sample);
-				server::sounds.push_back({ *origin, global::curtime, color(255, 100, 0) });
+				server::sound s;
+				s.position = cvector(origin->x, origin->y, origin->z);
+				s.time = global::curtime;
+				s.col = color(255, 100, 0);
+				server::sounds.push_back(s);
 			}
 			else if (sets->visuals.esp_show[5] && sample[0] == ')' && sample[1] == 'w' && sample[2] == 'e' && player->is_dormant()) // shot
 			{
-				//console::write(to_str(entity_index) + " " + sample);
-				server::sounds.push_back({ player->get_abs_origin(), global::curtime, color(255, 0, 0)});
+				server::sound s;
+				s.position = player->get_abs_origin();
+				s.time = global::curtime;
+				s.col = color(255, 0, 0);
+				server::sounds.push_back(s);
 			}
 		}
 
@@ -923,7 +929,7 @@ namespace hooks
 	}
 
 	void do_them()
-	{// ñòàðûé		long -> wndproc			  íàø wndproc	   îêíî cs:go	çàäàòü íîâûé àäðåñ					    íîâûé àäðåñ
+	{// Ã±Ã²Ã Ã°Ã»Ã©		long -> wndproc			  Ã­Ã Ã¸ wndproc	   Ã®ÃªÃ­Ã® cs:go	Ã§Ã Ã¤Ã Ã²Ã¼ Ã­Ã®Ã¢Ã»Ã© Ã Ã¤Ã°Ã¥Ã±					    Ã­Ã®Ã¢Ã»Ã© Ã Ã¤Ã°Ã¥Ã±
 		o_wndproc = reinterpret_cast<wndproc>(SetWindowLongPtr(global::window, GWLP_WNDPROC, reinterpret_cast<long>(wndproc_hook)));
 		console::write_hex("/hook/ o_wndproc", (dword)o_wndproc, darkgreen);
 
@@ -956,7 +962,7 @@ namespace hooks
 
 		o_create_move = (create_move_fn)client->hook_function((dword)create_move_hook, 21);
 		console::write_hex("/hook/ o_create_move", (dword)o_create_move, darkgreen);
-		// fsn ðàáî÷èé
+		// fsn Ã°Ã Ã¡Ã®Ã·Ã¨Ã©
 		//o_frame_stage_notify = (frame_stage_notify_fn)client->hook_function((dword)frame_stage_notify_hook, 35);
 		//console::write_hex("/hook/ o_frame_stage_notify", (dword)o_frame_stage_notify, darkgreen);
 		//o_write_usercmd_delta_to_buf = (write_usercmd_delta_to_buf_fn)client->hook_function((dword)write_usercmd_delta_to_buf_hook, 23);

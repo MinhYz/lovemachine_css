@@ -7,7 +7,7 @@ namespace legit
 {
 	namespace aimbot
 	{
-// TODO : заменить на квары ксс
+// TODO : Г§Г Г¬ГҐГ­ГЁГІГј Г­Г  ГЄГўГ Г°Г» ГЄГ±Г±
 #define m_yaw 0.022f
 #define m_pitch 0.022f
 #define sensitivity 3.4f
@@ -287,9 +287,9 @@ namespace legit
 			//if (global::key_click[VK_NUMPAD8])
 			//	send_mouse(0, 10, MOUSEEVENTF_MOVE);
 
-			// TODO : сделай фикс лучше, чем viewangles.x < -87.f || viewangles.x > 87.f
-			// P.S. : использовать trace_forward для проверки на врага под прицелом
-			// P.P.S: причина - начинает неестественно вертеться
+			// TODO : Г±Г¤ГҐГ«Г Г© ГґГЁГЄГ± Г«ГіГ·ГёГҐ, Г·ГҐГ¬ viewangles.x < -87.f || viewangles.x > 87.f
+			// P.S. : ГЁГ±ГЇГ®Г«ГјГ§Г®ГўГ ГІГј trace_forward Г¤Г«Гї ГЇГ°Г®ГўГҐГ°ГЄГЁ Г­Г  ГўГ°Г ГЈГ  ГЇГ®Г¤ ГЇГ°ГЁГ¶ГҐГ«Г®Г¬
+			// P.P.S: ГЇГ°ГЁГ·ГЁГ­Г  - Г­Г Г·ГЁГ­Г ГҐГІ Г­ГҐГҐГ±ГІГҐГ±ГІГўГҐГ­Г­Г® ГўГҐГ°ГІГҐГІГјГ±Гї
 			if (sets->legit.aim.fov <= 0.f || points.empty() || !should_aim() || (!cvar(ragemode).value && (global::cmd->viewangles.x < -87.f || global::cmd->viewangles.x > 87.f))) return;
 
 			global::weapon->update_acc_penalty();

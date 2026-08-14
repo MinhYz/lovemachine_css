@@ -118,7 +118,7 @@ namespace obj
 			}
 		}
 
-		//TODO : сделать взаимодействие мышкой
+		//TODO : Г±Г¤ГҐГ«Г ГІГј ГўГ§Г ГЁГ¬Г®Г¤ГҐГ©Г±ГІГўГЁГҐ Г¬Г»ГёГЄГ®Г©
 		bool textgetter(const char* name, string& text, int p_x, int p_y, int width, int height)
 		{
 			cont++;

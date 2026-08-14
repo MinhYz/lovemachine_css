@@ -1,5 +1,5 @@
 #pragma once
-// TODO : сделать папки и переименовать в aimbot.h
+// TODO : Г±Г¤ГҐГ«Г ГІГј ГЇГ ГЇГЄГЁ ГЁ ГЇГҐГ°ГҐГЁГ¬ГҐГ­Г®ГўГ ГІГј Гў aimbot.h
 #include "game def's.h"
 #include "game shit.h"
 

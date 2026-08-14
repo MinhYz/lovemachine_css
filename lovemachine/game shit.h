@@ -107,7 +107,7 @@ namespace game
 			bullet_params = memory::pattern("client.dll", "55 8B EC 56 8B 75 08 68 ? ? ? ? 56 E8 ? ? ? ? 83 C4 08 84 C0");
 			console::write_hex("/signature/ bullet_params", bullet_params, darkgreen);
 
-			// TODO: Œ¡ÕŒ¬»“‹ » ¬≈–Õ”“‹
+			// TODO: √é√Å√ç√é√Ç√à√í√ú √à √Ç√Ö√ê√ç√ì√í√ú
 			// thx catalindragan22 (c) // uc
 			//clientstate = *reinterpret_cast<cclientstate**>(memory::pattern("engine.dll", "B9 ? ? ? ? E8 ? ? ? ? E8 ? ? ? ? 83 78 14 00") + 0x1);
 			console::write_hex("/signature/ clientstate", (dword)clientstate, darkgreen);

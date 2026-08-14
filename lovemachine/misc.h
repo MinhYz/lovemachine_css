@@ -177,7 +177,7 @@ namespace misc
 
 				//disable = true;
 			}
-			else if (global::key[0x53]) // S // íå èäåàëüíî
+			else if (global::key[0x53]) // S // Ã­Ã¥ Ã¨Ã¤Ã¥Ã Ã«Ã¼Ã­Ã®
 			{
 				if (global::cmd->buttons & IN_BACK)
 				{
@@ -189,7 +189,7 @@ namespace misc
 
 				//disable = true;
 			}
-			else if (global::key[0x44]) // D // íå èäåàëüíî
+			else if (global::key[0x44]) // D // Ã­Ã¥ Ã¨Ã¤Ã¥Ã Ã«Ã¼Ã­Ã®
 			{
 				if (global::cmd->buttons & IN_MOVERIGHT)
 				{
@@ -201,7 +201,7 @@ namespace misc
 
 				//disable = true;
 			}
-			else // W èëè ïî äåôîëòó âïåðåä
+			else // W Ã¨Ã«Ã¨ Ã¯Ã® Ã¤Ã¥Ã´Ã®Ã«Ã²Ã³ Ã¢Ã¯Ã¥Ã°Ã¥Ã¤
 			{
 				//if (global::key[0x57]) _engine->clientcmd_unrestricted("-forward");
 				if (global::cmd->buttons & IN_FORWARD)

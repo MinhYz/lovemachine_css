@@ -127,7 +127,7 @@ namespace models
 				if (strstr(name.c_str(), "models/weapons/") && ((sets->visuals.other_chams[0] && sets->visuals.other_chams[1]) ||
 					((strstr(name.c_str(), "/v_") && sets->visuals.other_chams[0]) || (sets->visuals.other_chams[1] && strstr(name.c_str(), "/w_")))))
 				{
-					// v_ => â ðóêå | w_ => â ïðîñòðàíñòâå
+					// v_ => Ã¢ Ã°Ã³ÃªÃ¥ | w_ => Ã¢ Ã¯Ã°Ã®Ã±Ã²Ã°Ã Ã­Ã±Ã²Ã¢Ã¥
 					bool in_hand = strstr(name.c_str(), "/v_");
 
 					if (sets->visuals.other_style[0] || sets->visuals.other_style[1])

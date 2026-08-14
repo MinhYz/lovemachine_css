@@ -74,11 +74,11 @@ namespace obj
 		sets->menu.x = max(3, min(sets->menu.x, global::screen.right - menu_x - 3));
 		sets->menu.y = max(/*sets->menu.y -*/ 11 + (csize.bottom / 2), min(sets->menu.y, global::screen.bottom - menu_y - 3));
 
-		// основа меню
+		// Г®Г±Г­Г®ГўГ  Г¬ГҐГ­Гѕ
 		prim::filled_box(sets->menu.x - 2, sets->menu.y - 10 - (csize.bottom / 2), sets->menu.x + menu_x + 2, sets->menu.y + menu_y + 2, color::background());
 		prim::bordered_box(sets->menu.x - 1, sets->menu.y - 1, sets->menu.x + menu_x + 1, sets->menu.y + menu_y + 1, color::outline());
 		prim::bordered_box(sets->menu.x - 3, sets->menu.y - 11 - (csize.bottom / 2), sets->menu.x + menu_x + 3, sets->menu.y + menu_y + 3, color::outline());
-		// основа меню
+		// Г®Г±Г­Г®ГўГ  Г¬ГҐГ­Гѕ
 
 		static int cur_tab_x = 0;
 
@@ -164,7 +164,7 @@ namespace obj
 				sets->menu.cont_hovered = -1;
 			}
 
-			prim::filled_box(x, sets->menu.y, x1, y, tab); // основа
+			prim::filled_box(x, sets->menu.y, x1, y, tab); // Г®Г±Г­Г®ГўГ 
 			font::draw(font::tab, tx, sets->menu.y + 15, text, DT_CENTER | DT_VCENTER, name[tab_id]);
 		}
 	}
@@ -217,7 +217,7 @@ namespace obj
 		cur_y += 14;
 	}
 
-	//TODO : сделать +- кнопки по бокам
+	//TODO : Г±Г¤ГҐГ«Г ГІГј +- ГЄГ­Г®ГЇГЄГЁ ГЇГ® ГЎГ®ГЄГ Г¬
 	template< typename T >
 	void slider(int tab, const char* name, T& value, T pmin, T pmax, const char* print_type = "%i")
 	{
@@ -454,7 +454,7 @@ namespace obj
 				int vy1 = y + (15 * (value_id + 1)) - 1;
 
 				if ((!selectable && value_id == *value) || (selectable && values[value_id]))
-					vtext = color::enabled() + 65; // цвет странно работает
+					vtext = color::enabled() + 65; // Г¶ГўГҐГІ Г±ГІГ°Г Г­Г­Г® Г°Г ГЎГ®ГІГ ГҐГІ
 
 				if (in_range(x, vy, global::mouse.x, global::mouse.y, x1, vy1))
 				{
@@ -768,7 +768,7 @@ namespace obj
 		cur_y += 22;
 	}
 		
-	//TODO : пофиксить отрисовку линий и тд и сделать нормальный курсор
+	//TODO : ГЇГ®ГґГЁГЄГ±ГЁГІГј Г®ГІГ°ГЁГ±Г®ГўГЄГі Г«ГЁГ­ГЁГ© ГЁ ГІГ¤ ГЁ Г±Г¤ГҐГ«Г ГІГј Г­Г®Г°Г¬Г Г«ГјГ­Г»Г© ГЄГіГ°Г±Г®Г°
 	void draw_mouse()
 	{
 		prim::filled_box(global::mouse.x - 3, global::mouse.y - 3, global::mouse.x + 3, global::mouse.y + 3, color::lm());

@@ -15,8 +15,8 @@ namespace legit
 
 		inline int get_attack(centity* entity)
 		{
-			// без брони левой 20 правой 65
-			// без брони в спину правой 195
+			// ГЎГҐГ§ ГЎГ°Г®Г­ГЁ Г«ГҐГўГ®Г© 20 ГЇГ°Г ГўГ®Г© 65
+			// ГЎГҐГ§ ГЎГ°Г®Г­ГЁ Гў Г±ГЇГЁГ­Гі ГЇГ°Г ГўГ®Г© 195
 
 			if (entity->get_armor() == 0)
 			{
@@ -49,14 +49,14 @@ namespace legit
 
 			int button = 0;
 
-			// задумка заключается в том, чтобы трейсить по несколько лучей влево и вправо, таким образом находя ближайшего к нам
-			// +так лучше рассчитывается дистанция до игрока
+			// Г§Г Г¤ГіГ¬ГЄГ  Г§Г ГЄГ«ГѕГ·Г ГҐГІГ±Гї Гў ГІГ®Г¬, Г·ГІГ®ГЎГ» ГІГ°ГҐГ©Г±ГЁГІГј ГЇГ® Г­ГҐГ±ГЄГ®Г«ГјГЄГ® Г«ГіГ·ГҐГ© ГўГ«ГҐГўГ® ГЁ ГўГЇГ°Г ГўГ®, ГІГ ГЄГЁГ¬ Г®ГЎГ°Г Г§Г®Г¬ Г­Г ГµГ®Г¤Гї ГЎГ«ГЁГ¦Г Г©ГёГҐГЈГ® ГЄ Г­Г Г¬
+			// +ГІГ ГЄ Г«ГіГ·ГёГҐ Г°Г Г±Г±Г·ГЁГІГ»ГўГ ГҐГІГ±Гї Г¤ГЁГ±ГІГ Г­Г¶ГЁГї Г¤Г® ГЁГЈГ°Г®ГЄГ 
 			for (int i = 0; i < 5; i++)
 				for (int j = 0; j < 3; j++)
 				{
 					float yaw_correction = 20 - (10 * i);
 					float pitch_correction = 10 - (10 * j);
-					qangle viewangle = qangle(clamp(-89.f, global::cmd->viewangles.x + pitch_correction, 89.f), global::cmd->viewangles.y + yaw_correction, 0.f);
+					qangle viewangle = qangle(clamp<float>(-89.f, global::cmd->viewangles.x + pitch_correction, 89.f), global::cmd->viewangles.y + yaw_correction, 0.f);
 					normalize_angle(viewangle);
 					trace_t trace;
 					trigger::trace_forward(viewangle, global::local->get_eye_pos(), global::local, &trace, cvar(kb_range).value + 10.f);

@@ -1,8 +1,15 @@
 #pragma once
+#include "game shit.h"
+#include "game def's.h"
 #include "game classes.h"
+#include "d3d.h"
+#include "surface.h"
+
+using namespace surf;
+using namespace d3d;
+#include "math.h"
 #include "trace shit.h"
 #include "settings.h"
-#include "math.h"
 
 namespace legit
 {
@@ -11,32 +18,32 @@ namespace legit
 		bool undo = false;
 		float timer = 0.f;
 
-		// TODO: ñäåëàòü íà trace.hitgroup??
+		// TODO: Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã­Ã  trace.hitgroup??
 		bool valid_hitbox(int hitbox)
 		{
 			switch (hitbox)
 			{
-			case 11: case 12: /*ãîëîâà è øåÿ*/
+			case 11: case 12: /*Ã£Ã®Ã«Ã®Ã¢Ã  Ã¨ Ã¸Ã¥Ã¿*/
 				return sets->legit.trigger.hitbox[0];
 				break;
-			case 10: /*âñÿ ãğóäü*/
+			case 10: /*Ã¢Ã±Ã¿ Ã£Ã°Ã³Ã¤Ã¼*/
 				return sets->legit.trigger.hitbox[1];
 				break;
-			case 0: case 9: /*ïàõ è æèâîò*/
+			case 0: case 9: /*Ã¯Ã Ãµ Ã¨ Ã¦Ã¨Ã¢Ã®Ã²*/
 				return sets->legit.trigger.hitbox[2];
 				break;
-			case 13: case 14: /*ëåâàÿ ğóêà*/
-			case 16: case 17: /*ïğàâàÿ ğóêà*/
+			case 13: case 14: /*Ã«Ã¥Ã¢Ã Ã¿ Ã°Ã³ÃªÃ */
+			case 16: case 17: /*Ã¯Ã°Ã Ã¢Ã Ã¿ Ã°Ã³ÃªÃ */
 				return sets->legit.trigger.hitbox[3];
 				break;
-			case 1: case 2: case 4: /*ëåâàÿ íîãà*/
-			case 5: case 6: case 8: /*ïğàâàÿ íîãà*/
+			case 1: case 2: case 4: /*Ã«Ã¥Ã¢Ã Ã¿ Ã­Ã®Ã£Ã */
+			case 5: case 6: case 8: /*Ã¯Ã°Ã Ã¢Ã Ã¿ Ã­Ã®Ã£Ã */
 				return sets->legit.trigger.hitbox[4];
 				break;
 			}
 		}
 
-		// ÿ íå çíàş êàê ıòî íàçâàòü
+		// Ã¿ Ã­Ã¥ Ã§Ã­Ã Ã¾ ÃªÃ Ãª Ã½Ã²Ã® Ã­Ã Ã§Ã¢Ã Ã²Ã¼
 		void trace_forward(qangle viewangle, cvector position, centity* skip, trace_t* trace, float distance, unsigned int mask = MASK_ALL)
 		{
 			cvector pos(0.f, 0.f, 0.f);
@@ -68,7 +75,7 @@ namespace legit
 			//	timer = 0.f;
 		}
 
-		// TODO: óëó÷øèòü distance (ğàçíàÿ äàëüíîñòü ïîğàæåíèÿ ó êàæäîãî îğóæèÿ)
+		// TODO: Ã³Ã«Ã³Ã·Ã¸Ã¨Ã²Ã¼ distance (Ã°Ã Ã§Ã­Ã Ã¿ Ã¤Ã Ã«Ã¼Ã­Ã®Ã±Ã²Ã¼ Ã¯Ã®Ã°Ã Ã¦Ã¥Ã­Ã¨Ã¿ Ã³ ÃªÃ Ã¦Ã¤Ã®Ã£Ã® Ã®Ã°Ã³Ã¦Ã¨Ã¿)
 		void end()
 		{
 			bool bind = sets->legit.trigger.bind.is();
