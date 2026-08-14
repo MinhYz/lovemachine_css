@@ -1,3 +1,5 @@
+#include <windows.h>
+#include <dbghelp.h>
 #include "includes.h"
 #include "definitions.h"
 #include "global.h"
@@ -9,7 +11,6 @@
 #include "events.h"
 #include "configs.h"
 
-#include <dbghelp.h>
 #pragma comment(lib, "dbghelp.lib")
 
 static std::ofstream g_DebugLog;
@@ -55,7 +56,7 @@ LONG WINAPI SafeCrashHandler(PEXCEPTION_POINTERS pExceptionInfo)
 			GetCurrentProcess(),
 			GetCurrentProcessId(),
 			hDumpFile,
-			MiniDumpWithNormal,
+			(MINIDUMP_TYPE)0, // MiniDumpWithNormal
 			&mei,
 			NULL,
 			NULL
