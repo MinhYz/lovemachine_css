@@ -372,46 +372,23 @@ namespace misc
 
 		misc::draw::run();
 
-		// Thirdperson logic
-		static bool is_tp_active = false;
-		if (sets->visuals.thirdperson && _engine && _engine->in_game())
+		// Thirdperson logic (Bypass sv_cheats for LAN & Multiplayer servers)
+		if (sets->visuals.thirdperson && _input)
 		{
-			static convar* sv_cheats = nullptr;
-			static convar* cam_idealdist = nullptr;
-			if (!sv_cheats && _cvar) sv_cheats = _cvar->find_var("sv_cheats");
-			if (!cam_idealdist && _cvar) cam_idealdist = _cvar->find_var("cam_idealdist");
-
-			if (sv_cheats)
+			*_input->m_fCameraInThirdPerson() = true;
+			_input->m_vecCameraOffset()->z = sets->visuals.thirdperson_dist;
+			if (sets->visuals.thirdperson_reverse)
 			{
-				*(int*)((DWORD)sv_cheats + 0x2C) = 1;
-				sv_cheats->m_nValue = 1;
+				_input->m_vecCameraOffset()->y = 180.0f;
 			}
-			if (cam_idealdist)
+			else
 			{
-				cam_idealdist->SetValue(sets->visuals.thirdperson_dist);
-			}
-
-			if (_input)
-			{
-				*_input->m_fCameraInThirdPerson() = true;
-				_input->m_vecCameraOffset()->z = sets->visuals.thirdperson_dist;
-				if (sets->visuals.thirdperson_reverse)
-				{
-					_input->m_vecCameraOffset()->y = 180.0f;
-				}
-			}
-
-			if (!is_tp_active)
-			{
-				_engine->clientcmd_unrestricted("thirdperson");
-				is_tp_active = true;
+				_input->m_vecCameraOffset()->y = 0.0f;
 			}
 		}
-		else if (is_tp_active && _engine && _engine->in_game())
+		else if (_input)
 		{
-			if (_input) *_input->m_fCameraInThirdPerson() = false;
-			_engine->clientcmd_unrestricted("firstperson");
-			is_tp_active = false;
+			*_input->m_fCameraInThirdPerson() = false;
 		}
 
 		nightmode();

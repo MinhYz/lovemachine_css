@@ -42,6 +42,7 @@ public:
 		bool opened = false, hovered = false, console = false, panic = false; // TODO : Ã¢Ã¬Ã¥Ã±Ã²Ã® panic Ã«Ã³Ã·Ã¸Ã¥ Ã±Ã¤Ã¥Ã«Ã Ã²Ã¼ Ã Ã­Ã«Ã®Ã Ã¤ Ã·Ã¨Ã²Ã 
 		int cont_hovered = -1;
 		int x = 100, y = 100, cur_tab = 0;
+		int menu_key = VK_INSERT;
 	} menu;
 
 	struct
@@ -198,12 +199,6 @@ public:
 		bind_t draw_start = { false, VK_XBUTTON1 };
 		bind_t draw_clear = { false, VK_XBUTTON2 };
 	} misc;
-
-	struct
-	{
-		bool panic = false;
-		int menu_key = VK_INSERT;
-	} menu;
 };
 
 inline settings* sets = new settings();
