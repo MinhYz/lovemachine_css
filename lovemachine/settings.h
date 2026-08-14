@@ -131,10 +131,10 @@ public:
 		color chams_t = color(150, 255, 13);
 		color chams_ct = color(50, 255, 150);
 		int crosshair = 0;
-		bool esp_filter[6] = { true, false, false, false, false, false };
-		bool esp_show[6] = { true, true, true, false, false, false };
-		bool esp_bar[4] = { true, false, false, false };
-		bool esp_check[2] = { true, false };
+		bool esp_filter[6] = { true, true, true, true, true, true };
+		bool esp_show[6] = { true, true, true, true, true, true };
+		bool esp_bar[4] = { true, true, true, true };
+		bool esp_check[2] = { true, true };
 		color esp_t = color(210, 35, 16);
 		color esp_ct = color(50, 90, 210);
 		bool fade = true;

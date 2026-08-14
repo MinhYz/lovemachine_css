@@ -575,6 +575,7 @@ namespace hooks
 		if (!sets->menu.panic && _engine->is_connected() && _engine->in_game() && global::cmd && global::cmd->command_number != 0 &&
 			(global::local_id = _engine->get_local_id()) > 0 && (global::local = _ent_list->get_centity(global::local_id)))
 		{
+			Vector orig_angles = global::cmd->viewangles;
 			if ((global::map_changed || sets->misc.fake_ping == 0) && netchannel)
 			{
 				netchannel->unhook();
@@ -749,6 +750,7 @@ namespace hooks
 			misc::run();
 			rage::anti_aim();
 			rage::magic_bullet();
+			rage::fix_movement(global::cmd, orig_angles);
 			misc::draw::clear(true);
 
 			//auto p_weapon = global::local->get_weapon();
