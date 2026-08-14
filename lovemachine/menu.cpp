@@ -4,7 +4,7 @@
 
 namespace Menu
 {
-	bool show_menu = true;
+	bool show_menu = false;
 	int current_tab = 0;
 
 	// Helper for ImGui ColorEdit3 mapped to custom color struct

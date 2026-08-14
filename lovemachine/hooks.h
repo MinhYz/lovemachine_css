@@ -31,23 +31,20 @@ namespace hooks
 	{
 		global::realtime = (float)GetTickCount64() / 1000.f;
 
-		if (msg == WM_KEYDOWN && w_param == VK_INSERT)
+		// Toggle Menu Hotkey (Default INSERT or selected key)
+		if (msg == WM_KEYDOWN && (w_param == VK_INSERT || w_param == static_cast<WPARAM>(sets->menu.menu_key)))
 		{
 			Menu::show_menu = !Menu::show_menu;
+			sets->menu.opened = Menu::show_menu;
 		}
 
-		if (Menu::show_menu && ImGui::GetCurrentContext() && ImGui_ImplWin32_WndProcHandler(wnd, msg, w_param, l_param))
-		{
-			return true;
-		}
-
+		// Track input states for cheat logic
 		switch (msg)
 		{
 		case WM_LBUTTONDOWN:
 			global::key[VK_LBUTTON] = true;
 			if (global::key_timer[VK_LBUTTON] == 0.f)
 				global::key_timer[VK_LBUTTON] = global::realtime;
-			//if (legit::aimbot::smac_delay) return true;
 			break;
 		case WM_LBUTTONUP:
 			global::key[VK_LBUTTON] = false;
@@ -66,25 +63,16 @@ namespace hooks
 			global::key[VK_MBUTTON] = false;
 			break;
 		case WM_XBUTTONDOWN:
-			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = true; // GET_XBUTTON_WPARAM = ÃªÃ ÃªÃ Ã¿ Ã¯Ã® Ã§Ã­Ã Ã·Ã¥Ã­Ã¨Ã¾ ÃªÃ­Ã®Ã¯ÃªÃ (Ã¡Ã®ÃªÃ®Ã¢Ã Ã¿)
+			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = true;
 			break;
 		case WM_XBUTTONUP:
-			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = false; // GET_XBUTTON_WPARAM = ÃªÃ ÃªÃ Ã¿ Ã¯Ã® Ã§Ã­Ã Ã·Ã¥Ã­Ã¨Ã¾ ÃªÃ­Ã®Ã¯ÃªÃ (Ã¡Ã®ÃªÃ®Ã¢Ã Ã¿)
+			global::key[VK_XBUTTON1 + (GET_XBUTTON_WPARAM(w_param) - 1)] = false;
 			break;
 		case WM_KEYDOWN:
 			global::key[w_param] = true;
-			if (w_param == static_cast<WPARAM>(sets->menu.menu_key))
-			{
-				Menu::show_menu = !Menu::show_menu;
-				sets->menu.opened = Menu::show_menu;
-			}
-			if (w_param == VK_F5 || w_param == VK_SNAPSHOT)
-				return CallWindowProc(o_wndproc, wnd, msg, w_param, l_param);
 			break;
 		case WM_KEYUP:
 			global::key[w_param] = false;
-			if (w_param == VK_F5 || w_param == VK_SNAPSHOT)
-				return CallWindowProc(o_wndproc, wnd, msg, w_param, l_param);
 			break;
 		case WM_MOUSEMOVE:
 			global::mouse.x = (signed short)(l_param);
@@ -93,8 +81,17 @@ namespace hooks
 		default: break;
 		}
 
+		// When menu is OPEN, pass inputs to ImGui and trap them from game
 		if (Menu::show_menu && !sets->menu.panic)
+		{
+			if (ImGui::GetCurrentContext() && ImGui_ImplWin32_WndProcHandler(wnd, msg, w_param, l_param))
+				return true;
 			return true;
+		}
+
+		// When menu is CLOSED, let all inputs pass straight to game Engine
+		return CallWindowProc(o_wndproc, wnd, msg, w_param, l_param);
+	}
 
 		/*if (_engine)
 		{
