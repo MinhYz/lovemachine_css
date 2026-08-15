@@ -350,10 +350,27 @@ namespace esp
 				// Asian Hat 3D Conical Rice Hat (Applies to ALL players & local player)
 				if (sets->visuals.asian_hat && entity->valid())
 				{
+					static cvector smoothed_head[65];
 					cvector head_pos = entity->get_hitbox(hitbox_head, matrix);
+					if (head_pos.IsZero())
+					{
+						head_pos = entity->get_eye_pos() + cvector(0, 0, 4.0f);
+					}
+
+					int cache_id = (id >= 0 && id < 65) ? id : 0;
+					if (smoothed_head[cache_id].IsZero() || (head_pos - smoothed_head[cache_id]).Length() > 40.0f)
+					{
+						smoothed_head[cache_id] = head_pos;
+					}
+					else
+					{
+						smoothed_head[cache_id] = smoothed_head[cache_id] * 0.35f + head_pos * 0.65f;
+					}
+					head_pos = smoothed_head[cache_id];
+
 					if (!head_pos.IsZero())
 					{
-						head_pos.z += 8.0f;
+						head_pos.z += 7.0f;
 						cvector apex = head_pos + cvector(0, 0, sets->visuals.asian_hat_height);
 						cvector screen_apex;
 						if (w2s(apex, screen_apex))

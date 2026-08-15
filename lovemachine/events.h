@@ -58,7 +58,7 @@ namespace events
 					else if (event->get_int("hitgroup") == 1) text = "HEADSHOT";
 					else if (strstr(weapon, "grenade") || strstr(weapon, "flash")) text = "GRENADE";
 					else text = "KILLED";
-					if (killstreak > 1) text += " X" + killstreak;
+					if (killstreak > 1) text += " X" + std::to_string(killstreak);
 					kill_timer = global::realtime + 3.f;
 				}
 				legit::aimbot::kill_delay = sets->legit.aim.kill_delay != 0.f ? global::curtime + sets->legit.aim.kill_delay : 0.f;

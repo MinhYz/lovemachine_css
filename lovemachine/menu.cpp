@@ -147,7 +147,7 @@ namespace Menu
 
 			// Smooth 3D rotation animation
 			static float model_angle = 0.0f;
-			model_angle += ImGui::GetIO().DeltaTime * 0.45f;
+			model_angle += ImGui::GetIO().DeltaTime * 0.55f * ui_anim_speed;
 			float cos_a = std::cos(model_angle);
 			float sin_a = std::sin(model_angle);
 
@@ -774,8 +774,8 @@ namespace Menu
 		// Column 1: Pitch & Yaw Angles
 		ImGui::BeginChild("AntiAimCol1", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("ANTI-AIM ANGLES");
-			AnimatedSwitch("Enable Anti-Aim / Spinbot", &sets->rage.spinbot);
+			BeginGroupbox("SPINBOT & ANGLES");
+			AnimatedSwitch("Enable Spinbot", &sets->rage.spinbot);
 			
 			const char* pitch_modes[] = { "Off", "Down (Emotion)", "Up (Fakeping)", "Zero / Untrusted" };
 			ImGui::SetNextItemWidth(170);
@@ -815,21 +815,16 @@ namespace Menu
 		// Column 1: Aimbot & Recoil Control (RCS)
 		ImGui::BeginChild("LegitCol1", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("Legit Aimbot Master");
+			BeginGroupbox("Aim Assistance & Trigger");
 			AnimatedSwitch("Enable Legitbot", &sets->legit.enabled);
-			AnimatedSwitch("Draw FOV Circle", &sets->legit.aim.draw_fov);
+			AnimatedSwitch("Automatic Fire (Autopistol)", &sets->misc.autopistol);
+			AnimatedSwitch("Triggerbot", &sets->legit.trigger._enabled);
 			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("FOV (First Bullet)", &sets->legit.aim.fov, 0.1f, 30.0f, "%.1f deg");
+			ImGui::SliderFloat("Trigger Delay", &sets->legit.trigger.delay, 0.0f, 1.0f, "%.2f s");
 			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Smooth (First Bullet)", &sets->legit.aim.smooth[0], 1.0f, 100.0f, "%.1f");
-			AnimatedSwitch("Use First Bullet Settings for Spray", &sets->legit.aim.use_first_bullet_settings);
-			if (!sets->legit.aim.use_first_bullet_settings)
-			{
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("FOV (Spray Bullets)", &sets->legit.aim.other_fov, 0.1f, 30.0f, "%.1f deg");
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("Smooth (Spray Bullets)", &sets->legit.aim.other_smooth[0], 1.0f, 100.0f, "%.1f");
-			}
+			ImGui::SliderFloat("Aimbot Field of View", &sets->legit.aim.fov, 0.0f, 30.0f, "%.1f°");
+			ImGui::SetNextItemWidth(170);
+			ImGui::SliderFloat("Smooth Amount", &sets->legit.aim.smooth[0], 0.0f, 100.0f, "%.1f");
 			EndGroupbox();
 
 			BeginGroupbox("Recoil Control System (RCS)");
@@ -845,25 +840,22 @@ namespace Menu
 
 		ImGui::SameLine();
 
-		// Column 2: Backtrack, Conditions & Triggerbot
+		// Column 2: Backtrack & Hitbox Filters
 		ImGui::BeginChild("LegitCol2", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("Legit Backtracking");
+			BeginGroupbox("Backtrack Engine");
 			AnimatedSwitch("Enable Backtrack", &sets->legit.backtrack.enabled);
 			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("Backtrack Ticks", &sets->legit.backtrack.ticks, 1, 12, "%d ticks");
+			ImGui::SliderInt("Backtrack Ticks", &sets->legit.backtrack.ticks, 1, 14, "%d ticks");
+			AnimatedSwitch("Draw Backtrack Records", &sets->legit.backtrack.style[0]);
 			EndGroupbox();
 
-			BeginGroupbox("Disable Aimbot Conditions");
-			AnimatedSwitch("Disable when Flashed", &sets->legit.aim.disable_flashed);
-			AnimatedSwitch("Disable inside Smoke", &sets->legit.aim.disable_in_smoke);
-			AnimatedSwitch("Disable while Jumping", &sets->legit.aim.disable_in_jump);
-			EndGroupbox();
-
-			BeginGroupbox("Triggerbot");
-			AnimatedSwitch("Enable Triggerbot", &sets->legit.trigger._enabled);
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Trigger Shot Delay", &sets->legit.trigger.delay, 0.0f, 0.50f, "%.2f s");
+			BeginGroupbox("Target Hitbox Filter");
+			AnimatedSwitch("Head Hitbox", &sets->legit.aim.hitbox[0]);
+			AnimatedSwitch("Chest Hitbox", &sets->legit.aim.hitbox[1]);
+			AnimatedSwitch("Pelvis Hitbox", &sets->legit.aim.hitbox[2]);
+			AnimatedSwitch("Arms Hitbox", &sets->legit.aim.hitbox[3]);
+			AnimatedSwitch("Legs Hitbox", &sets->legit.aim.hitbox[4]);
 			EndGroupbox();
 		}
 		ImGui::EndChild();
@@ -972,21 +964,14 @@ namespace Menu
 	{
 		float col_w = (ImGui::GetContentRegionAvail().x - 10.0f) * 0.5f;
 
-		// Column 1: Movement Exploits
+		// Column 1: Movement & Character Exploits
 		ImGui::BeginChild("MiscCol1", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("Movement Exploits");
-			AnimatedSwitch("Bunnyhop (Bhop)", &sets->misc.autojump);
+			BeginGroupbox("Movement System");
+			AnimatedSwitch("Bunnyhop (Auto-Jump)", &sets->misc.autojump);
 			AnimatedSwitch("Auto Strafer", &sets->misc.autostrafer);
-			AnimatedSwitch("Fast Ladder Climb", &sets->misc.fast_ladder);
-			AnimatedSwitch("Circle Strafe Helper", &sets->misc.circle_strafe);
-			AnimatedSwitch("Auto Edge Jump", &sets->misc.edge_jump);
-			AnimatedSwitch("Slow Walk", &sets->misc.slow_walk);
-			if (sets->misc.slow_walk)
-			{
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("Slow Walk Speed", &sets->misc.slow_walk_speed, 10.0f, 100.0f, "%.0f u/s");
-			}
+			AnimatedSwitch("Auto Pistol", &sets->misc.autopistol);
+			AnimatedSwitch("Slowwalk", &sets->misc.slow_walk);
 			AnimatedSwitch("Fake Duck", &sets->misc.fake_duck);
 			EndGroupbox();
 		}
@@ -997,12 +982,7 @@ namespace Menu
 		// Column 2: Network & Server Bypasses
 		ImGui::BeginChild("MiscCol2", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("FakeLag & Network");
-			AnimatedSwitch("Enable FakeLag", &sets->misc.fakelag_enabled);
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("FakeLag Limit", &sets->misc.fakelag_limit, 1, 16, "%d ticks");
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("FakeLag Random", &sets->misc.fakelag_random, 0, 8, "%d ticks");
+			BeginGroupbox("Network & Latency");
 			ImGui::SetNextItemWidth(170);
 			ImGui::SliderInt("Fake Ping Latency", &sets->misc.fake_ping, 0, 500, "%d ms");
 			EndGroupbox();
@@ -1060,18 +1040,36 @@ namespace Menu
 		ImGui::BeginChild("SettingsCol2", ImVec2(col_w, 0), false);
 		{
 			BeginGroupbox("Menu Toggle Key");
-			const char* key_names[] = {
-				"INSERT",
-				"DELETE",
-				"HOME",
-				"END",
-				"TILDE / GRAVE (~)",
-				"F11",
-				"F12",
-				"RIGHT SHIFT"
-			};
-			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("Toggle Key", &sets->menu.menu_key_idx, key_names, IM_ARRAYSIZE(key_names));
+			static bool is_binding = false;
+			char key_btn_text[64];
+			if (is_binding)
+			{
+				snprintf(key_btn_text, sizeof(key_btn_text), "[ Press any key... ]");
+				for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++)
+				{
+					if (ImGui::IsKeyPressed((ImGuiKey)k))
+					{
+						if (k != ImGuiKey_Escape)
+						{
+							sets->menu.menu_key = k;
+						}
+						is_binding = false;
+						break;
+					}
+				}
+			}
+			else
+			{
+				const char* kname = ImGui::GetKeyName((ImGuiKey)sets->menu.menu_key);
+				if (!kname || strlen(kname) == 0) kname = "INSERT";
+				snprintf(key_btn_text, sizeof(key_btn_text), "[ %s ]", kname);
+			}
+
+			if (ImGui::Button(key_btn_text, ImVec2(170, 30)))
+			{
+				is_binding = !is_binding;
+			}
+			ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Click button above & press any key");
 			EndGroupbox();
 
 			BeginGroupbox("Animation & Performance");
@@ -1144,7 +1142,7 @@ namespace Menu
 		struct IconTabMap { const char* icon; int tab_id; };
 		const IconTabMap skeet_icons[] = {
 			{ "(R)", 0 }, // Ragebot
-			{ "(A)", 1 }, // Anti-Aim
+			{ "(S)", 1 }, // Spinbot
 			{ "(L)", 2 }, // Legitbot
 			{ "(V)", 3 }, // Visuals (All ESP & Chams)
 			{ "(M)", 4 }, // Misc Exploits
@@ -1186,7 +1184,7 @@ namespace Menu
 		const OnetapTab ot_top_tabs[] = {
 			{ "Legit", 2 },
 			{ "Rage", 0 },
-			{ "Anti-Aim", 1 },
+			{ "Spinbot", 1 },
 			{ "Visuals", 3 },
 			{ "Misc", 4 },
 			{ "Settings", 5 }
@@ -1227,7 +1225,7 @@ namespace Menu
 		struct FatalityTab { const char* name; int tab_id; };
 		const FatalityTab fat_tabs[] = {
 			{ "RAGE", 0 },
-			{ "ANTI-AIM", 1 },
+			{ "SPINBOT", 1 },
 			{ "LEGIT", 2 },
 			{ "VISUALS", 3 },
 			{ "MISC", 4 },
@@ -1270,7 +1268,7 @@ namespace Menu
 
 		ImGui::TextColored(ImVec4(0.45f, 0.50f, 0.60f, 1.00f), "AIMBOT");
 		if (ImGui::Button("  Rage", ImVec2(170, 30))) { current_tab = 0; }
-		if (ImGui::Button("  Anti-Aim", ImVec2(170, 30))) { current_tab = 1; }
+		if (ImGui::Button("  Spinbot", ImVec2(170, 30))) { current_tab = 1; }
 		if (ImGui::Button("  Legit", ImVec2(170, 30))) { current_tab = 2; }
 
 		ImGui::Spacing();

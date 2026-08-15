@@ -74,15 +74,28 @@ namespace models
 					record = records[p_info.entity_index][min(13, max(0, (global::cmd->tick_count - sets->legit.backtrack.ticks + 1) % sets->legit.backtrack.ticks))];
 				}
 
-				//invis
-				if (sets->visuals.chams_style[0])
-				{
-					if (!model_material->get_materialvar_flag(MATERIAL_VAR_IGNOREZ))
-					{
-						model_material->set_materialvar_flag(MATERIAL_VAR_IGNOREZ, true);
-					}
+				imaterial* invis_mat = materials[1][sets->visuals.chams == 2][sets->visuals.chams_style[1]];
+				imaterial* vis_mat = materials[0][sets->visuals.chams == 2][sets->visuals.chams_style[1]];
 
-					apply_chams(materials[1][sets->visuals.chams == 2][sets->visuals.chams_style[1]], invis);
+				bool is_wireframe = (sets->visuals.chams == 3);
+				bool is_flat = (sets->visuals.chams == 1);
+
+				if (vis_mat)
+				{
+					vis_mat->set_materialvar_flag(MATERIAL_VAR_WIREFRAME, is_wireframe);
+					vis_mat->set_materialvar_flag(MATERIAL_VAR_FLAT, is_flat);
+				}
+				if (invis_mat)
+				{
+					invis_mat->set_materialvar_flag(MATERIAL_VAR_WIREFRAME, is_wireframe);
+					invis_mat->set_materialvar_flag(MATERIAL_VAR_FLAT, is_flat);
+				}
+
+				//invis
+				if (sets->visuals.chams_style[0] && invis_mat)
+				{
+					invis_mat->set_materialvar_flag(MATERIAL_VAR_IGNOREZ, true);
+					apply_chams(invis_mat, invis);
 
 					_model_render->draw_model_execute(state, p_info, p_custom_bone_to_world);
 
@@ -90,12 +103,12 @@ namespace models
 					{
 						if (sets->legit.backtrack.style[2] && best_record.id == p_info.entity_index && best_record.valid && best_record.have_matrix && best_record.hitbox_matrix && cvector(origin - best_record.origin).Length() > 1.f)
 						{
-							apply_chams(materials[1][sets->visuals.chams == 2][sets->visuals.chams_style[1]], color(15, 205, 15, 120));
+							apply_chams(invis_mat, color(15, 205, 15, 120));
 							_model_render->draw_model_execute(state, p_info, best_record.hitbox_matrix);
 						}
 						else if (sets->legit.backtrack.style[3] && record.valid && record.have_matrix && record.hitbox_matrix && cvector(origin - record.origin).Length() > 1.f)
 						{
-							apply_chams(materials[1][sets->visuals.chams == 2][sets->visuals.chams_style[1]], color(220, 120, 25, 70));
+							apply_chams(invis_mat, color(220, 120, 25, 70));
 							_model_render->draw_model_execute(state, p_info, record.hitbox_matrix);
 						}
 					}
@@ -105,18 +118,18 @@ namespace models
 				{					
 					if (sets->legit.backtrack.style[2] && best_record.is_valid(entity) && best_record.id == p_info.entity_index && best_record.have_matrix && best_record.hitbox_matrix && cvector(origin - best_record.origin).Length2D() > 1.f)
 					{
-						apply_chams(materials[0][sets->visuals.chams == 2][sets->visuals.chams_style[1]], color(30, 255, 30, 140));
+						apply_chams(vis_mat, color(30, 255, 30, 140));
 						_model_render->draw_model_execute(state, p_info, best_record.hitbox_matrix);
 					}
 
 					if (record.is_valid(entity) && (record.id != best_record.id || record.tick != best_record.tick || !sets->legit.backtrack.style[2]) && sets->legit.backtrack.style[3] && record.have_matrix && record.hitbox_matrix && cvector(origin - record.origin).Length2D() > 1.f)
 					{
-						apply_chams(materials[0][sets->visuals.chams == 2][sets->visuals.chams_style[1]], color(255, 167, 25, 100));
+						apply_chams(vis_mat, color(255, 167, 25, 100));
 						_model_render->draw_model_execute(state, p_info, record.hitbox_matrix);
 					}
 				}
 
-				apply_chams(materials[0][sets->visuals.chams == 2][sets->visuals.chams_style[1]], vis);
+				if (vis_mat) apply_chams(vis_mat, vis);
 			}
 		}
 
@@ -378,6 +391,22 @@ namespace models
 		{
 			end(nullptr, state, p_info, p_custom_bone_to_world);
 			return;
+		}
+
+		// Custom 3D Player Model Override (Cissia ZZZ)
+		if (is_player && sets->visuals.enable_custom_model && sets->visuals.model_selection == 1)
+		{
+			if (!sets->visuals.custom_model_local_only || entity == global::local || p_info.entity_index == _engine->get_local_player())
+			{
+				const model_t* custom_model = _model_info->find_or_load_model("models/sneaky_holy/neps/powered_by_nidegg/best_zombie_escape_server/thick_snake/cissia_zzz.mdl");
+				if (custom_model && custom_model != p_info.pModel)
+				{
+					ModelRenderInfo_t custom_info = p_info;
+					custom_info.pModel = custom_model;
+					_model_render->draw_model_execute(state, custom_info, p_custom_bone_to_world);
+					return;
+				}
+			}
 		}
 
 		if (is_player && sets->visuals.chams > 0)

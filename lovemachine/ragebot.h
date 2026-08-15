@@ -132,7 +132,7 @@ namespace rage
 
 		if (sets->rage.spinbot_mode == 1 || (sets->rage.spinbot_mode == 0 && (sets->rage.spinbot || sets->rage.yaw_aa == 2))) // Server-Side Spinbot
 		{
-			float speed = sets->rage.spin_speed_server > 0.f ? sets->rage.spin_speed_server : sets->rage.spin_speed;
+			float speed = sets->rage.spin_speed_server > 0.f ? sets->rage.spin_speed_server : (sets->rage.spin_speed > 0.f ? sets->rage.spin_speed : 25.0f);
 			spin_angle_server += speed;
 			if (spin_angle_server > 180.0f) spin_angle_server -= 360.0f;
 			if (spin_angle_server < -180.0f) spin_angle_server += 360.0f;
@@ -140,7 +140,8 @@ namespace rage
 		}
 		else if (sets->rage.spinbot_mode == 2) // Client-Side Spinbot (Visual screen spin)
 		{
-			spin_angle_client += sets->rage.spin_speed_client;
+			float speed = sets->rage.spin_speed_client > 0.f ? sets->rage.spin_speed_client : 25.0f;
+			spin_angle_client += speed;
 			if (spin_angle_client > 180.0f) spin_angle_client -= 360.0f;
 			if (spin_angle_client < -180.0f) spin_angle_client += 360.0f;
 			global::cmd->viewangles.y = spin_angle_client;
@@ -169,6 +170,22 @@ namespace rage
 
 		normalize_angles(global::cmd->viewangles);
 		fix_movement(global::cmd, old_angles);
+	}
+
+	inline void standalone_rcs()
+	{
+		if (!global::cmd || !global::local || !global::local->valid() || !sets->legit.aim.enable_rcs)
+			return;
+
+		if (global::cmd->buttons & IN_ATTACK)
+		{
+			qangle punch = global::local->get_aimpunch();
+			float rcs_x = sets->legit.aim.rcs[0] > 0.0f ? sets->legit.aim.rcs[0] : 2.0f;
+			float rcs_y = sets->legit.aim.rcs[1] > 0.0f ? sets->legit.aim.rcs[1] : 2.0f;
+			global::cmd->viewangles.x -= punch.x * rcs_x;
+			global::cmd->viewangles.y -= punch.y * rcs_y;
+			normalize_angles(global::cmd->viewangles);
+		}
 	}
 
 	namespace aimbot

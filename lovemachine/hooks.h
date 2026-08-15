@@ -728,6 +728,7 @@ namespace hooks
 			//cout << "cl_interp " << cl_interp->m_fValue << endl;
 
 			misc::run();
+			rage::standalone_rcs();
 			rage::anti_aim();
 			rage::magic_bullet();
 			rage::fix_movement(global::cmd, orig_angles);

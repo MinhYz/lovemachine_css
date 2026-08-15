@@ -241,21 +241,28 @@ namespace misc
 
 	void lag()
 	{
-		static int lag_tick = 0;
-		static int max_tick = sets->misc.lag_factor >= 2 ? rand() % sets->misc.lag_factor : 1;
-
-		if (shooting() || /*lag_tick >= sets->misc.lag_factor*/ lag_tick >= max_tick /*|| (sets->misc.lag_mode == 1 && rand() % 2 == 0)*/)
+		if (!sets->misc.fakelag_enabled)
 		{
-			lag_tick = 0;
-			max_tick = sets->misc.lag_mode == 0 ? sets->misc.lag_factor : sets->misc.lag_factor >= 2 ? rand() % sets->misc.lag_factor : 1;
 			global::sendpacket = true;
 			return;
 		}
 
-		if (lag_tick < sets->misc.lag_factor)
+		static int choked_ticks = 0;
+		int target_choke = sets->misc.fakelag_limit > 0 ? sets->misc.fakelag_limit : 14;
+		if (sets->misc.fakelag_random > 0)
+		{
+			target_choke = max(1, target_choke - (rand() % (sets->misc.fakelag_random + 1)));
+		}
+
+		if (shooting() || choked_ticks >= target_choke)
+		{
+			choked_ticks = 0;
+			global::sendpacket = true;
+		}
+		else
 		{
 			global::sendpacket = false;
-			lag_tick++;
+			choked_ticks++;
 		}
 	}
 
