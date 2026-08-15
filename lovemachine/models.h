@@ -396,7 +396,7 @@ namespace models
 		// Custom 3D Player Model Override (Cissia ZZZ)
 		if (is_player && sets->visuals.enable_custom_model && sets->visuals.model_selection == 1)
 		{
-			if (!sets->visuals.custom_model_local_only || entity == global::local || p_info.entity_index == _engine->get_local_player())
+			if (!sets->visuals.custom_model_local_only || entity == global::local || p_info.entity_index == _engine->get_local_id())
 			{
 				const model_t* custom_model = _model_info->find_or_load_model("models/sneaky_holy/neps/powered_by_nidegg/best_zombie_escape_server/thick_snake/cissia_zzz.mdl");
 				if (custom_model && custom_model != p_info.pModel)

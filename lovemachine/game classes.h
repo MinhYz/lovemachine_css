@@ -253,6 +253,11 @@ public:
 		return *(qangle*)((dword)this + offsets::aimpunch);
 	}
 
+	qangle get_aimpunch()
+	{
+		return get_punch();
+	}
+
 	float get_simulation_time()
 	{
 		return *(float*)((dword)this + offsets::sim_time);

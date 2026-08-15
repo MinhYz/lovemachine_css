@@ -179,7 +179,7 @@ namespace rage
 
 		if (global::cmd->buttons & IN_ATTACK)
 		{
-			qangle punch = global::local->get_aimpunch();
+			qangle punch = global::local->get_punch();
 			float rcs_x = sets->legit.aim.rcs[0] > 0.0f ? sets->legit.aim.rcs[0] : 2.0f;
 			float rcs_y = sets->legit.aim.rcs[1] > 0.0f ? sets->legit.aim.rcs[1] : 2.0f;
 			global::cmd->viewangles.x -= punch.x * rcs_x;
