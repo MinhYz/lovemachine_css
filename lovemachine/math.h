@@ -27,11 +27,6 @@ inline void normalize_angle(qangle& angle)
 	while (angle.y < -180.f) angle.y += 360.f;
 }
 
-inline void normalize_angles(qangle& angle)
-{
-	normalize_angle(angle);
-}
-
 #ifdef _WIN32
 typedef void (*RandomSeedFn)(int iSeed);
 typedef float (*RandomFloatFn)(float flMinVal, float flMaxVal);

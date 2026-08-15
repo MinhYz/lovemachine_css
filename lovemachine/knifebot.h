@@ -54,8 +54,8 @@ namespace legit
 			for (int i = 0; i < 5; i++)
 				for (int j = 0; j < 3; j++)
 				{
-					float yaw_correction = 20 - (10 * i);
-					float pitch_correction = 10 - (10 * j);
+					float yaw_correction = 20.0f - (10.0f * (float)i);
+					float pitch_correction = 10.0f - (10.0f * (float)j);
 					qangle viewangle = qangle(math_clamp<float>(-89.f, global::cmd->viewangles.x + pitch_correction, 89.f), global::cmd->viewangles.y + yaw_correction, 0.f);
 					normalize_angle(viewangle);
 					trace_t trace;

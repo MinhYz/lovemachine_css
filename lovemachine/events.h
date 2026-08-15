@@ -91,7 +91,7 @@ namespace events
 			if ((timer - global::realtime + 1.f) > 0.f)
 			{
 				float percent = timer - global::realtime + 1.f;
-				int alpha = 70 * percent;
+				int alpha = (int)(70.f * percent);
 				string s_did = "did " + to_string(damage_did) + " hp";
 				string s_left = "left " + to_string(health_left) + " hp";
 				draw_box(centerx - 150, centery, s_did, alpha);

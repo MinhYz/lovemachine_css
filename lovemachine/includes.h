@@ -1,6 +1,10 @@
 #pragma once
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
+#ifndef _HAS_STD_BYTE
 #define _HAS_STD_BYTE 0
+#endif
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN

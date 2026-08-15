@@ -25,40 +25,40 @@ namespace rage
 			switch (sMaterial)
 			{
 			case CHAR_TEX_METAL:
-				fPenetrationPowerModifier = 0.5;
-				fDamageModifier = 0.3;
+				fPenetrationPowerModifier = 0.5f;
+				fDamageModifier = 0.3f;
 				break;
 			case CHAR_TEX_DIRT:
-				fPenetrationPowerModifier = 0.5;
-				fDamageModifier = 0.3;
+				fPenetrationPowerModifier = 0.5f;
+				fDamageModifier = 0.3f;
 				break;
 			case CHAR_TEX_CONCRETE:
-				fPenetrationPowerModifier = 0.4;
-				fDamageModifier = 0.25;
+				fPenetrationPowerModifier = 0.4f;
+				fDamageModifier = 0.25f;
 				break;
 			case CHAR_TEX_GRATE:
-				fPenetrationPowerModifier = 1.0;
-				fDamageModifier = 0.99;
+				fPenetrationPowerModifier = 1.0f;
+				fDamageModifier = 0.99f;
 				break;
 			case CHAR_TEX_VENT:
-				fPenetrationPowerModifier = 0.5;
-				fDamageModifier = 0.45;
+				fPenetrationPowerModifier = 0.5f;
+				fDamageModifier = 0.45f;
 				break;
 			case CHAR_TEX_TILE:
-				fPenetrationPowerModifier = 0.65;
-				fDamageModifier = 0.3;
+				fPenetrationPowerModifier = 0.65f;
+				fDamageModifier = 0.3f;
 				break;
 			case CHAR_TEX_COMPUTER:
-				fPenetrationPowerModifier = 0.4;
-				fDamageModifier = 0.45;
+				fPenetrationPowerModifier = 0.4f;
+				fDamageModifier = 0.45f;
 				break;
 			case CHAR_TEX_WOOD:
-				fPenetrationPowerModifier = 1.0;
-				fDamageModifier = 0.6;
+				fPenetrationPowerModifier = 1.0f;
+				fDamageModifier = 0.6f;
 				break;
 			default:
-				fPenetrationPowerModifier = 1.0;
-				fDamageModifier = 0.5;
+				fPenetrationPowerModifier = 1.0f;
+				fDamageModifier = 0.5f;
 				break;
 			}
 		}
