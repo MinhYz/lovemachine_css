@@ -37,7 +37,7 @@ namespace misc
 			if (drawlist.empty())
 				return;
 
-			for (int i = 0; i < drawlist.size(); i++)
+			for (size_t i = 0; i < drawlist.size(); i++)
 			{
 				if (drawlist.at(i).time < _globals->curtime)
 				{
@@ -47,14 +47,14 @@ namespace misc
 				}
 
 				Vector start = drawlist.at(i).point;
-				Vector end = i < (drawlist.size() - 1) ? drawlist.at(i + 1).point : start;
+				Vector end = (i + 1 < drawlist.size()) ? drawlist.at(i + 1).point : start;
 				switch (sets->misc.draw_mode)
 				{
 				case 0:
 					Vector _start, _end; if (d3d::w2s(start, _start) && d3d::w2s(end, _end))
 					{
-						surf::prim::line(start.x, start.y, end.x, end.y,
-							sets->misc.draw_color.with_alpha(/*((drawlist.at(i).time - _globals->curtime) / sets->misc.draw_time) * */ 255.f));
+						surf::prim::line((int)_start.x, (int)_start.y, (int)_end.x, (int)_end.y,
+							sets->misc.draw_color.with_alpha(255));
 					}
 					break;
 				}

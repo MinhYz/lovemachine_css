@@ -1,0 +1,11 @@
+Model Information:
+* title:	TR phoenix
+* source:	https://sketchfab.com/3d-models/tr-phoenix-3cc4a5938dd744bab678b370d6bb52a3
+* author:	3axap (https://sketchfab.com/3axapV)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "TR phoenix" (https://sketchfab.com/3d-models/tr-phoenix-3cc4a5938dd744bab678b370d6bb52a3) by 3axap (https://sketchfab.com/3axapV) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

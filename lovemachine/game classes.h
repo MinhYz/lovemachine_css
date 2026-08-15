@@ -439,6 +439,18 @@ public:
 	{
 		return *(int*)((dword)this + offsets::move_type);
 	}
+
+	float get_flash_duration()
+	{
+		if (!offsets::flash_duration) return 0.0f;
+		return *(float*)((dword)this + offsets::flash_duration);
+	}
+
+	float get_flash_alpha()
+	{
+		if (!offsets::flash_max_alpha) return 0.0f;
+		return *(float*)((dword)this + offsets::flash_max_alpha);
+	}
 };
 
 typedef struct

@@ -87,7 +87,11 @@
 *.iobj
 *.ipdb
 *.tlog
-*.pdb
 *.recipe
 lovemachine/Release/lovemachine.vcxproj.FileListAbsolute.txt
 Xenos_2.3.2_\[unknowncheats.me\]_/XenosCurrentProfile.xpr
+
+# OS & Build Artifacts
+.DS_Store
+lovemachine_test
+DXSDK_Jun10.exe

@@ -36,6 +36,8 @@ namespace offsets
 	//dword c4_defuse;
 	dword usp_silencer;
 	dword m4a1_silencer;
+	dword flash_duration;
+	dword flash_max_alpha;
 
 	// TODO : ïåðåðàáîòàòü cout â console::write
 	const char* initialize_tables()
@@ -179,5 +181,7 @@ namespace offsets
 		//c4_defuse = get_offset("DT_PlantedC4", "m_flDefuseCountDown");
 		usp_silencer = get_offset("DT_WeaponUSP", "m_bSilencerOn");
 		m4a1_silencer = get_offset("DT_WeaponM4A1", "m_bSilencerOn");
+		flash_duration = get_offset("DT_CSPlayer", "m_flFlashDuration");
+		flash_max_alpha = get_offset("DT_CSPlayer", "m_flFlashMaxAlpha");
 	}
 }
