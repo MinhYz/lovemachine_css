@@ -351,8 +351,20 @@ namespace misc
 		global::map_changed = false;
 	}
 
+	void pure_bypass()
+	{
+		if (!_cvar) return;
+		auto sv_pure = _cvar->find_var("sv_pure");
+		if (sv_pure)
+		{
+			sv_pure->m_nFlags &= ~(FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_NOT_CONNECTED);
+			sv_pure->set_value(0);
+		}
+	}
+
 	void run()
 	{
+		pure_bypass();
 		if (!global::local->valid()) return;
 
 		if (sets->misc.fl_spam_always || sets->misc.fl_spam.is() == bind_true)

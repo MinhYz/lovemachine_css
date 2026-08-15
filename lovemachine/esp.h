@@ -342,11 +342,6 @@ namespace esp
 				if (alpha[id] == 0 && dormant && id != global::local_id) continue;
 				if (!sets->visuals.esp_check[0] && !visible && (!sets->visuals.fade || alpha[id] == 0) && id != global::local_id) continue;
 				
-				box = cbox(/*id, */entity, CCSPlayer);
-				if (!box.construct_points()) continue;
-
-				p_color = visible ? entity->get_team() == 2 ? sets->visuals.esp_t : sets->visuals.esp_ct : entity->get_team() != global::local->get_team() ? color::text() : color::disabled();
-
 				// Asian Hat 3D Conical Rice Hat (Applies to ALL players & local player)
 				if (sets->visuals.asian_hat && entity->valid())
 				{
@@ -433,8 +428,8 @@ namespace esp
 									}
 									else
 									{
-										surf::prim::line(rim_screens[i].x, rim_screens[i].y, rim_screens[next_i].x, rim_screens[next_i].y, base_col);
-										surf::prim::line(rim_screens[i].x, rim_screens[i].y, screen_apex.x, screen_apex.y, base_col);
+										surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)rim_screens[next_i].x, (int)rim_screens[next_i].y, base_col);
+										surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)screen_apex.x, (int)screen_apex.y, base_col);
 									}
 								}
 

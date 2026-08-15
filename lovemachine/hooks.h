@@ -32,10 +32,21 @@ namespace hooks
 		global::realtime = (float)GetTickCount64() / 1000.f;
 
 		// Toggle Menu Hotkey (Default INSERT or selected key)
-		if (msg == WM_KEYDOWN && (w_param == VK_INSERT || w_param == static_cast<WPARAM>(sets->menu.menu_key)))
+		if (msg == WM_KEYDOWN)
 		{
-			Menu::show_menu = !Menu::show_menu;
-			sets->menu.opened = Menu::show_menu;
+			if (Menu::is_binding_key)
+			{
+				if (w_param != VK_ESCAPE)
+				{
+					sets->menu.menu_key = (int)w_param;
+				}
+				Menu::is_binding_key = false;
+			}
+			else if (w_param == VK_INSERT || w_param == static_cast<WPARAM>(sets->menu.menu_key))
+			{
+				Menu::show_menu = !Menu::show_menu;
+				sets->menu.opened = Menu::show_menu;
+			}
 		}
 
 		// Track input states for cheat logic

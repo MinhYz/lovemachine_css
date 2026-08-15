@@ -1051,7 +1051,24 @@ namespace Menu
 					{
 						if (k != ImGuiKey_Escape)
 						{
-							sets->menu.menu_key = k;
+							int vk = 0x2D;
+							if (k >= ImGuiKey_F1 && k <= ImGuiKey_F12) vk = 0x70 + (k - ImGuiKey_F1);
+							else if (k >= ImGuiKey_0 && k <= ImGuiKey_9) vk = 0x30 + (k - ImGuiKey_0);
+							else if (k >= ImGuiKey_A && k <= ImGuiKey_Z) vk = 0x41 + (k - ImGuiKey_A);
+							else if (k == ImGuiKey_Insert) vk = 0x2D;
+							else if (k == ImGuiKey_Delete) vk = 0x2E;
+							else if (k == ImGuiKey_Home) vk = 0x24;
+							else if (k == ImGuiKey_End) vk = 0x23;
+							else if (k == ImGuiKey_PageUp) vk = 0x21;
+							else if (k == ImGuiKey_PageDown) vk = 0x22;
+							else if (k == ImGuiKey_GraveAccent) vk = 0xC0;
+							else if (k == ImGuiKey_RightShift) vk = 0xA1;
+							else if (k == ImGuiKey_LeftShift) vk = 0xA0;
+							else if (k == ImGuiKey_RightCtrl) vk = 0xA3;
+							else if (k == ImGuiKey_LeftCtrl) vk = 0xA2;
+							else if (k == ImGuiKey_Tab) vk = 0x09;
+							else vk = k; // fallback
+							sets->menu.menu_key = vk;
 						}
 						is_binding_key = false;
 						break;
@@ -1060,9 +1077,43 @@ namespace Menu
 			}
 			else
 			{
-				const char* kname = (sets->menu.menu_key >= ImGuiKey_NamedKey_BEGIN && sets->menu.menu_key < ImGuiKey_NamedKey_END) ? 
-					ImGui::GetKeyName((ImGuiKey)sets->menu.menu_key) : "INSERT";
-				if (!kname || strlen(kname) == 0) kname = "INSERT";
+				const char* kname = "INSERT";
+				int vk = sets->menu.menu_key;
+				switch (vk)
+				{
+				case 0x2D: kname = "INSERT"; break;
+				case 0x2E: kname = "DELETE"; break;
+				case 0x24: kname = "HOME"; break;
+				case 0x23: kname = "END"; break;
+				case 0x21: kname = "PAGE UP"; break;
+				case 0x22: kname = "PAGE DOWN"; break;
+				case 0x70: kname = "F1"; break;
+				case 0x71: kname = "F2"; break;
+				case 0x72: kname = "F3"; break;
+				case 0x73: kname = "F4"; break;
+				case 0x74: kname = "F5"; break;
+				case 0x75: kname = "F6"; break;
+				case 0x76: kname = "F7"; break;
+				case 0x77: kname = "F8"; break;
+				case 0x78: kname = "F9"; break;
+				case 0x79: kname = "F10"; break;
+				case 0x7A: kname = "F11"; break;
+				case 0x7B: kname = "F12"; break;
+				case 0xC0: kname = "TILDE (~)"; break;
+				case 0xA1: kname = "RIGHT SHIFT"; break;
+				case 0xA0: kname = "LEFT SHIFT"; break;
+				case 0xA3: kname = "RIGHT CTRL"; break;
+				case 0xA2: kname = "LEFT CTRL"; break;
+				case 0x09: kname = "TAB"; break;
+				default:
+					if (vk >= 0x41 && vk <= 0x5A) { static char b[2] = {0,0}; b[0] = (char)vk; kname = b; }
+					else if (vk >= 0x30 && vk <= 0x39) { static char b[2] = {0,0}; b[0] = (char)vk; kname = b; }
+					else if (vk >= ImGuiKey_NamedKey_BEGIN && vk < ImGuiKey_NamedKey_END) {
+						const char* n = ImGui::GetKeyName((ImGuiKey)vk);
+						if (n && strlen(n) > 0) kname = n;
+					}
+					break;
+				}
 				snprintf(key_btn_text, sizeof(key_btn_text), "[ %s ]", kname);
 			}
 
@@ -1316,13 +1367,35 @@ namespace Menu
 		// Global toggle hotkey check (checks every frame)
 		if (!is_binding_key && sets)
 		{
-			ImGuiKey target_key = (sets->menu.menu_key >= ImGuiKey_NamedKey_BEGIN && sets->menu.menu_key < ImGuiKey_NamedKey_END) ? 
-				(ImGuiKey)sets->menu.menu_key : ImGuiKey_Insert;
-
-			if (ImGui::IsKeyPressed(target_key, false) || ImGui::IsKeyPressed(ImGuiKey_Insert, false))
+			for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++)
 			{
-				show_menu = !show_menu;
-				sets->menu.opened = show_menu;
+				if (ImGui::IsKeyPressed((ImGuiKey)k, false))
+				{
+					int vk = 0x2D;
+					if (k >= ImGuiKey_F1 && k <= ImGuiKey_F12) vk = 0x70 + (k - ImGuiKey_F1);
+					else if (k >= ImGuiKey_0 && k <= ImGuiKey_9) vk = 0x30 + (k - ImGuiKey_0);
+					else if (k >= ImGuiKey_A && k <= ImGuiKey_Z) vk = 0x41 + (k - ImGuiKey_A);
+					else if (k == ImGuiKey_Insert) vk = 0x2D;
+					else if (k == ImGuiKey_Delete) vk = 0x2E;
+					else if (k == ImGuiKey_Home) vk = 0x24;
+					else if (k == ImGuiKey_End) vk = 0x23;
+					else if (k == ImGuiKey_PageUp) vk = 0x21;
+					else if (k == ImGuiKey_PageDown) vk = 0x22;
+					else if (k == ImGuiKey_GraveAccent) vk = 0xC0;
+					else if (k == ImGuiKey_RightShift) vk = 0xA1;
+					else if (k == ImGuiKey_LeftShift) vk = 0xA0;
+					else if (k == ImGuiKey_RightCtrl) vk = 0xA3;
+					else if (k == ImGuiKey_LeftCtrl) vk = 0xA2;
+					else if (k == ImGuiKey_Tab) vk = 0x09;
+					else vk = k;
+
+					if (vk == sets->menu.menu_key || vk == 0x2D || k == sets->menu.menu_key || k == ImGuiKey_Insert)
+					{
+						show_menu = !show_menu;
+						sets->menu.opened = show_menu;
+						break;
+					}
+				}
 			}
 		}
 
