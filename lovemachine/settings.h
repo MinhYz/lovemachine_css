@@ -43,6 +43,7 @@ public:
 		int cont_hovered = -1;
 		int x = 100, y = 100, cur_tab = 0;
 		int menu_key = VK_INSERT;
+		int menu_key_idx = 0; // 0: INSERT, 1: DELETE, 2: HOME, 3: END, 4: TILDE (~), 5: F11, 6: F12, 7: RSHIFT
 	} menu;
 
 	struct
@@ -185,6 +186,11 @@ public:
 		color asian_hat_color = color(255, 200, 50);
 		float asian_hat_size = 20.0f;
 		float asian_hat_height = 10.0f;
+
+		// Custom 3D Character Model (Cissia ZZZ / Phoenix)
+		bool enable_custom_model = false;
+		bool custom_model_local_only = true; // Only apply 3D model to LocalPlayer (self)
+		int model_selection = 0; // 0: Phoenix Terrorist, 1: Cissia ZZZ (Zenless Zone Zero)
 
 		// Skeleton & Nightmode & Advanced ESP (Neverlose)
 		bool skeleton = true;

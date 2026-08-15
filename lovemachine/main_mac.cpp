@@ -76,7 +76,24 @@ int main(int argc, char* argv[])
                 done = true;
             if (event.type == SDL_KEYDOWN)
             {
-                if (event.key.keysym.sym == SDLK_INSERT)
+                SDL_Keycode current_toggle_key = SDLK_INSERT;
+                if (sets)
+                {
+                    switch (sets->menu.menu_key_idx)
+                    {
+                    case 0: current_toggle_key = SDLK_INSERT; break;
+                    case 1: current_toggle_key = SDLK_DELETE; break;
+                    case 2: current_toggle_key = SDLK_HOME; break;
+                    case 3: current_toggle_key = SDLK_END; break;
+                    case 4: current_toggle_key = SDLK_BACKQUOTE; break;
+                    case 5: current_toggle_key = SDLK_F11; break;
+                    case 6: current_toggle_key = SDLK_F12; break;
+                    case 7: current_toggle_key = SDLK_RSHIFT; break;
+                    default: current_toggle_key = SDLK_INSERT; break;
+                    }
+                }
+
+                if (event.key.keysym.sym == current_toggle_key || event.key.keysym.sym == SDLK_INSERT)
                 {
                     Menu::show_menu = !Menu::show_menu;
                 }

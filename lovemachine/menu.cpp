@@ -122,9 +122,11 @@ namespace Menu
 		for (float gy = cursor.y + 40.0f; gy < cursor.y + size.y - 10.0f; gy += 30.0f)
 			draw_list->AddLine(ImVec2(cursor.x + 10.0f, gy), ImVec2(cursor.x + size.x - 10.0f, gy), IM_COL32(20, 30, 48, 60), 1.0f);
 
-		// Header Label
-		const char* header_txt = (preview_type == 0) ? "Interactive 3D Player ESP Preview" : (preview_type == 1 ? "Interactive 3D Weapon Preview" : "Interactive 3D C4 & Grenade Preview");
-		draw_list->AddText(ImVec2(cursor.x + 16, cursor.y + 12), IM_COL32(0, 220, 255, 255), header_txt);
+		// Dynamic Header Label
+		std::string header_txt = (preview_type == 0) ? 
+			(sets->visuals.enable_custom_model && sets->visuals.model_selection == 1 ? "3D Model: Cissia (Zenless Zone Zero)" : "Interactive 3D Player ESP Preview") 
+			: (preview_type == 1 ? "Interactive 3D Weapon Preview" : "Interactive 3D C4 & Grenade Preview");
+		draw_list->AddText(ImVec2(cursor.x + 16, cursor.y + 12), IM_COL32(0, 220, 255, 255), header_txt.c_str());
 		draw_list->AddLine(ImVec2(cursor.x + 14, cursor.y + 32), ImVec2(cursor.x + size.x - 14, cursor.y + 32), IM_COL32(35, 50, 80, 180), 1.0f);
 
 		float center_x = cursor.x + size.x * 0.5f;
@@ -904,6 +906,17 @@ namespace Menu
 			ColorEdit3Custom("Counter-Terrorist (CT) Color", sets->visuals.chams_ct);
 			EndGroupbox();
 
+			BeginGroupbox("Custom 3D Player Model");
+			AnimatedSwitch("Add / Apply Custom 3D Model", &sets->visuals.enable_custom_model);
+			if (sets->visuals.enable_custom_model)
+			{
+				AnimatedSwitch("Local Player Only (Only You)", &sets->visuals.custom_model_local_only);
+			}
+			const char* custom_models[] = { "Phoenix Terrorist (CS:S Default)", "Cissia ZZZ (Zenless Zone Zero)" };
+			ImGui::SetNextItemWidth(180);
+			ImGui::Combo("Character Model", &sets->visuals.model_selection, custom_models, IM_ARRAYSIZE(custom_models));
+			EndGroupbox();
+
 			BeginGroupbox("3D Asian Rice Hat");
 			AnimatedSwitch("Enable Asian Rice Hat", &sets->visuals.asian_hat);
 			ColorEdit3Custom("Hat Color", sets->visuals.asian_hat_color);
@@ -1046,6 +1059,21 @@ namespace Menu
 		// Column 2: Layout Performance & Profiles
 		ImGui::BeginChild("SettingsCol2", ImVec2(col_w, 0), false);
 		{
+			BeginGroupbox("Menu Toggle Key");
+			const char* key_names[] = {
+				"INSERT",
+				"DELETE",
+				"HOME",
+				"END",
+				"TILDE / GRAVE (~)",
+				"F11",
+				"F12",
+				"RIGHT SHIFT"
+			};
+			ImGui::SetNextItemWidth(170);
+			ImGui::Combo("Toggle Key", &sets->menu.menu_key_idx, key_names, IM_ARRAYSIZE(key_names));
+			EndGroupbox();
+
 			BeginGroupbox("Animation & Performance");
 			ImGui::SetNextItemWidth(170);
 			ImGui::SliderFloat("UI Animation Speed", &ui_anim_speed, 0.5f, 3.0f, "%.1fx");
