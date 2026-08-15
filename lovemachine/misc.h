@@ -357,7 +357,6 @@ namespace misc
 		auto sv_pure = _cvar->find_var("sv_pure");
 		if (sv_pure)
 		{
-			sv_pure->m_nFlags &= ~(FCVAR_CHEAT | FCVAR_REPLICATED | FCVAR_NOT_CONNECTED);
 			sv_pure->set_value(0);
 		}
 	}

@@ -26,6 +26,7 @@ namespace Menu
 	};
 
 	extern bool show_menu;
+	extern bool is_binding_key;
 	extern int current_tab;
 	extern int current_theme;
 	extern int current_layout;

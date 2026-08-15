@@ -172,20 +172,57 @@ namespace rage
 		fix_movement(global::cmd, old_angles);
 	}
 
+	inline void apply_nospread_norecoil(cusercmd* pCmd, centity* pLocal)
+	{
+		if (!pCmd || !pLocal || !pLocal->valid()) return;
+
+		auto pWeapon = pLocal->get_weapon();
+		if (!pWeapon || pWeapon->get_clip1() <= 0) return;
+
+		if (!(pCmd->buttons & IN_ATTACK)) return;
+
+		// 1. NO RECOIL (XÓA ĐỘ GIẬT)
+		qangle punchAngle = pLocal->get_punch();
+		float mult_x = (sets->legit.aim.rcs[0] > 0.0f) ? sets->legit.aim.rcs[0] : 2.0f;
+		float mult_y = (sets->legit.aim.rcs[1] > 0.0f) ? sets->legit.aim.rcs[1] : 2.0f;
+
+		QAngle currentAngles = pCmd->viewangles;
+		currentAngles.x -= punchAngle.x * (sets->rage.enabled ? 2.0f : mult_x);
+		currentAngles.y -= punchAngle.y * (sets->rage.enabled ? 2.0f : mult_y);
+		currentAngles.z -= punchAngle.z * (sets->rage.enabled ? 2.0f : mult_y);
+
+		// 2. NO SPREAD (XÓA ĐỘ LỆCH ĐẠN BẰNG TOÁN HỌC DỰ ĐOÁN RANDOM_SEED)
+		pWeapon->update_accuracy_penalty();
+		float flSpread = pWeapon->get_spread();
+		float flCone = pWeapon->get_cone();
+
+		int seed = (pCmd->random_seed & 255) + 1;
+		RandomSeed(seed);
+
+		float rand1 = RandomFloat(0.0f, 1.0f);
+		float pi1   = RandomFloat(0.0f, 2.0f * (float)M_PI);
+		float rand2 = RandomFloat(0.0f, 1.0f);
+		float pi2   = RandomFloat(0.0f, 2.0f * (float)M_PI);
+
+		float spreadX = rand1 * flSpread * cosf(pi1) + rand2 * flCone * cosf(pi2);
+		float spreadY = rand1 * flSpread * sinf(pi1) + rand2 * flCone * sinf(pi2);
+
+		Vector forward, right, up;
+		AngleVectors(currentAngles, &forward, &right, &up);
+
+		Vector spreadDir = forward + (right * -spreadX) + (up * -spreadY);
+		VectorNormalize(spreadDir);
+
+		QAngle compensatedAngles;
+		VectorAngles(spreadDir, compensatedAngles);
+
+		pCmd->viewangles = compensatedAngles;
+		normalize_angles(pCmd->viewangles);
+	}
+
 	inline void standalone_rcs()
 	{
-		if (!global::cmd || !global::local || !global::local->valid() || !sets->legit.aim.enable_rcs)
-			return;
-
-		if (global::cmd->buttons & IN_ATTACK)
-		{
-			qangle punch = global::local->get_punch();
-			float rcs_x = sets->legit.aim.rcs[0] > 0.0f ? sets->legit.aim.rcs[0] : 2.0f;
-			float rcs_y = sets->legit.aim.rcs[1] > 0.0f ? sets->legit.aim.rcs[1] : 2.0f;
-			global::cmd->viewangles.x -= punch.x * rcs_x;
-			global::cmd->viewangles.y -= punch.y * rcs_y;
-			normalize_angles(global::cmd->viewangles);
-		}
+		apply_nospread_norecoil(global::cmd, global::local);
 	}
 
 	namespace aimbot

@@ -27,27 +27,65 @@ void normalize_angle(qangle& angle)
 	while (angle.y < -180.f) angle.y += 360.f;
 }
 
-void vectorangles(const cvector& forward, qangle& angles)
+#ifdef _WIN32
+typedef void (*RandomSeedFn)(int iSeed);
+typedef float (*RandomFloatFn)(float flMinVal, float flMaxVal);
+
+inline void RandomSeed(int iSeed)
 {
+	static RandomSeedFn pRandomSeed = (RandomSeedFn)GetProcAddress(GetModuleHandleA("vstdlib.dll"), "RandomSeed");
+	if (pRandomSeed) pRandomSeed(iSeed);
+	else srand(iSeed);
+}
+
+inline float RandomFloat(float flMinVal, float flMaxVal)
+{
+	static RandomFloatFn pRandomFloat = (RandomFloatFn)GetProcAddress(GetModuleHandleA("vstdlib.dll"), "RandomFloat");
+	if (pRandomFloat) return pRandomFloat(flMinVal, flMaxVal);
+	return flMinVal + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (flMaxVal - flMinVal)));
+}
+#else
+inline void RandomSeed(int iSeed) { srand(iSeed); }
+inline float RandomFloat(float flMinVal, float flMaxVal)
+{
+	return flMinVal + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (flMaxVal - flMinVal)));
+}
+#endif
+
+inline void VectorAngles(const Vector& forward, QAngle& angles)
+{
+	float tmp, yaw, pitch;
+
 	if (forward[1] == 0.0f && forward[0] == 0.0f)
 	{
-		angles[0] = (forward[2] > 0.0f) ? 270.0f : 90.0f;
-		angles[1] = 0.0f;
+		yaw = 0.0f;
+		if (forward[2] > 0.0f)
+			pitch = 270.0f;
+		else
+			pitch = 90.0f;
 	}
 	else
 	{
-		angles[0] = atan2(-forward[2], forward.Length2D()) * -180 / M_PI;
-		angles[1] = atan2(forward[1], forward[0]) * 180 / M_PI;
+		yaw = (atan2(forward[1], forward[0]) * 180.0f / (float)M_PI);
+		if (yaw < 0.0f)
+			yaw += 360.0f;
 
-		if (angles[1] > 90)
-			angles[1] -= 180;
-		else if (angles[1] < 90)
-			angles[1] += 180;
-		else if (angles[1] == 90)
-			angles[1] = 0;
+		tmp = sqrt(forward[0] * forward[0] + forward[1] * forward[1]);
+		pitch = (atan2(-forward[2], tmp) * 180.0f / (float)M_PI);
+		if (pitch < 0.0f)
+			pitch += 360.0f;
 	}
 
+	angles[0] = pitch;
+	angles[1] = yaw;
 	angles[2] = 0.0f;
+
+	normalize_angle(angles);
+}
+
+void vectorangles(const cvector& forward, qangle& angles)
+{
+	VectorAngles(forward, angles);
 }
 
 void sincos(float radians, float* sine, float* cosine)

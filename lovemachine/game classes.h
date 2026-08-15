@@ -626,6 +626,11 @@ public:
 		vfunc< update_acc_penalty_fn >(this, 378)(this);
 	}
 
+	void update_accuracy_penalty()
+	{
+		update_acc_penalty();
+	}
+
 	float get_spread()
 	{
 		if (!this) return 0.f;
@@ -638,6 +643,11 @@ public:
 		if (!this) return 0.f;
 		typedef float(__thiscall* update_acc_penalty_fn)(void*);
 		return vfunc< update_acc_penalty_fn >(this, 376)(this);
+	}
+
+	float get_cone()
+	{
+		return get_inacc();
 	}
 
 	string get_name()
