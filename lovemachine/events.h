@@ -108,8 +108,8 @@ namespace events
 			if ((kill_timer - global::realtime + 0.1f) > 0.f)
 			{
 				float percent = kill_timer - global::realtime + 1.f;
-				int alpha = 127 * percent;
-				int y = (centery / 10 * percent) - (centery / 4);
+				int alpha = (int)(127.f * percent);
+				int y = (int)((centery / 10.f * percent) - (centery / 4.f));
 				d3d::font::draw(d3d::font::hitmarker_big, centerx, y, color(255, 20, 20, alpha), DT_CENTER | DT_VCENTER, text.c_str());
 			}
 			else
@@ -147,22 +147,22 @@ namespace events
 
 		inline void on_draw()
 		{
-			if (!sets->visuals.enabled || !sets->visuals.bomb_timer || explosion_time == 0.f || !planted) return;
+			if (!sets->visuals.enabled || !sets->visuals.bomb_timer || explosion_time == 0.f || !planted || f_exp_time <= 0.f) return;
 
 			float percent = ((explosion_time - global::curtime) / f_exp_time);
-			int x = global::screen.right * percent;
+			int x = (int)(global::screen.right * percent);
 
-			d3d::prim::filled_box(0, 0, x, 20, color(255 - (255 * percent), 255 * percent, 0));
-			d3d::font::draw(d3d::font::hitmarker_small, x + 5, 20, color(255 * percent, 255 - (255 * percent), 0), DT_CENTER, explosion_time > 0.f ? "%.1f" : "exploded", (explosion_time - global::curtime));
+			d3d::prim::filled_box(0, 0, x, 20, color((int)(255.f - (255.f * percent)), (int)(255.f * percent), 0));
+			d3d::font::draw(d3d::font::hitmarker_small, x + 5, 20, color((int)(255.f * percent), (int)(255.f - (255.f * percent)), 0), DT_CENTER, explosion_time > 0.f ? "%.1f" : "exploded", (explosion_time - global::curtime));
 			
-			if (defuse_time == 0.f) return;
+			if (defuse_time == 0.f || f_def_time <= 0.f) return;
 
 			float percent2 = ((defuse_time - global::curtime) / f_def_time);
 			percent = ((defuse_time - global::curtime) / f_exp_time);
-			x = global::screen.right * percent;
+			x = (int)(global::screen.right * percent);
 
-			d3d::prim::filled_box(0, 0, x, 20, color(0, 255 - (255 * percent2), 255 * percent2));
-			d3d::font::draw(d3d::font::hitmarker_small, x + 5, 10, color(0, 255 * percent2, 255 - (255 * percent2)), DT_CENTER | DT_VCENTER, "%.1f", (defuse_time - global::curtime));
+			d3d::prim::filled_box(0, 0, x, 20, color(0, (int)(255.f - (255.f * percent2)), (int)(255.f * percent2)));
+			d3d::font::draw(d3d::font::hitmarker_small, x + 5, 10, color(0, (int)(255.f * percent2), (int)(255.f - (255.f * percent2))), DT_CENTER | DT_VCENTER, "%.1f", (defuse_time - global::curtime));
 		}
 	}
 
@@ -170,7 +170,8 @@ namespace events
 	{
 		if (strcmp(name, "round_start") == 0)
 		{
-			hitmarker::killstreak2 = hitmarker::timer = hitmarker::kill_timer = bomb_timer::defuse_time = bomb_timer::explosion_time = legit::aimbot::kill_delay = 0.f;
+			hitmarker::killstreak2 = 0;
+			hitmarker::timer = hitmarker::kill_timer = bomb_timer::defuse_time = bomb_timer::explosion_time = legit::aimbot::kill_delay = 0.f;
 			bomb_timer::planted = false;
 			server::sounds.clear();
 		}

@@ -406,4 +406,5 @@ FORCEINLINE void VectorMultiply(const Vector& a, const Vector& b, Vector& c)
 }
 
 #define qangle Vector
+#define QAngle Vector
 #define cvector Vector

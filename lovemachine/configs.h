@@ -20,11 +20,12 @@ struct an_var
 
 	void parse(string path)
 	{
-		//char* sz_value = (char*)"";
-		char* sz_value = new char[32];
-		GetPrivateProfileStringA(category.c_str(), name.c_str(), "", sz_value, 32, path.c_str());
-		*value = std::is_same<t, float>() ? atof(sz_value) : atoi(sz_value);//atof(sz_value);
-		//*value = std::is_same<t, bool>() ? sz_value == "true" : std::is_same<t, float>() ? atof(sz_value) : atoi(sz_value);
+		char sz_value[64] = { '\0' };
+		GetPrivateProfileStringA(category.c_str(), name.c_str(), "", sz_value, sizeof(sz_value), path.c_str());
+		if (sz_value[0] != '\0')
+		{
+			*value = (t)(std::is_same<t, float>() ? (float)atof(sz_value) : atoi(sz_value));
+		}
 	}
 
 	t* value;

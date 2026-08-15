@@ -2,8 +2,8 @@
 #include "includes.h"
 #include "definitions.h"
 #include "color.h"
+#include "vector.h"
 
-struct cvector { float x, y, z; };
 class cusercmd;
 class centity;
 class cweapon;

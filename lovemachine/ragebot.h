@@ -186,7 +186,7 @@ namespace rage
 		float mult_x = (sets->legit.aim.rcs[0] > 0.0f) ? sets->legit.aim.rcs[0] : 2.0f;
 		float mult_y = (sets->legit.aim.rcs[1] > 0.0f) ? sets->legit.aim.rcs[1] : 2.0f;
 
-		QAngle currentAngles = pCmd->viewangles;
+		qangle currentAngles = pCmd->viewangles;
 		currentAngles.x -= punchAngle.x * (sets->rage.enabled ? 2.0f : mult_x);
 		currentAngles.y -= punchAngle.y * (sets->rage.enabled ? 2.0f : mult_y);
 		currentAngles.z -= punchAngle.z * (sets->rage.enabled ? 2.0f : mult_y);
@@ -213,7 +213,7 @@ namespace rage
 		Vector spreadDir = forward + (right * -spreadX) + (up * -spreadY);
 		VectorNormalize(spreadDir);
 
-		QAngle compensatedAngles;
+		qangle compensatedAngles;
 		VectorAngles(spreadDir, compensatedAngles);
 
 		pCmd->viewangles = compensatedAngles;

@@ -139,7 +139,7 @@ namespace misc
 			return;
 		}
 
-		global::cmd->sidemove = global::cmd->mousedx < 0 ? -400 : 400;
+		global::cmd->sidemove = global::cmd->mousedx < 0 ? -400.0f : 400.0f;
 
 		//if (!cvar(antismac).value)
 		/*{

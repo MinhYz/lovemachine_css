@@ -18,13 +18,18 @@ using std::min;
 #define rad2deg( x )  ( (float)(x) * (float)(180.f / (float)M_PI) )
 #define deg2rad( x )  ( (float)(x) * (float)((float)M_PI / 180.f) )
 
-void normalize_angle(qangle& angle)
+inline void normalize_angle(qangle& angle)
 {
 	//while (angle.x > 89.f) angle.x -= 180.f;
 	//while (angle.x < -89.f) angle.x += 180.f;
 	angle.x = max(-89.f, min(angle.x, 89.f));
 	while (angle.y > 180.f) angle.y -= 360.f;
 	while (angle.y < -180.f) angle.y += 360.f;
+}
+
+inline void normalize_angles(qangle& angle)
+{
+	normalize_angle(angle);
 }
 
 #ifdef _WIN32
