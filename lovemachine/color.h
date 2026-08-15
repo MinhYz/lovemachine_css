@@ -43,10 +43,22 @@ struct color
 		return D3DCOLOR_RGBA(this->r, this->g, this->b, this->a);
 	}
 
-	float* divide()
+	struct float_color {
+		float rgba[4];
+		float operator[](int i) const { return rgba[i]; }
+		float& operator[](int i) { return rgba[i]; }
+		operator float*() { return rgba; }
+		operator const float*() const { return rgba; }
+	};
+
+	float_color divide() const
 	{
-		float divided[4] = { (float)(r / 255.f), (float)(g / 255.f), (float)(b / 255.f), (float)(a / 255.f) };
-		return divided;
+		float_color fc;
+		fc.rgba[0] = (float)(r / 255.f);
+		fc.rgba[1] = (float)(g / 255.f);
+		fc.rgba[2] = (float)(b / 255.f);
+		fc.rgba[3] = (float)(a / 255.f);
+		return fc;
 	}
 
 	color with_alpha(int alpha)

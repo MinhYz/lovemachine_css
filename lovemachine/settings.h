@@ -82,6 +82,26 @@ public:
 			float kill_delay = 0.5f;
 			float shot_delay = 0.15f;
 
+			// Disable Aimbot Conditions (Neverlose menu-introduction)
+			bool disable_flashed = false;
+			bool disable_in_smoke = false;
+			bool disable_in_jump = false;
+
+			// Visual Draw FOV
+			bool draw_fov = false;
+
+			// First vs Spray/Other Bullets
+			bool use_first_bullet_settings = true;
+			float other_fov = 6.0f;
+			float other_smooth[2] = { 25.0f, 25.0f };
+
+			// Recoil Control (RCS)
+			bool enable_rcs = true;
+			bool standalone_rcs = false;
+
+			// Legit Autowall Minimum Damage
+			float autowall_min_damage = 10.0f;
+
 			// Cranium Aimbot Extensions
 			bool auto_crouch = false;
 			bool predicted_position = false;
@@ -113,10 +133,19 @@ public:
 		bool hitbox[5] = { true, false, true, false, false };
 		float hitchance = 0.f;
 
+		// CS:S Compatible Neverlose Additions
+		float min_damage_visible = 10.0f;
+		float min_damage_autowall = 15.0f;
+		int body_aim_mode = 0; // 0: Default, 1: Prefer, 2: Force
+		bool override_resolver = false;
+
 		// Anti-Aim / Spinbot / Magic Bullet
 		bool spinbot = false;
+		int spinbot_mode = 0; // 0: Disabled, 1: Server-Side, 2: Client-Side
 		bool magic_bullet = false;
 		float spin_speed = 25.0f;
+		float spin_speed_client = 25.0f;
+		float spin_speed_server = 45.0f;
 		int pitch_aa = 0;
 		int yaw_aa = 0;
 	} rage;
@@ -148,15 +177,70 @@ public:
 		bool hitmarker = false;
 		bool bomb_timer = false;
 
+		// Viewmodel FOV (Arm/Hand Length)
+		float viewmodel_fov = 90.0f;
+
 		// Asian Hat (Mũ Asian / Rice Hat)
 		bool asian_hat = false;
 		color asian_hat_color = color(255, 200, 50);
 		float asian_hat_size = 20.0f;
 		float asian_hat_height = 10.0f;
 
-		// Skeleton & Nightmode
+		// Skeleton & Nightmode & Advanced ESP (Neverlose)
 		bool skeleton = true;
 		bool nightmode = false;
+		bool offscreen_esp = false;
+		float oof_size = 15.0f;
+		float oof_radius = 120.0f;
+		bool footstep_rings = false;
+		bool armor_bar = true;
+		bool ammo_bar = true;
+		bool flag_hk = true;
+		bool flag_scoped = true;
+		bool flag_reloading = true;
+		bool flag_flashed = true;
+		bool sound_esp = false;
+		bool glow_esp = false;
+
+		// World Modulation & Atmosphere (Neverlose Image 4)
+		float asus_walls = 100.0f; // 0-100% Wall Opacity (ASUS Wallhack)
+		float asus_props = 100.0f; // 0-100% Props Opacity
+		int skybox_mode = 0;       // 0: Default, 1: Night, 2: Baggage, 3: Cold, 4: Clear
+		bool enable_fog = false;
+		float fog_start = 0.0f;
+		float fog_end = 2000.0f;
+		float fog_density = 0.5f;
+
+		// Crosshairs, Indicators & FX (Neverlose Image 4)
+		bool noscope_crosshair = false;
+		bool autowall_crosshair = false;
+		bool damage_indicator = false;
+		bool hit_sound = false;
+		float hit_sound_volume = 50.0f;
+		bool bullet_impacts = false;
+
+		// Grenades & C4 Bomb (Neverlose Image 2 & 3)
+		bool grenade_esp = true;
+		bool grenade_trajectory = false;
+		bool grenade_warning = false;
+		bool bomb_esp = true;
+		bool bomb_defuse_radius = false;
+
+		// Viewmodel XYZ Offsets & Camera (Neverlose Image 5)
+		float viewmodel_x = 0.0f;
+		float viewmodel_y = 0.0f;
+		float viewmodel_z = 0.0f;
+		bool force_fov_in_scope = false;
+		bool remove_scope = false;
+		bool aspect_ratio_override = false;
+		float aspect_ratio_val = 1.77f;
+
+		// Customizable ESP Bar & Element Positions
+		int health_bar_pos = 0; // 0: Left, 1: Right, 2: Top, 3: Bottom
+		int armor_bar_pos = 1;  // 0: Left, 1: Right, 2: Top, 3: Bottom
+		int name_pos = 0;       // 0: Top, 1: Bottom, 2: Right, 3: Left
+		int weapon_pos = 1;     // 0: Top, 1: Bottom, 2: Right, 3: Left
+		int hp_text_style = 0;  // 0: Next to Bar, 1: Inside Bar, 2: Bottom Text
 
 		// Thirdperson & Inverted Angle
 		bool thirdperson = false;
@@ -182,6 +266,14 @@ public:
 		int sm_speed = 4;
 		bind_t record = { false, VK_NUMPAD7 };
 		bind_t play = { false, VK_NUMPAD8 };
+
+		// Neverlose CS:S Movement & Anti-Aim Exploits
+		bool fakelag_enabled = false;
+		int fakelag_limit = 14;
+		int fakelag_random = 0;
+		bool slow_walk = false;
+		float slow_walk_speed = 35.0f;
+		bool fake_duck = false;
 
 		// Cranium Misc Extensions
 		bool norecoil = false;

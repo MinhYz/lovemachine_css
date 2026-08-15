@@ -872,6 +872,8 @@ namespace hooks
 	get_vm_fov_fn o_get_vm_fov;
 	float __stdcall get_vm_fov_hook()
 	{
+		if (!sets->menu.panic && sets->visuals.viewmodel_fov > 0.0f)
+			return sets->visuals.viewmodel_fov;
 		return ((cvar(vm_fov).value > 0 && !sets->menu.panic) ? cvar(vm_fov).value : o_get_vm_fov());
 	}
 

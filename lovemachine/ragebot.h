@@ -22,8 +22,9 @@ namespace rage
 		if (!weapon || weapon->get_clip1() <= 0)
 			return;
 
-		// Strictly require manual IN_ATTACK (Left Click)
-		if (!(global::cmd->buttons & IN_ATTACK))
+		// Autoshoot or manual IN_ATTACK
+		bool is_attacking = (global::cmd->buttons & IN_ATTACK) != 0;
+		if (!is_attacking && !sets->rage.autoshoot)
 			return;
 
 		cvector local_eye = global::local->get_eye_pos();
@@ -43,18 +44,32 @@ namespace rage
 			if (head_pos.IsZero()) continue;
 
 			qangle aim_angle = calc_angle(local_eye, head_pos);
+
+			// Recoil compensation for 100% pin-point headshots while moving/firing
+			qangle punch = global::local->get_punch();
+			aim_angle.x -= punch.x * 2.0f;
+			aim_angle.y -= punch.y * 2.0f;
+
 			normalize_angle(aim_angle);
 
 			global::cmd->viewangles.x = aim_angle.x;
 			global::cmd->viewangles.y = aim_angle.y;
 			global::cmd->buttons |= IN_ATTACK;
+
+			// Autostop on fire tick to guarantee maximum accuracy while moving
+			if (sets->rage.autostop)
+			{
+				global::cmd->forwardmove = 0.0f;
+				global::cmd->sidemove = 0.0f;
+			}
+
 			break;
 		}
 	}
 
 	inline void norecoil()
 	{
-		if (!sets->misc.norecoil || !global::local || !global::cmd) return;
+		if ((!sets->misc.norecoil && !sets->legit.aim.norecoil) || !global::local || !global::cmd) return;
 		if (global::cmd->buttons & IN_ATTACK)
 		{
 			qangle punch = global::local->get_punch();
@@ -62,6 +77,7 @@ namespace rage
 			global::cmd->viewangles.y -= punch.y * 2.0f;
 		}
 	}
+
 	inline void normalize_angles(Vector& angles)
 	{
 		while (angles.x > 89.0f) angles.x -= 180.0f;
@@ -90,7 +106,7 @@ namespace rage
 
 	inline void anti_aim()
 	{
-		if (!sets->rage.enabled && !sets->rage.spinbot && sets->rage.pitch_aa == 0 && sets->rage.yaw_aa == 0)
+		if (!sets->rage.enabled && !sets->rage.spinbot && sets->rage.spinbot_mode == 0 && sets->rage.pitch_aa == 0 && sets->rage.yaw_aa == 0)
 			return;
 
 		if (!global::cmd || !global::local || !global::local->valid())
@@ -109,14 +125,32 @@ namespace rage
 		else if (sets->rage.pitch_aa == 3) // Zero (0°)
 			global::cmd->viewangles.x = 0.0f;
 
-		// Yaw Anti-Aim / Spinbot
-		if (sets->rage.spinbot || sets->rage.yaw_aa == 2) // Spinbot
+		// Yaw Anti-Aim & Dual Spinbot Modes
+		// spinbot_mode: 1 = Server-Side (Silent AA spin), 2 = Client-Side (Visual camera spin)
+		static float spin_angle_server = 0.0f;
+		static float spin_angle_client = 0.0f;
+
+		if (sets->rage.spinbot_mode == 1 || (sets->rage.spinbot_mode == 0 && (sets->rage.spinbot || sets->rage.yaw_aa == 2))) // Server-Side Spinbot
 		{
-			static float spin_angle = 0.0f;
-			spin_angle += sets->rage.spin_speed;
-			if (spin_angle > 180.0f) spin_angle -= 360.0f;
-			if (spin_angle < -180.0f) spin_angle += 360.0f;
-			global::cmd->viewangles.y = spin_angle;
+			float speed = sets->rage.spin_speed_server > 0.f ? sets->rage.spin_speed_server : sets->rage.spin_speed;
+			spin_angle_server += speed;
+			if (spin_angle_server > 180.0f) spin_angle_server -= 360.0f;
+			if (spin_angle_server < -180.0f) spin_angle_server += 360.0f;
+			global::cmd->viewangles.y = spin_angle_server;
+		}
+		else if (sets->rage.spinbot_mode == 2) // Client-Side Spinbot (Visual screen spin)
+		{
+			spin_angle_client += sets->rage.spin_speed_client;
+			if (spin_angle_client > 180.0f) spin_angle_client -= 360.0f;
+			if (spin_angle_client < -180.0f) spin_angle_client += 360.0f;
+			global::cmd->viewangles.y = spin_angle_client;
+			if (_engine)
+			{
+				qangle cur_engine_angles;
+				_engine->get_viewangles(cur_engine_angles);
+				cur_engine_angles.y = spin_angle_client;
+				_engine->set_viewangles(cur_engine_angles);
+			}
 		}
 		else if (sets->rage.yaw_aa == 1) // Backward (180°)
 		{

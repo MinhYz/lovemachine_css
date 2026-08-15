@@ -1,11 +1,20 @@
 #pragma once
 #if defined(__GNUG__) || defined(__clang__)
 #include_next <math.h>
+#else
+#include <math.h>
 #endif
+#include <cmath>
+#include <algorithm>
+using std::max;
+using std::min;
+
 #include "includes.h"
 #include "vector.h"
 
+#ifndef M_PI
 #define M_PI 3.14159265358979323846f
+#endif
 #define rad2deg( x )  ( (float)(x) * (float)(180.f / (float)M_PI) )
 #define deg2rad( x )  ( (float)(x) * (float)((float)M_PI / 180.f) )
 
@@ -114,11 +123,8 @@ float get_fov(const qangle& viewAngle, const qangle& aimAngle)
 	return rad2deg(acos(aim.Dot(ang) / aim.LengthSqr()));
 }
 
-void vector_transform(cvector in, matrix3x4_t transform, cvector& out)
-{
-	for (int i = 0; i < 3; i++)
-		out[i] = in.Dot(transform[i]) + transform[i][3];
-}
+struct matrix3x4_t;
+void vector_transform(cvector in, const matrix3x4_t& transform, cvector& out);
 
 template<typename t>
 t math_clamp(t pmin, t val, t pmax)

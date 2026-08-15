@@ -227,21 +227,24 @@ namespace legit
 
 		void start()
 		{
+			// Check Disable Aimbot Conditions (Flashed, Smoke, Jump)
+			if (sets->legit.aim.disable_flashed && global::local && global::local->get_flash_duration() > 0.0f)
+			{
+				drop();
+				return;
+			}
+			if (sets->legit.aim.disable_in_jump && global::local && !(global::local->get_flags() & FL_ONGROUND))
+			{
+				drop();
+				return;
+			}
+
 			if (sets->legit.aim.fov > 0.f)
 			{
 				misc::set_points(points, sets->legit.aim.hitbox);
 
-				/*if (best_id != -1 && best_fov != 180.f && shot_delay == 0.f && sets->legit.aim.shot_delay != 0.f)
-				{
-					smac_delay = true;
-					shot_delay = global::curtime + sets->legit.aim.shot_delay;
-				}*/
-
 				if (cvar(ragemode).value || global::curtime >= kill_delay || sets->legit.aim.kill_delay == 0.f)
 					kill_delay = 0.f;
-
-				//if (global::curtime >= shot_delay || sets->legit.aim.shot_delay == 0.f)
-				//	smac_delay = false;
 
 				if (!should_aim())
 					drop();

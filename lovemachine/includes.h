@@ -38,6 +38,10 @@ typedef unsigned long LPARAM;
 typedef struct { LONG left, top, right, bottom; } RECT;
 typedef struct { LONG x, y; } POINT;
 #define VK_INSERT 0x2D
+#define VK_DELETE 0x2E
+#define VK_HOME 0x24
+#define VK_END 0x23
+#define VK_F11 0x7A
 #define VK_ESCAPE 0x1B
 #define VK_NUMPAD7 0x67
 #define VK_NUMPAD8 0x68
@@ -61,6 +65,14 @@ typedef struct { LONG x, y; } POINT;
 typedef struct { char cFileName[260]; } WIN32_FIND_DATAA;
 #endif
 
+#ifndef __forceinline
+#define __forceinline inline
+#endif
+
+#ifndef FORCEINLINE
+#define FORCEINLINE inline
+#endif
+
 #include <string>
 #include <array>
 #include <cstdarg>
@@ -73,13 +85,5 @@ typedef struct { char cFileName[260]; } WIN32_FIND_DATAA;
 #include <deque>
 #include <chrono>
 #include <algorithm>
-
-#ifndef __forceinline
-#define __forceinline inline
-#endif
-
-#ifndef FORCEINLINE
-#define FORCEINLINE inline
-#endif
 
 using namespace std;

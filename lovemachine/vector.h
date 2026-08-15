@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 
 #define CHECK_VALID( _v ) 0
 #define Assert( _exp ) ((void)0)
@@ -206,11 +207,15 @@ inline float Vector::Length(void) const
 
 	float sqsr = x * x + y * y + z * z;
 
+#if defined(_MSC_VER) && !defined(_M_X64)
 	__asm
 	{
 		sqrtss xmm0, sqsr
 		movss root, xmm0
 	}
+#else
+	root = std::sqrt(sqsr);
+#endif
 
 	return root;
 }
@@ -223,11 +228,15 @@ inline float Vector::Length2D(void) const
 
 	float sqst = x * x + y * y;
 
+#if defined(_MSC_VER) && !defined(_M_X64)
 	__asm
 	{
 		sqrtss xmm0, sqst
 		movss root, xmm0
 	}
+#else
+	root = std::sqrt(sqst);
+#endif
 
 	return root;
 }

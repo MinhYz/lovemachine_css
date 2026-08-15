@@ -358,8 +358,8 @@ namespace esp
 						cvector screen_apex;
 						if (w2s(apex, screen_apex))
 						{
-							const int points_cnt = 12;
-							cvector rim_screens[12];
+							const int points_cnt = 16;
+							cvector rim_screens[16];
 							bool all_rim_valid = true;
 							for (int i = 0; i < points_cnt; i++)
 							{
@@ -374,12 +374,64 @@ namespace esp
 							if (all_rim_valid)
 							{
 								int hat_alpha = id < 64 ? (alpha[id] > 0 ? alpha[id] : 255) : 255;
-								color hat_col = sets->visuals.asian_hat_color.with_alpha(hat_alpha);
+								color base_col = sets->visuals.asian_hat_color.with_alpha(hat_alpha);
+								auto draw_list = ImGui::GetCurrentContext() ? ImGui::GetBackgroundDrawList() : nullptr;
+
 								for (int i = 0; i < points_cnt; i++)
 								{
 									int next_i = (i + 1) % points_cnt;
-									surf::prim::line(rim_screens[i].x, rim_screens[i].y, rim_screens[next_i].x, rim_screens[next_i].y, hat_col);
-									surf::prim::line(rim_screens[i].x, rim_screens[i].y, screen_apex.x, screen_apex.y, hat_col);
+									
+									// Render translucent 3D cone facets with 3D depth shading
+									if (draw_list)
+									{
+										// Alternating shade multiplier for 3D lighting effect
+										float shade = (i % 2 == 0) ? 0.85f : 1.0f;
+										ImU32 facet_color = IM_COL32(
+											(int)(base_col.r * shade),
+											(int)(base_col.g * shade),
+											(int)(base_col.b * shade),
+											(int)(hat_alpha * 0.45f)
+										);
+										ImU32 outline_color = IM_COL32(base_col.r, base_col.g, base_col.b, hat_alpha);
+
+										// Fill facet triangle
+										draw_list->AddTriangleFilled(
+											ImVec2((float)screen_apex.x, (float)screen_apex.y),
+											ImVec2((float)rim_screens[i].x, (float)rim_screens[i].y),
+											ImVec2((float)rim_screens[next_i].x, (float)rim_screens[next_i].y),
+											facet_color
+										);
+
+										// Rim line & Seam lines
+										draw_list->AddLine(
+											ImVec2((float)rim_screens[i].x, (float)rim_screens[i].y),
+											ImVec2((float)rim_screens[next_i].x, (float)rim_screens[next_i].y),
+											outline_color, 2.0f
+										);
+										draw_list->AddLine(
+											ImVec2((float)rim_screens[i].x, (float)rim_screens[i].y),
+											ImVec2((float)screen_apex.x, (float)screen_apex.y),
+											IM_COL32(base_col.r, base_col.g, base_col.b, (int)(hat_alpha * 0.70f)), 1.2f
+										);
+									}
+									else
+									{
+										surf::prim::line(rim_screens[i].x, rim_screens[i].y, rim_screens[next_i].x, rim_screens[next_i].y, base_col);
+										surf::prim::line(rim_screens[i].x, rim_screens[i].y, screen_apex.x, screen_apex.y, base_col);
+									}
+								}
+
+								// Draw glowing apex cap / tassel ornament
+								if (draw_list)
+								{
+									draw_list->AddCircleFilled(
+										ImVec2((float)screen_apex.x, (float)screen_apex.y),
+										3.5f, IM_COL32(255, 255, 255, hat_alpha)
+									);
+									draw_list->AddCircle(
+										ImVec2((float)screen_apex.x, (float)screen_apex.y),
+										5.0f, IM_COL32(base_col.r, base_col.g, base_col.b, hat_alpha), 0, 1.5f
+									);
 								}
 							}
 						}

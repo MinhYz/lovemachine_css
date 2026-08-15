@@ -373,6 +373,30 @@ namespace misc
 		misc::draw::run();
 
 		// Thirdperson logic (Bypass sv_cheats for LAN & Multiplayer servers)
+		static bool last_tp_state = false;
+		if (sets->visuals.thirdperson != last_tp_state)
+		{
+			last_tp_state = sets->visuals.thirdperson;
+			auto sv_cheats = _cvar ? _cvar->find_var("sv_cheats") : nullptr;
+			if (sv_cheats)
+			{
+				int old_val = sv_cheats->m_nValue;
+				sv_cheats->m_nValue = 1;
+				if (sets->visuals.thirdperson)
+					_engine->clientcmd_unrestricted("thirdperson");
+				else
+					_engine->clientcmd_unrestricted("firstperson");
+				sv_cheats->m_nValue = old_val;
+			}
+			else
+			{
+				if (sets->visuals.thirdperson)
+					_engine->clientcmd_unrestricted("thirdperson");
+				else
+					_engine->clientcmd_unrestricted("firstperson");
+			}
+		}
+
 		if (sets->visuals.thirdperson && _input)
 		{
 			*_input->m_fCameraInThirdPerson() = true;

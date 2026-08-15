@@ -1128,3 +1128,9 @@ struct matrix3x4_t
 
 	float m_flMatVal[3][4];
 };
+
+inline void vector_transform(cvector in, const matrix3x4_t& transform, cvector& out)
+{
+	for (int i = 0; i < 3; i++)
+		out[i] = in.Dot(transform[i]) + transform[i][3];
+}
