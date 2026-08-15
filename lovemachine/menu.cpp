@@ -1060,7 +1060,8 @@ namespace Menu
 			}
 			else
 			{
-				const char* kname = ImGui::GetKeyName((ImGuiKey)sets->menu.menu_key);
+				const char* kname = (sets->menu.menu_key >= ImGuiKey_NamedKey_BEGIN && sets->menu.menu_key < ImGuiKey_NamedKey_END) ? 
+					ImGui::GetKeyName((ImGuiKey)sets->menu.menu_key) : "INSERT";
 				if (!kname || strlen(kname) == 0) kname = "INSERT";
 				snprintf(key_btn_text, sizeof(key_btn_text), "[ %s ]", kname);
 			}
