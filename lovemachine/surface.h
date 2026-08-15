@@ -27,42 +27,40 @@ namespace surf
 
 		void size(e_font font_id, int& width, int& height, const char* text, ...)
 		{
+			if (!_surface || fonts[font_id] == 0) return;
 			char buf[1024] = { '\0' };
 			va_list va_alist;
 			va_start(va_alist, text);
-			int length = vsprintf_s(buf, text, va_alist);
+			vsprintf_s(buf, text, va_alist);
 			va_end(va_alist);
 
-			wchar_t* wstr = new wchar_t[length + 1];
-			mbstowcs(wstr, buf, length + 1);
+			wchar_t wstr[1024];
+			MultiByteToWideChar(CP_UTF8, 0, buf, -1, wstr, 1024);
 
 			_surface->get_text_size(fonts[font_id], wstr, width, height);
-
-			delete wstr;
 		}
 
 		void draw(e_font font_id, int x, int y, color p_color, DWORD flag, const char* fmt, ...)
 		{
+			if (!_surface || fonts[font_id] == 0) return;
 			char buf[1024] = { '\0' };
 			va_list va_alist;
 			va_start(va_alist, fmt);
 			vsprintf_s(buf, fmt, va_alist);
 			va_end(va_alist);
 
-			//wchar_t* wstr = new wchar_t[length + 1];
-			//mbstowcs(wstr, buf, length + 1);
-
-			int wchars_num = MultiByteToWideChar(CP_UTF8, 0, buf, -1, NULL, 0);
-			wchar_t* wstr = new wchar_t[wchars_num];
-			MultiByteToWideChar(CP_UTF8, 0, buf, -1, wstr, wchars_num);
+			wchar_t wstr[1024];
+			int wchars_num = MultiByteToWideChar(CP_UTF8, 0, buf, -1, wstr, 1024);
+			if (wchars_num <= 0) return;
 
 			int p_x = x, p_y = y;
 
 			if (flag != null)
 			{
-				int sx, sy; _surface->get_text_size(fonts[font_id], wstr, sx, sy);
+				int sx = 0, sy = 0; 
+				_surface->get_text_size(fonts[font_id], wstr, sx, sy);
 				if (flag & DT_CENTER) p_x -= sx / 2;
-				if (flag & DT_VCENTER)p_y -= sy / 2;
+				if (flag & DT_VCENTER) p_y -= sy / 2;
 				if (flag & DT_RIGHT)  p_x -= sx;
 				if (flag & DT_BOTTOM) p_y -= sy;
 			}
@@ -71,8 +69,6 @@ namespace surf
 			_surface->set_font(fonts[font_id]);
 			_surface->set_text_pos(p_x, p_y);
 			_surface->print_text(wstr, wcslen(wstr));
-		
-			delete wstr;
 		}
 	}
 

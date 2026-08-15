@@ -1,3 +1,4 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <iostream>
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -57,6 +58,41 @@ int main(int argc, char* argv[])
     // Setup ImGui SDL2 & OpenGL3 backends
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // 1. Base Main Font (Museo 500 / GothamPro)
+    ImFontConfig font_cfg;
+    font_cfg.OversampleH = 2;
+    font_cfg.OversampleV = 2;
+    font_cfg.PixelSnapH = true;
+    Menu::font_main = io.Fonts->AddFontFromFileTTF("assets/fonts/Museo500.ttf", 14.0f, &font_cfg);
+    if (!Menu::font_main)
+        Menu::font_main = io.Fonts->AddFontFromFileTTF("assets/fonts/GothamPro.ttf", 14.0f, &font_cfg);
+    if (!Menu::font_main)
+        Menu::font_main = io.Fonts->AddFontDefault();
+
+    // 2. FontAwesome Icon Merge into Default Font
+    ImFontConfig fa_cfg;
+    fa_cfg.MergeMode = true;
+    fa_cfg.PixelSnapH = true;
+    fa_cfg.OversampleH = 2;
+    fa_cfg.OversampleV = 2;
+    static const ImWchar fa_ranges[] = { 0xf000, 0xf976, 0 };
+    io.Fonts->AddFontFromFileTTF("assets/fonts/FontAwesome.ttf", 13.0f, &fa_cfg, fa_ranges);
+
+    // 3. Large Brand Header Font (Museo 900)
+    ImFontConfig brand_cfg;
+    brand_cfg.OversampleH = 2;
+    brand_cfg.OversampleV = 2;
+    brand_cfg.PixelSnapH = true;
+    Menu::font_brand_title = io.Fonts->AddFontFromFileTTF("assets/fonts/Museo900.ttf", 24.0f, &brand_cfg);
+
+    // 4. Gamesense Vector Icon Font (AstriumTabs)
+    ImFontConfig skeet_cfg;
+    skeet_cfg.OversampleH = 2;
+    skeet_cfg.OversampleV = 2;
+    skeet_cfg.PixelSnapH = true;
+    static const ImWchar skeet_ranges[] = { 0x0020, 0x00FF, 0 };
+    Menu::font_skeet_icons = io.Fonts->AddFontFromFileTTF("assets/fonts/AstriumTabs.ttf", 22.0f, &skeet_cfg, skeet_ranges);
 
     // Setup custom theme
     Menu::SetupStyle();

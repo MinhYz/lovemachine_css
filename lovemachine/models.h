@@ -74,11 +74,13 @@ namespace models
 					record = records[p_info.entity_index][min(13, max(0, (global::cmd->tick_count - sets->legit.backtrack.ticks + 1) % sets->legit.backtrack.ticks))];
 				}
 
-				imaterial* invis_mat = materials[1][sets->visuals.chams == 2][sets->visuals.chams_style[1]];
-				imaterial* vis_mat = materials[0][sets->visuals.chams == 2][sets->visuals.chams_style[1]];
-
-				bool is_wireframe = (sets->visuals.chams == 3);
 				bool is_flat = (sets->visuals.chams == 1);
+				bool is_wireframe = (sets->visuals.chams == 3);
+				int flat_idx = is_flat ? 1 : 0;
+				int shine_idx = (sets->visuals.chams == 2) ? 1 : (sets->visuals.chams_style[1] ? 1 : 0);
+
+				imaterial* invis_mat = materials[1][flat_idx][shine_idx];
+				imaterial* vis_mat = materials[0][flat_idx][shine_idx];
 
 				if (vis_mat)
 				{

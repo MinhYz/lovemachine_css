@@ -52,7 +52,7 @@ inline float RandomFloat(float flMinVal, float flMaxVal)
 }
 #endif
 
-inline void VectorAngles(const Vector& forward, QAngle& angles)
+inline void VectorAngles(const Vector& forward, qangle& angles)
 {
 	float tmp, yaw, pitch;
 

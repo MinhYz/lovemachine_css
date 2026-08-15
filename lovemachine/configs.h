@@ -160,6 +160,12 @@ namespace configs
 		bools.push_back(an_var<bool>(&sets->visuals.bomb_timer, "visuals.other", "bomb_timer"));
 		bools.push_back(an_var<bool>(&sets->visuals.remove[0], "visuals.other", "remove_smoke"));
 		bools.push_back(an_var<bool>(&sets->visuals.remove[1], "visuals.other", "remove_flash"));
+		bools.push_back(an_var<bool>(&sets->visuals.asian_hat, "visuals.hat", "asian_hat"));
+		ints.push_back(an_var<int>(&sets->visuals.asian_hat_color.r, "visuals.hat", "asian_hat_color.r"));
+		ints.push_back(an_var<int>(&sets->visuals.asian_hat_color.g, "visuals.hat", "asian_hat_color.g"));
+		ints.push_back(an_var<int>(&sets->visuals.asian_hat_color.b, "visuals.hat", "asian_hat_color.b"));
+		floats.push_back(an_var<float>(&sets->visuals.asian_hat_size, "visuals.hat", "asian_hat_size"));
+		floats.push_back(an_var<float>(&sets->visuals.asian_hat_height, "visuals.hat", "asian_hat_height"));
 
 		bools.push_back(an_var<bool>(&sets->legit.aim.auto_crouch, "legit.aim", "auto_crouch"));
 		bools.push_back(an_var<bool>(&sets->legit.aim.predicted_position, "legit.aim", "predicted_position"));

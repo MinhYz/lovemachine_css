@@ -343,25 +343,22 @@ namespace d3d
 	//(c) tgf a5
 	bool screen_transform(const Vector& point, Vector& screen)
 	{
-		float w;
-		auto worldToScreen = _engine->w2s_matrix();
+		if (!_engine) return true;
+		const auto& worldToScreen = _engine->w2s_matrix();
 
 		screen.x = worldToScreen[0][0] * point[0] + worldToScreen[0][1] * point[1] + worldToScreen[0][2] * point[2] + worldToScreen[0][3];
 		screen.y = worldToScreen[1][0] * point[0] + worldToScreen[1][1] * point[1] + worldToScreen[1][2] * point[2] + worldToScreen[1][3];
-		w = worldToScreen[3][0] * point[0] + worldToScreen[3][1] * point[1] + worldToScreen[3][2] * point[2] + worldToScreen[3][3];
+		float w = worldToScreen[3][0] * point[0] + worldToScreen[3][1] * point[1] + worldToScreen[3][2] * point[2] + worldToScreen[3][3];
 		screen.z = 0.0f;
 
-		bool behind = false;
-
-		if (w < 0.001f)
+		bool behind = (w < 0.001f);
+		if (behind)
 		{
-			behind = true;
-			screen.x *= 100000;
-			screen.y *= 100000;
+			screen.x *= 100000.0f;
+			screen.y *= 100000.0f;
 		}
 		else
 		{
-			behind = false;
 			float invw = 1.0f / w;
 			screen.x *= invw;
 			screen.y *= invw;
@@ -373,14 +370,15 @@ namespace d3d
 	//(c) tgf a5
 	bool w2s(const cvector& point, cvector& screen)
 	{
+		if (global::screen.right <= 0 || global::screen.bottom <= 0)
+			return false;
+
 		if (!screen_transform(point, screen))
 		{
-			float x = global::screen.right / 2;
-			float y = global::screen.bottom / 2;
-			x += 0.5 * screen.x * global::screen.right + 0.5;
-			y -= 0.5 * screen.y * global::screen.bottom + 0.5;
-			screen.x = x;
-			screen.y = y;
+			float half_w = (float)global::screen.right * 0.5f;
+			float half_h = (float)global::screen.bottom * 0.5f;
+			screen.x = half_w + 0.5f * screen.x * (float)global::screen.right + 0.5f;
+			screen.y = half_h - 0.5f * screen.y * (float)global::screen.bottom + 0.5f;
 			return true;
 		}
 

@@ -93,20 +93,19 @@ namespace obj
 				
 					if (!sinfo.empty())
 					{
-						int wchars_num = MultiByteToWideChar(CP_UTF8, 0, sinfo.c_str(), -1, NULL, 0);
-						wchar_t* wstr = new wchar_t[wchars_num];
-						MultiByteToWideChar(CP_UTF8, 0, sinfo.c_str(), -1, wstr, wchars_num);
+						wchar_t wstr[512];
+						int wchars_num = MultiByteToWideChar(CP_UTF8, 0, sinfo.c_str(), -1, wstr, 512);
+						if (wchars_num > 0)
+						{
+							auto p_size = font::size_w(font::cont, wstr, wchars_num);
 
-						auto p_size = font::size_w(font::cont, wstr, wchars_num);
+							sets->info.mx = max(200, p_size.right + 10);
+							sets->info.my = pos_y + p_size.bottom + 4;
 
-						sets->info.mx = max(200, p_size.right + 10);
-						sets->info.my = pos_y + p_size.bottom + 4;
+							font::draw_w(font::cont, sets->info.x + (sets->info.mx / 2) - (p_size.right / 2), sets->info.y + pos_y, color::ptext(), NULL, wstr);
 
-						font::draw_w(font::cont, sets->info.x + (sets->info.mx / 2) - (p_size.right / 2), sets->info.y + pos_y, color::ptext(), NULL, wstr);
-
-						delete wstr;
-
-						pos_y += p_size.bottom;
+							pos_y += p_size.bottom;
+						}
 					}
 				}
 			}
