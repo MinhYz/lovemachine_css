@@ -11,6 +11,7 @@
 namespace Menu
 {
 	bool show_menu = false;
+	bool is_binding_key = false;
 	int current_tab = 3; // Default to Players ESP
 	int current_theme = THEME_SKEET;
 	int current_layout = LAYOUT_SKEET;
@@ -1040,20 +1041,19 @@ namespace Menu
 		ImGui::BeginChild("SettingsCol2", ImVec2(col_w, 0), false);
 		{
 			BeginGroupbox("Menu Toggle Key");
-			static bool is_binding = false;
 			char key_btn_text[64];
-			if (is_binding)
+			if (is_binding_key)
 			{
 				snprintf(key_btn_text, sizeof(key_btn_text), "[ Press any key... ]");
 				for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++)
 				{
-					if (ImGui::IsKeyPressed((ImGuiKey)k))
+					if (ImGui::IsKeyPressed((ImGuiKey)k, false))
 					{
 						if (k != ImGuiKey_Escape)
 						{
 							sets->menu.menu_key = k;
 						}
-						is_binding = false;
+						is_binding_key = false;
 						break;
 					}
 				}
@@ -1068,7 +1068,7 @@ namespace Menu
 
 			if (ImGui::Button(key_btn_text, ImVec2(170, 30)))
 			{
-				is_binding = !is_binding;
+				is_binding_key = !is_binding_key;
 			}
 			ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Click button above & press any key");
 			EndGroupbox();
@@ -1313,6 +1313,19 @@ namespace Menu
 
 	void Render()
 	{
+		// Global toggle hotkey check (checks every frame)
+		if (!is_binding_key && sets)
+		{
+			ImGuiKey target_key = (sets->menu.menu_key >= ImGuiKey_NamedKey_BEGIN && sets->menu.menu_key < ImGuiKey_NamedKey_END) ? 
+				(ImGuiKey)sets->menu.menu_key : ImGuiKey_Insert;
+
+			if (ImGui::IsKeyPressed(target_key, false) || ImGui::IsKeyPressed(ImGuiKey_Insert, false))
+			{
+				show_menu = !show_menu;
+				sets->menu.opened = show_menu;
+			}
+		}
+
 		if (!show_menu) return;
 
 		static int prev_layout = -1;
