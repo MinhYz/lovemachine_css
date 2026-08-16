@@ -741,15 +741,22 @@ namespace hooks
 
 			misc::run();
 			legit::knifebot::run();
-			rage::magic_bullet(orig_angles);
-			if (!(global::cmd->buttons & (IN_ATTACK | IN_ATTACK2)))
+
+			bool shot_fired = false;
+			if (sets->rage.enabled || sets->rage.magic_bullet)
+			{
+				shot_fired = rage::magic_bullet(orig_angles);
+			}
+
+			if (!shot_fired && !(global::cmd->buttons & (IN_ATTACK | IN_ATTACK2)))
 			{
 				rage::anti_aim();
 			}
-			if (global::cmd->buttons & IN_ATTACK)
+			else if (!shot_fired && (global::cmd->buttons & IN_ATTACK))
 			{
 				rage::standalone_rcs();
 			}
+
 			rage::fix_movement(global::cmd, orig_angles);
 			rage::normalize_angles(global::cmd->viewangles);
 			misc::draw::clear(true);
@@ -877,6 +884,9 @@ namespace hooks
 	override_view_fn o_override_view;
 	void __stdcall override_view_hook(cviewsetup* p_setup)
 	{
+		if (o_override_view)
+			o_override_view(p_setup);
+
 		if (p_setup && _engine && _engine->in_game() && global::local && global::local->valid() && !sets->menu.panic)
 		{
 			if (sets->visuals.fov > 0.0f)
@@ -894,21 +904,21 @@ namespace hooks
 				Vector forward, right, up;
 				AngleVectors(view_angles, &forward, &right, &up);
 
-				Vector eye_pos = global::local->get_eye_pos();
-				Vector cam_offset = forward * (-sets->visuals.thirdperson_dist);
-				Vector target_pos = eye_pos + cam_offset;
+				Vector eye_pos = p_setup->origin;
+				float dist = sets->visuals.thirdperson_dist > 10.0f ? sets->visuals.thirdperson_dist : 120.0f;
+				Vector target_pos = eye_pos - (forward * dist);
 
 				if (_engine_trace)
 				{
 					trace_t tr;
 					ray_t ray;
-					ray.Init(eye_pos, target_pos, Vector(-10, -10, -10), Vector(10, 10, 10));
+					ray.Init(eye_pos, target_pos, Vector(-4, -4, -4), Vector(4, 4, 4));
 					CSimpleTraceFilter filter((void*)global::local);
 					_engine_trace->trace_ray(ray, MASK_SOLID, &filter, &tr);
 
 					if (tr.fraction < 1.0f)
 					{
-						target_pos = eye_pos + (forward * (-sets->visuals.thirdperson_dist * tr.fraction * 0.9f));
+						target_pos = eye_pos - (forward * (dist * tr.fraction * 0.9f));
 					}
 				}
 

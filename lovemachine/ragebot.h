@@ -71,24 +71,24 @@ namespace rage
 		}
 	}
 
-	inline void magic_bullet(Vector orig_angles)
+	inline bool magic_bullet(Vector orig_angles)
 	{
 		if (!sets->rage.enabled && !sets->rage.magic_bullet)
-			return;
+			return false;
 
 		if (!global::cmd || !global::local || !global::local->valid() || !_ent_list || !_engine)
-			return;
+			return false;
 
 		if (global::cmd->buttons & IN_RELOAD)
-			return;
+			return false;
 
 		auto weapon = global::local->get_weapon();
 		if (!weapon || weapon->get_clip1() <= 0)
-			return;
+			return false;
 
 		bool is_attacking = (global::cmd->buttons & IN_ATTACK) != 0;
 		if (!is_attacking && !sets->rage.autoshoot)
-			return;
+			return false;
 
 		cvector local_eye = global::local->get_eye_pos();
 		int max_clients = _engine->get_max_clients();
@@ -138,16 +138,9 @@ namespace rage
 		if (best_target && !best_target_pos.IsZero())
 		{
 			qangle aim_angle = calc_angle(local_eye, best_target_pos);
+			normalize_angles(aim_angle);
 
-			// Recoil compensation for 100% pin-point headshots while moving/firing
-			qangle punch = global::local->get_punch();
-			aim_angle.x -= punch.x * 2.0f;
-			aim_angle.y -= punch.y * 2.0f;
-
-			normalize_angle(aim_angle);
-
-			global::cmd->viewangles.x = aim_angle.x;
-			global::cmd->viewangles.y = aim_angle.y;
+			global::cmd->viewangles = aim_angle;
 			global::cmd->buttons |= IN_ATTACK;
 
 			// Active counter-strafing autostop to guarantee 100% laser accuracy
@@ -155,7 +148,13 @@ namespace rage
 			{
 				autostop(global::cmd, orig_angles);
 			}
+
+			// Apply NoRecoil + NoSpread for 100% pin-point headshots
+			apply_nospread_norecoil(global::cmd, global::local);
+			return true;
 		}
+
+		return false;
 	}
 
 	inline void norecoil()

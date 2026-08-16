@@ -142,13 +142,11 @@ inline float VectorNormalize(Vector& v)
 	return l;
 }
 
-qangle calc_angle(cvector src, cvector dst)
+inline qangle calc_angle(const cvector& src, const cvector& dst)
 {
 	qangle angles;
-	cvector delta = src - dst;
-	vectorangles(delta, angles);
-	delta.Normalize();
-	//normalize_angle(delta); // delta.Normalize(); Ã§Ã Ã·Ã¥Ã¬ Ã­Ã³Ã¦Ã­Ã  Ã½Ã²Ã  Ã´Ã³Ã­ÃªÃ¶Ã¨Ã¿ Ã§Ã¤Ã¥Ã±Ã¼?
+	cvector delta = dst - src;
+	VectorAngles(delta, angles);
 	return angles;
 }
 
