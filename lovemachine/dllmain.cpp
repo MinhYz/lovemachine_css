@@ -74,50 +74,70 @@ static void CopyDirRecursive(const std::string& sourceDir, const std::string& ta
 
 static void AutoInstallCustomModels()
 {
-	const char* model_sources[] = {
+	char dllPath[MAX_PATH] = { 0 };
+	std::string cheatDir = "";
+	if (GetModuleFileNameA((HMODULE)global::dll, dllPath, MAX_PATH))
+	{
+		std::string p(dllPath);
+		size_t pos = p.find_last_of("\\/");
+		if (pos != std::string::npos)
+		{
+			cheatDir = p.substr(0, pos + 1);
+		}
+	}
+
+	std::vector<std::string> model_sources = {
+		cheatDir + "scripts\\models\\cissia_zzz",
+		cheatDir + "assets\\models\\cissia_zzz",
+		cheatDir + "..\\scripts\\models\\cissia_zzz",
+		cheatDir + "..\\assets\\models\\cissia_zzz",
 		"scripts\\models\\cissia_zzz",
 		"assets\\models\\cissia_zzz",
 		"..\\scripts\\models\\cissia_zzz",
 		"..\\assets\\models\\cissia_zzz"
 	};
 
-	for (const char* src : model_sources)
+	for (const auto& src : model_sources)
 	{
-		DWORD attr = GetFileAttributesA(src);
+		DWORD attr = GetFileAttributesA(src.c_str());
 		if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
 		{
-			std::string srcModels = std::string(src) + "\\models";
-			std::string srcMaterials = std::string(src) + "\\materials";
+			std::string srcModels = src + "\\models";
+			std::string srcMaterials = src + "\\materials";
 
 			if (GetFileAttributesA(srcModels.c_str()) != INVALID_FILE_ATTRIBUTES)
 			{
 				CopyDirRecursive(srcModels, "cstrike\\models");
-				LogTrace("[+] Auto-Installed Custom 3D Models into 'cstrike\\models'!");
+				LogTrace("[+] Auto-Installed Custom 3D Models into 'cstrike\\models' from: " + src);
 			}
 
 			if (GetFileAttributesA(srcMaterials.c_str()) != INVALID_FILE_ATTRIBUTES)
 			{
 				CopyDirRecursive(srcMaterials, "cstrike\\materials");
-				LogTrace("[+] Auto-Installed Custom Materials into 'cstrike\\materials'!");
+				LogTrace("[+] Auto-Installed Custom Materials into 'cstrike\\materials' from: " + src);
 			}
 			break;
 		}
 	}
 
-	const char* font_sources[] = {
+	std::vector<std::string> font_sources = {
+		cheatDir + "scripts\\fonts",
+		cheatDir + "assets\\fonts",
+		cheatDir + "..\\scripts\\fonts",
+		cheatDir + "..\\assets\\fonts",
 		"scripts\\fonts",
 		"assets\\fonts",
 		"..\\scripts\\fonts",
 		"..\\assets\\fonts"
 	};
 
-	for (const char* src : font_sources)
+	for (const auto& src : font_sources)
 	{
-		DWORD attr = GetFileAttributesA(src);
+		DWORD attr = GetFileAttributesA(src.c_str());
 		if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
 		{
 			CopyDirRecursive(src, "cstrike\\fonts");
-			LogTrace("[+] Auto-Installed HD UI Fonts into 'cstrike\\fonts'!");
+			LogTrace("[+] Auto-Installed HD UI Fonts into 'cstrike\\fonts' from: " + src);
 			break;
 		}
 	}
