@@ -385,9 +385,7 @@ namespace models
 		static imaterial* model_material[32]; _model_info->get_model_materials(p_info.pModel, 1, model_material);
 		base_alpha = _render_view->get_blend();
 		auto name = _model_info->get_model_name(p_info.pModel);
-		const auto is_player = p_info.entity_index >= 1 && strstr(name, "player");
-		//if (is_player && p_info.entity_index < 64)
-		//	server::players[p_info.entity_index].drawable = true;
+		const auto is_player = (p_info.entity_index >= 1 && p_info.entity_index <= 64) || (name && (strstr(name, "player") || strstr(name, "characters")));
 		
 		bool is_local = (entity == global::local || p_info.entity_index == global::local_id);
 		if (is_player && !is_local && (!entity->valid() || (!sets->visuals.friends && entity->get_team() == global::local->get_team())))
@@ -414,10 +412,11 @@ namespace models
 				if (sel >= 0 && sel < 6)
 				{
 					const model_t* custom_model = _model_info->find_or_load_model(model_paths[sel]);
-					if (custom_model && custom_model != p_info.pModel)
+					if (custom_model)
 					{
 						ModelRenderInfo_t custom_info = p_info;
 						custom_info.pModel = custom_model;
+
 						if (sets->visuals.chams > 0)
 						{
 							chams::players::run(model_material[0], entity, state, custom_info, p_custom_bone_to_world);

@@ -624,18 +624,20 @@ public:
 
 	model_t* find_or_load_model(const char* name)
 	{
-		int idx = get_model_index(name);
-		if (idx > 0)
-		{
-			const model_t* mdl = get_model(idx);
-			if (mdl) return const_cast<model_t*>(mdl);
-		}
-
 		typedef model_t*(__thiscall* find_or_load_model_fn)(void*, const char*);
-		model_t* result = vfunc< find_or_load_model_fn >(this, 39)(this, name);
+		model_t* result = vfunc< find_or_load_model_fn >(this, 43)(this, name);
 		if (!result)
 		{
-			result = vfunc< find_or_load_model_fn >(this, 43)(this, name);
+			result = vfunc< find_or_load_model_fn >(this, 39)(this, name);
+		}
+		if (!result)
+		{
+			int idx = get_model_index(name);
+			if (idx > 0)
+			{
+				const model_t* mdl = get_model(idx);
+				if (mdl) result = const_cast<model_t*>(mdl);
+			}
 		}
 		return result;
 	}
