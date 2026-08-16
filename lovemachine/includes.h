@@ -77,13 +77,15 @@ typedef struct { char cFileName[260]; } WIN32_FIND_DATAA;
 #define FORCEINLINE inline
 #endif
 
+#include <cmath>
 #include <string>
 #include <array>
 #include <cstdarg>
 #include <vector>
+#include <unordered_map>
 #include <memory>
-#include <memory.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <deque>

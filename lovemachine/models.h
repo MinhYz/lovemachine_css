@@ -389,24 +389,45 @@ namespace models
 		//if (is_player && p_info.entity_index < 64)
 		//	server::players[p_info.entity_index].drawable = true;
 		
-		if (is_player && (!entity->valid() || (!sets->visuals.friends && entity->get_team() == global::local->get_team())))
+		bool is_local = (entity == global::local || p_info.entity_index == global::local_id);
+		if (is_player && !is_local && (!entity->valid() || (!sets->visuals.friends && entity->get_team() == global::local->get_team())))
 		{
 			end(nullptr, state, p_info, p_custom_bone_to_world);
 			return;
 		}
 
-		// Custom 3D Player Model Override (Cissia ZZZ)
-		if (is_player && sets->visuals.enable_custom_model && sets->visuals.model_selection == 1)
+		// Custom 3D Player Model Override
+		if (is_player && sets->visuals.enable_custom_model)
 		{
-			if (!sets->visuals.custom_model_local_only || entity == global::local || p_info.entity_index == _engine->get_local_id())
+			if (!sets->visuals.custom_model_local_only || is_local)
 			{
-				const model_t* custom_model = _model_info->find_or_load_model("models/sneaky_holy/neps/powered_by_nidegg/best_zombie_escape_server/thick_snake/cissia_zzz.mdl");
-				if (custom_model && custom_model != p_info.pModel)
+				const char* model_paths[] = {
+					"models/player/t_phoenix.mdl",
+					"models/player/t_leet.mdl",
+					"models/player/ct_sas.mdl",
+					"models/player/ct_gign.mdl",
+					"models/characters/hostage_01.mdl",
+					"models/sneaky_holy/neps/powered_by_nidegg/best_zombie_escape_server/thick_snake/cissia_zzz.mdl"
+				};
+
+				int sel = sets->visuals.model_selection;
+				if (sel >= 0 && sel < 6)
 				{
-					ModelRenderInfo_t custom_info = p_info;
-					custom_info.pModel = custom_model;
-					_model_render->draw_model_execute(state, custom_info, p_custom_bone_to_world);
-					return;
+					const model_t* custom_model = _model_info->find_or_load_model(model_paths[sel]);
+					if (custom_model && custom_model != p_info.pModel)
+					{
+						ModelRenderInfo_t custom_info = p_info;
+						custom_info.pModel = custom_model;
+						if (sets->visuals.chams > 0)
+						{
+							chams::players::run(model_material[0], entity, state, custom_info, p_custom_bone_to_world);
+						}
+						else
+						{
+							_model_render->draw_model_execute(state, custom_info, p_custom_bone_to_world);
+						}
+						return;
+					}
 				}
 			}
 		}

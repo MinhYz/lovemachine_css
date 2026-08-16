@@ -126,6 +126,87 @@ namespace esp
 		}
 	}
 
+	struct trail_node {
+		cvector pos;
+		float time;
+	};
+	inline std::deque<trail_node> local_trail;
+
+	void draw_rainbow_trail()
+	{
+		if (!sets->visuals.rainbow_trail || !global::local || !global::local->valid())
+		{
+			local_trail.clear();
+			return;
+		}
+
+		cvector cur_pos = global::local->get_origin() + cvector(0.0f, 0.0f, 15.0f);
+		if (local_trail.empty() || (local_trail.back().pos - cur_pos).Length() > 6.0f)
+		{
+			local_trail.push_back({ cur_pos, global::realtime });
+		}
+
+		while (!local_trail.empty() && (global::realtime - local_trail.front().time) > 1.8f)
+		{
+			local_trail.pop_front();
+		}
+
+		if (local_trail.size() < 2) return;
+
+		for (size_t i = 0; i < local_trail.size() - 1; i++)
+		{
+			cvector s1, s2;
+			if (w2s(local_trail[i].pos, s1) && w2s(local_trail[i + 1].pos, s2))
+			{
+				float progress = (float)i / (float)local_trail.size();
+				float hue = fmodf(global::realtime * (sets->visuals.rainbow_trail_speed > 0.0f ? sets->visuals.rainbow_trail_speed : 1.0f) + progress * 0.8f, 1.0f);
+				int alpha = (int)(progress * 255.0f);
+				color col = color::from_hsv(hue, 1.0f, 1.0f, alpha);
+				surf::prim::line((int)s1.x, (int)s1.y, (int)s2.x, (int)s2.y, col);
+				surf::prim::line((int)s1.x, (int)s1.y + 1, (int)s2.x, (int)s2.y + 1, col);
+			}
+		}
+	}
+
+	void draw_oof_arrow(centity* enemy, color col)
+	{
+		if (!enemy || !global::local || !global::local->valid()) return;
+
+		cvector local_pos = global::local->get_eye_pos();
+		cvector enemy_pos = enemy->get_abs_origin() + cvector(0, 0, 40.0f);
+
+		qangle view_angles;
+		_engine->get_viewangles(view_angles);
+
+		qangle aim_ang = calc_angle(local_pos, enemy_pos);
+		float yaw = DEG2RAD(view_angles.y - aim_ang.y - 90.0f);
+
+		int center_x = global::screen.right / 2;
+		int center_y = global::screen.bottom / 2;
+		float radius = sets->visuals.oof_radius > 10.0f ? sets->visuals.oof_radius : 140.0f;
+		float size = sets->visuals.oof_size > 5.0f ? sets->visuals.oof_size : 16.0f;
+
+		float cx = (float)center_x + radius * cosf(yaw);
+		float cy = (float)center_y + radius * sinf(yaw);
+
+		float point_angle = yaw;
+		float p1_x = cx + size * cosf(point_angle);
+		float p1_y = cy + size * sinf(point_angle);
+
+		float p2_x = cx + (size * 0.6f) * cosf(point_angle + 2.4f);
+		float p2_y = cy + (size * 0.6f) * sinf(point_angle + 2.4f);
+
+		float p3_x = cx + (size * 0.6f) * cosf(point_angle - 2.4f);
+		float p3_y = cy + (size * 0.6f) * sinf(point_angle - 2.4f);
+
+		surf::prim::line((int)p1_x, (int)p1_y, (int)p2_x, (int)p2_y, col);
+		surf::prim::line((int)p2_x, (int)p2_y, (int)p3_x, (int)p3_y, col);
+		surf::prim::line((int)p3_x, (int)p3_y, (int)p1_x, (int)p1_y, col);
+
+		float dist = (enemy_pos - local_pos).Length() * 0.01905f;
+		surf::font::draw(surf::font::esp, (int)cx, (int)cy + 10, color(230, 230, 230), DT_CENTER, "%.0fm", dist);
+	}
+
 	void draw_sounds()
 	{
 		if (server::sounds.empty()) return;
@@ -133,15 +214,26 @@ namespace esp
 		for (size_t i = 0; i < server::sounds.size(); )
 		{
 			float delta = fabsf(server::sounds[i].time - global::curtime);
-			if (delta > 2.f)
+			if (delta > 2.0f)
 			{
 				server::sounds.erase(server::sounds.begin() + i);
 				continue;
 			}
 
-			circle_3d(server::sounds[i].position,
-				5.f + delta * 5.f, 16.f,
-				server::sounds[i].col.with_alpha((int)(255.f - delta * 127.5f)));
+			float radius = (sets->visuals.footstep_rings ? (10.0f + delta * 45.0f) : (5.0f + delta * 15.0f));
+			int alpha_val = (int)(255.0f - (delta / 2.0f) * 255.0f);
+			if (alpha_val < 0) alpha_val = 0;
+
+			circle_3d(server::sounds[i].position, radius, 20.0f, server::sounds[i].col.with_alpha(alpha_val));
+			
+			if (sets->visuals.sound_esp)
+			{
+				cvector screen;
+				if (w2s(server::sounds[i].position + cvector(0, 0, 15.0f), screen))
+				{
+					surf::font::draw(surf::font::esp, (int)screen.x, (int)screen.y, server::sounds[i].col.with_alpha(alpha_val), DT_CENTER, "[STEP]");
+				}
+			}
 			i++;
 		}
 	}
@@ -176,14 +268,16 @@ namespace esp
 	// Ã¢Ã±Ã¥ Ã²Ã ÃªÃ¨ Ã¯Ã°Ã¨Ã­Ã¿Ã«Ã®, Ã§Ã  Ã°Ã Ã¡Ã®Ã²Ã³
 	void draw()
 	{
-		if (!sets->visuals.enabled || !_engine || !_engine->in_game() || !_ent_list || !global::local || !global::local->valid())
+		if (!sets->visuals.enabled || !_engine || !_engine->in_game() || !_ent_list)
 			return;
 
 		if (!sets->visuals.asian_hat && !sets->visuals.bomb_timer && !sets->visuals.esp_filter[0] && !sets->visuals.esp_filter[1] && !sets->visuals.esp_filter[2] && !sets->visuals.esp_filter[3] && !sets->visuals.esp_filter[4] && !sets->visuals.esp_filter[5])
 			return;
 
-		if (sets->visuals.esp_filter[0] && sets->visuals.esp_show[4])
+		if (sets->visuals.sound_esp || sets->visuals.footstep_rings || (sets->visuals.esp_filter[0] && sets->visuals.esp_show[4]))
 			draw_sounds();
+
+		draw_rainbow_trail();
 
 		centity* entity = nullptr;
 		iclientnetworkable* networkable = nullptr;
@@ -199,9 +293,12 @@ namespace esp
 		int max_ents = _ent_list->get_highest_entity_index();
 		if (max_ents <= 0 || max_ents > 2048) return;
 
+		bool local_alive = (global::local && global::local->valid());
+		int local_team = (global::local ? global::local->get_team() : 0);
+
 		for (int id = 0; id < max_ents; id++)
 		{
-			if (id == global::local_id && !sets->visuals.thirdperson) continue;			
+			if (id == global::local_id && !sets->visuals.thirdperson && local_alive) continue;			
 
 			entity = _ent_list->get_centity(id);
 			if (!entity || IsBadReadPtr(entity, sizeof(centity)) || entity->get_origin().IsZero() || entity == global::local_observed) continue;
@@ -221,7 +318,9 @@ namespace esp
 
 			int alpha_idx = (id >= 0 && id < 64) ? id : 64;
 
-			if ((class_id == CPlantedC4 && ((!sets->visuals.esp_filter[3] && !sets->visuals.bomb_timer) || !events::bomb_timer::planted)) || (class_id == CCSPlayer && ((!sets->visuals.esp_filter[0] && !sets->visuals.asian_hat) || !entity->valid() || (!sets->visuals.friends && id != global::local_id && entity->get_team() == global::local->get_team() && !sets->visuals.asian_hat) || !entity->get_hitbox_matrix(matrix, global::curtime))))
+			bool is_teammate = (local_alive && local_team > 1 && entity->get_team() == local_team);
+
+			if ((class_id == CPlantedC4 && ((!sets->visuals.esp_filter[3] && !sets->visuals.bomb_timer) || !events::bomb_timer::planted)) || (class_id == CCSPlayer && ((!sets->visuals.esp_filter[0] && !sets->visuals.asian_hat && !sets->visuals.offscreen_esp) || !entity->valid() || (!sets->visuals.friends && id != global::local_id && is_teammate && !sets->visuals.asian_hat))))
 			{
 				alpha[alpha_idx] = 0;
 				continue;
@@ -231,12 +330,14 @@ namespace esp
 			{
 			case CCSPlayer:
 			{
-				bool visible = box.visible(entity, matrix);
+				bool has_matrix = entity->get_hitbox_matrix(matrix, global::curtime);
+				bool visible = has_matrix && box.visible(entity, matrix);
 				alpha[alpha_idx] = sets->visuals.fade ? interpolate<int>(alpha[alpha_idx], ((!sets->visuals.esp_check[0] && !visible) || dormant) ? 0 : 255, 7) : 255;
 				if (alpha[alpha_idx] == 0 && dormant && id != global::local_id) continue;
 				if (!sets->visuals.esp_check[0] && !visible && (!sets->visuals.fade || alpha[alpha_idx] == 0) && id != global::local_id) continue;
 				
-				p_color = visible ? (entity->get_team() == 2 ? sets->visuals.esp_t : sets->visuals.esp_ct) : (entity->get_team() != global::local->get_team() ? color::text() : color::disabled());
+				bool is_enemy = (!local_alive || local_team <= 1 || entity->get_team() != local_team);
+				p_color = visible ? (entity->get_team() == 2 ? sets->visuals.esp_t : sets->visuals.esp_ct) : (is_enemy ? (entity->get_team() == 2 ? sets->visuals.esp_t.with_alpha(180) : sets->visuals.esp_ct.with_alpha(180)) : color::disabled());
 
 				// Asian Hat 3D Conical Rice Hat (Applies to ALL players & local player in 3rd person)
 				if (sets->visuals.asian_hat && entity->valid())
@@ -269,81 +370,32 @@ namespace esp
 
 							int hat_alpha = (id == global::local_id) ? 255 : (alpha[alpha_idx] > 0 ? alpha[alpha_idx] : 255);
 							color base_col = sets->visuals.asian_hat_color.with_alpha(hat_alpha);
-							auto draw_list = ImGui::GetCurrentContext() ? ImGui::GetBackgroundDrawList() : nullptr;
-
 							for (int i = 0; i < points_cnt; i++)
 							{
 								int next_i = (i + 1) % points_cnt;
 
 								if (rim_valid[i] && rim_valid[next_i])
 								{
-									// Render translucent 3D cone facets with 3D depth shading
-									if (draw_list)
+									// Render 3D Conical Hat Rim & Ribs using Engine Surface
+									surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)rim_screens[next_i].x, (int)rim_screens[next_i].y, base_col);
+									if (apex_valid)
 									{
-										if (apex_valid)
-										{
-											// Alternating shade multiplier for 3D lighting effect
-											float shade = (i % 2 == 0) ? 0.85f : 1.0f;
-											ImU32 facet_color = IM_COL32(
-												(int)(base_col.r * shade),
-												(int)(base_col.g * shade),
-												(int)(base_col.b * shade),
-												(int)(hat_alpha * 0.45f)
-											);
-
-											// Fill facet triangle
-											draw_list->AddTriangleFilled(
-												ImVec2((float)screen_apex.x, (float)screen_apex.y),
-												ImVec2((float)rim_screens[i].x, (float)rim_screens[i].y),
-												ImVec2((float)rim_screens[next_i].x, (float)rim_screens[next_i].y),
-												facet_color
-											);
-
-											// Seam line
-											draw_list->AddLine(
-												ImVec2((float)rim_screens[i].x, (float)rim_screens[i].y),
-												ImVec2((float)screen_apex.x, (float)screen_apex.y),
-												IM_COL32(base_col.r, base_col.g, base_col.b, (int)(hat_alpha * 0.70f)), 1.2f
-											);
-										}
-
-										// Rim line
-										ImU32 outline_color = IM_COL32(base_col.r, base_col.g, base_col.b, hat_alpha);
-										draw_list->AddLine(
-											ImVec2((float)rim_screens[i].x, (float)rim_screens[i].y),
-											ImVec2((float)rim_screens[next_i].x, (float)rim_screens[next_i].y),
-											outline_color, 2.0f
-										);
-									}
-									else
-									{
-										surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)rim_screens[next_i].x, (int)rim_screens[next_i].y, base_col);
-										if (apex_valid)
-										{
-											surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)screen_apex.x, (int)screen_apex.y, base_col);
-										}
+										surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)screen_apex.x, (int)screen_apex.y, base_col);
 									}
 								}
 							}
 
-							// Draw glowing apex cap / tassel ornament
-							if (apex_valid && draw_list)
+							// Draw apex cap
+							if (apex_valid)
 							{
-								draw_list->AddCircleFilled(
-									ImVec2((float)screen_apex.x, (float)screen_apex.y),
-									3.5f, IM_COL32(255, 255, 255, hat_alpha)
-								);
-								draw_list->AddCircle(
-									ImVec2((float)screen_apex.x, (float)screen_apex.y),
-									5.0f, IM_COL32(base_col.r, base_col.g, base_col.b, hat_alpha), 0, 1.5f
-								);
+								surf::prim::filled_box((int)screen_apex.x - 2, (int)screen_apex.y - 2, (int)screen_apex.x + 3, (int)screen_apex.y + 3, color(255, 255, 255, hat_alpha));
 							}
 						}
 					}
 				}
 
 				// Skeleton ESP (Xương người)
-				if (sets->visuals.skeleton && entity->valid())
+				if (sets->visuals.skeleton && entity->valid() && has_matrix)
 				{
 					static const int bones[][2] = {
 						{ hitbox_head, hitbox_neck },
@@ -375,7 +427,14 @@ namespace esp
 				}
 
 				box = cbox(entity, CCSPlayer);
-				if (!box.construct_points()) continue;
+				if (!box.construct_points())
+				{
+					if (sets->visuals.offscreen_esp && id != global::local_id)
+					{
+						draw_oof_arrow(entity, p_color);
+					}
+					continue;
+				}
 
 				player_info_t info;
 				if (sets->visuals.esp_show[0] && _engine->get_playerinfo(id, &info))
@@ -423,6 +482,50 @@ namespace esp
 							surf::font::draw(surf::font::esp, box.centerx, box.bottom + 1, color::ptext().with_alpha(alpha[alpha_idx]), DT_CENTER, weapon->get_name().c_str());
 						}
 					}
+				}
+
+				// Player Flags Rendering
+				int flag_y = box.top;
+				int flag_x = box.right + (sets->visuals.esp_bar[1] ? 12 : 5);
+
+				if (sets->visuals.flag_hk)
+				{
+					int armor = entity->get_armor();
+					if (armor > 0)
+					{
+						surf::font::draw(surf::font::esp, flag_x, flag_y, color(0, 200, 255).with_alpha(alpha[alpha_idx]), NULL, "HK");
+						flag_y += 11;
+					}
+				}
+
+				if (entity->have_defuser())
+				{
+					surf::font::draw(surf::font::esp, flag_x, flag_y, color(50, 220, 50).with_alpha(alpha[alpha_idx]), NULL, "KIT");
+					flag_y += 11;
+				}
+
+				if (sets->visuals.flag_flashed)
+				{
+					float flash_alpha = *(float*)((DWORD)entity + offsets::flash_max_alpha);
+					float flash_duration = *(float*)((DWORD)entity + offsets::flash_duration);
+					if (flash_duration > 0.5f || flash_alpha > 50.0f)
+					{
+						surf::font::draw(surf::font::esp, flag_x, flag_y, color(255, 230, 0).with_alpha(alpha[alpha_idx]), NULL, "BLIND");
+						flag_y += 11;
+					}
+				}
+
+				if (entity->get_flags() & FL_DUCKING)
+				{
+					surf::font::draw(surf::font::esp, flag_x, flag_y, color(200, 200, 200).with_alpha(alpha[alpha_idx]), NULL, "DUCK");
+					flag_y += 11;
+				}
+
+				int money = *(int*)((DWORD)entity + offsets::account);
+				if (money > 0)
+				{
+					surf::font::draw(surf::font::esp, flag_x, flag_y, color(120, 220, 80).with_alpha(alpha[alpha_idx]), NULL, "$%d", money);
+					flag_y += 11;
 				}
 
 				if (legit::backtrack::draw && sets->legit.backtrack.style[1])

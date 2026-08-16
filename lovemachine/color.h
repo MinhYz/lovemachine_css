@@ -84,6 +84,21 @@ struct color
 	static color disabled() { return color(40, 40, 40); } // ÷åêáîêñ âûêëþ÷åí
 	static color enabled() { return color(152, 26, 152); } // ÷åêáîêñ âêëþ÷åí
 
+	static color from_hsv(float h, float s, float v, int alpha = 255)
+	{
+		float c = v * s;
+		float x = c * (1.0f - fabsf(fmodf(h * 6.0f, 2.0f) - 1.0f));
+		float m = v - c;
+		float r1 = 0, g1 = 0, b1 = 0;
+		if (h < 1.0f / 6.0f) { r1 = c; g1 = x; b1 = 0; }
+		else if (h < 2.0f / 6.0f) { r1 = x; g1 = c; b1 = 0; }
+		else if (h < 3.0f / 6.0f) { r1 = 0; g1 = c; b1 = x; }
+		else if (h < 4.0f / 6.0f) { r1 = 0; g1 = x; b1 = c; }
+		else if (h < 5.0f / 6.0f) { r1 = x; g1 = 0; b1 = c; }
+		else { r1 = c; g1 = 0; b1 = x; }
+		return color((int)((r1 + m) * 255.0f), (int)((g1 + m) * 255.0f), (int)((b1 + m) * 255.0f), alpha);
+	}
+
 	// ìîé ëþáèìûé öâåò
 	static color lm() { return color(49, 124, 230); }
 

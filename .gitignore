@@ -43,6 +43,8 @@
 *.db-shm
 *.db-wal
 *.opendb
+donttouch.txt
+lovemachine_test
 # Prerequisites
 *.d
 

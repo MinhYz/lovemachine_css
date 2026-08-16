@@ -32,6 +32,79 @@ void LogTrace(const std::string& msg)
 	}
 }
 
+static void CreateDirectoryRecursive(const std::string& path)
+{
+	size_t pos = 0;
+	while ((pos = path.find_first_of("\\/", pos + 1)) != std::string::npos)
+	{
+		std::string sub = path.substr(0, pos);
+		CreateDirectoryA(sub.c_str(), NULL);
+	}
+	CreateDirectoryA(path.c_str(), NULL);
+}
+
+static void CopyDirRecursive(const std::string& sourceDir, const std::string& targetDir)
+{
+	CreateDirectoryRecursive(targetDir);
+	std::string searchPath = sourceDir + "\\*.*";
+	WIN32_FIND_DATAA fd;
+	HANDLE hFind = FindFirstFileA(searchPath.c_str(), &fd);
+	if (hFind == INVALID_HANDLE_VALUE) return;
+
+	do
+	{
+		if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0)
+			continue;
+
+		std::string src = sourceDir + "\\" + fd.cFileName;
+		std::string dst = targetDir + "\\" + fd.cFileName;
+
+		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
+			CopyDirRecursive(src, dst);
+		}
+		else
+		{
+			CopyFileA(src.c_str(), dst.c_str(), FALSE);
+		}
+	} while (FindNextFileA(hFind, &fd));
+
+	FindClose(hFind);
+}
+
+static void AutoInstallCustomModels()
+{
+	const char* model_sources[] = {
+		"scripts\\models\\cissia_zzz",
+		"assets\\models\\cissia_zzz",
+		"..\\scripts\\models\\cissia_zzz",
+		"..\\assets\\models\\cissia_zzz"
+	};
+
+	for (const char* src : model_sources)
+	{
+		DWORD attr = GetFileAttributesA(src);
+		if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
+		{
+			std::string srcModels = std::string(src) + "\\models";
+			std::string srcMaterials = std::string(src) + "\\materials";
+
+			if (GetFileAttributesA(srcModels.c_str()) != INVALID_FILE_ATTRIBUTES)
+			{
+				CopyDirRecursive(srcModels, "cstrike\\models");
+				LogTrace("[+] Auto-Installed Custom 3D Models into 'cstrike\\models'!");
+			}
+
+			if (GetFileAttributesA(srcMaterials.c_str()) != INVALID_FILE_ATTRIBUTES)
+			{
+				CopyDirRecursive(srcMaterials, "cstrike\\materials");
+				LogTrace("[+] Auto-Installed Custom Materials into 'cstrike\\materials'!");
+			}
+			break;
+		}
+	}
+}
+
 // 2. DLL Core: Vectored Exception Handler (VEH) & Minidump Generator
 LONG WINAPI SafeCrashHandler(PEXCEPTION_POINTERS pExceptionInfo)
 {
@@ -151,6 +224,7 @@ DWORD WINAPI MainInitThread(LPVOID lpParam)
 		LogTrace("[+] Netvar offsets scanned successfully!");
 
 		LogTrace("[3/5] Initializing Models & Materials...");
+		AutoInstallCustomModels();
 		models::on_inject();
 		LogTrace("[+] Models initialized!");
 

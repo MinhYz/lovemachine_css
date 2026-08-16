@@ -757,6 +757,7 @@ namespace Menu
 		{
 			BeginGroupbox("MAIN");
 			AnimatedSwitch("Enabled", &sets->rage.enabled);
+			AnimatedSwitch("Auto Knife (Knifebot)", &sets->legit.knifebot);
 			AnimatedSwitch("Silent Aim", &sets->rage.silent);
 			AnimatedSwitch("Automatic Fire", &sets->rage.autoshoot);
 			AnimatedSwitch("Aim Through Walls", &sets->rage.autowall);
@@ -851,6 +852,7 @@ namespace Menu
 		{
 			BeginGroupbox("Aim Assistance & Trigger");
 			AnimatedSwitch("Enable Legitbot", &sets->legit.enabled);
+			AnimatedSwitch("Auto Knife (Knifebot)", &sets->legit.knifebot);
 			AnimatedSwitch("Automatic Fire (Autopistol)", &sets->misc.autopistol);
 			AnimatedSwitch("Triggerbot", &sets->legit.trigger._enabled);
 			ImGui::SetNextItemWidth(170);
@@ -908,11 +910,11 @@ namespace Menu
 			AnimatedSwitch("Enable Visuals Engine", &sets->visuals.enabled);
 			AnimatedSwitch("Draw Teammates", &sets->visuals.friends);
 			AnimatedSwitch("Player Names", &sets->visuals.esp_show[0]);
-			AnimatedSwitch("2D Bounding Box", &sets->visuals.esp_show[0]);
+			AnimatedSwitch("2D Bounding Box", &sets->visuals.esp_show[1]);
 			AnimatedSwitch("Skeleton ESP (Bones)", &sets->visuals.skeleton);
-			AnimatedSwitch("Health Bar", &sets->visuals.esp_show[1]);
-			AnimatedSwitch("Armor Bar", &sets->visuals.armor_bar);
-			AnimatedSwitch("Ammo Bar", &sets->visuals.ammo_bar);
+			AnimatedSwitch("Health Bar", &sets->visuals.esp_bar[0]);
+			AnimatedSwitch("Armor Bar", &sets->visuals.esp_bar[1]);
+			AnimatedSwitch("Ammo Bar", &sets->visuals.esp_bar[2]);
 			AnimatedSwitch("Active Weapon Text", &sets->visuals.esp_show[2]);
 			AnimatedSwitch("Snaplines to Enemy", &sets->visuals.esp_show[3]);
 			EndGroupbox();
@@ -922,6 +924,13 @@ namespace Menu
 			AnimatedSwitch("Flag [SCOPED]", &sets->visuals.flag_scoped);
 			AnimatedSwitch("Flag [RELOADING]", &sets->visuals.flag_reloading);
 			AnimatedSwitch("Flag [FLASHED]", &sets->visuals.flag_flashed);
+			EndGroupbox();
+
+			BeginGroupbox("World & Removals");
+			AnimatedSwitch("Remove Smoke (No Smoke)", &sets->visuals.remove[0]);
+			AnimatedSwitch("Remove Flash (No Flash)", &sets->visuals.remove[1]);
+			AnimatedSwitch("Grenades ESP", &sets->visuals.esp_filter[2]);
+			AnimatedSwitch("C4 Bomb ESP", &sets->visuals.esp_filter[3]);
 			EndGroupbox();
 
 			BeginGroupbox("Player Chams");
@@ -938,7 +947,14 @@ namespace Menu
 			{
 				AnimatedSwitch("Local Player Only (Only You)", &sets->visuals.custom_model_local_only);
 			}
-			const char* custom_models[] = { "Phoenix Terrorist (CS:S Default)", "Cissia ZZZ (Zenless Zone Zero)" };
+			const char* custom_models[] = {
+				"Phoenix Terrorist (T)",
+				"Leet Krew (T)",
+				"SAS Gasmask (CT)",
+				"GIGN SWAT (CT)",
+				"Hostage (Scientist)",
+				"Cissia ZZZ (Zenless Zone Zero)"
+			};
 			ImGui::SetNextItemWidth(180);
 			ImGui::Combo("Character Model", &sets->visuals.model_selection, custom_models, IM_ARRAYSIZE(custom_models));
 			EndGroupbox();
@@ -979,12 +995,19 @@ namespace Menu
 			}
 			EndGroupbox();
 
-			BeginGroupbox("Camera Bypass");
+			BeginGroupbox("Camera & Trail FX");
 			AnimatedSwitch("Thirdperson (No sv_cheats)", &sets->visuals.thirdperson);
 			if (sets->visuals.thirdperson)
 			{
 				ImGui::SetNextItemWidth(170);
 				ImGui::SliderFloat("Camera Distance", &sets->visuals.thirdperson_dist, 30.0f, 300.0f, "%.0f u");
+				AnimatedSwitch("Reverse Angle (Look Back)", &sets->visuals.thirdperson_reverse);
+			}
+			AnimatedSwitch("Rainbow Trail", &sets->visuals.rainbow_trail);
+			if (sets->visuals.rainbow_trail)
+			{
+				ImGui::SetNextItemWidth(170);
+				ImGui::SliderFloat("Trail Speed", &sets->visuals.rainbow_trail_speed, 0.2f, 3.0f, "%.1fx");
 			}
 			EndGroupbox();
 
@@ -1702,69 +1725,11 @@ namespace Menu
 			ImGui::Spacing();
 		}
 
-		// Main Content Area (2 Columns)
-		if (at_selected_tab == 0) // Aimbot
-		{
-			// Column 1
-			ImGui::SetCursorPos(ImVec2(210, 15));
-			ImGui::BeginChild("AtCol1", ImVec2(265, size.y - 30), false);
-			{
-				ImGui::TextColored(ImVec4(0.55f, 0.65f, 0.75f, 1.0f), "Weapons");
-				static int wep_sel = 0;
-				const char* wep_items[] = { "One", "Two", "All" };
-				ImGui::Combo("Select Weapon", &wep_sel, wep_items, IM_ARRAYSIZE(wep_items));
-				ImGui::Spacing();
-
-				ImGui::TextColored(ImVec4(0.55f, 0.65f, 0.75f, 1.0f), "General");
-				ImGui::Checkbox("Enabled", &sets->rage.autoshoot);
-				static bool peek_assist = true;
-				ImGui::Checkbox("Peek Assist", &peek_assist);
-				static bool hide_shots = true;
-				ImGui::Checkbox("Hide Shots", &hide_shots);
-				static bool double_tap = true;
-				ImGui::Checkbox("Double Tap", &double_tap);
-				ImGui::SliderFloat("Field of View", &sets->legit.aim.fov, 0.0f, 180.0f, "%.0f°");
-				ImGui::Spacing();
-
-				ImGui::TextColored(ImVec4(0.55f, 0.65f, 0.75f, 1.0f), "Accuracy");
-				static bool auto_scope = true;
-				ImGui::Checkbox("Auto Scope", &auto_scope);
-			}
-			ImGui::EndChild();
-
-			// Column 2
-			ImGui::SetCursorPos(ImVec2(485, 15));
-			ImGui::BeginChild("AtCol2", ImVec2(265, size.y - 30), false);
-			{
-				ImGui::TextColored(ImVec4(0.55f, 0.65f, 0.75f, 1.0f), "Selection");
-				static int hit_sel = 0;
-				const char* hit_items[] = { "Head, Chest, Stomach", "Head Only", "All" };
-				ImGui::Combo("Hitboxes", &hit_sel, hit_items, IM_ARRAYSIZE(hit_items));
-				static int multi_sel = 0;
-				const char* multi_items[] = { "Head, Chest", "Full Body" };
-				ImGui::Combo("Multipoints", &multi_sel, multi_items, IM_ARRAYSIZE(multi_items));
-				ImGui::SliderFloat("Hit Chance", &sets->rage.hitchance, 0.0f, 100.0f, "%.1f, %.1f");
-				ImGui::SliderFloat("Min. Damage", &sets->rage.min_damage_visible, 0.0f, 100.0f, "%.0fHP, %.0fHP");
-				ImGui::Checkbox("Penetrate Walls", &sets->rage.autowall);
-				ImGui::Spacing();
-
-				ImGui::TextColored(ImVec4(0.55f, 0.65f, 0.75f, 1.0f), "Safety");
-				static int body_aim_sel = 0;
-				const char* body_aim_items[] = { "Force", "Prefer", "Off" };
-				ImGui::Combo("Body Aim", &body_aim_sel, body_aim_items, IM_ARRAYSIZE(body_aim_items));
-				static int safe_pts = 0;
-				const char* safe_items[] = { "Default", "Strict" };
-				ImGui::Combo("Safe Points", &safe_pts, safe_items, IM_ARRAYSIZE(safe_items));
-			}
-			ImGui::EndChild();
-		}
-		else
-		{
-			ImGui::SetCursorPos(ImVec2(210, 15));
-			ImGui::BeginChild("AtMainBody", ImVec2(size.x - 225, size.y - 30), false);
-			RenderCurrentTabContent(current_tab, 1.0f);
-			ImGui::EndChild();
-		}
+		// Main Content Area
+		ImGui::SetCursorPos(ImVec2(210, 15));
+		ImGui::BeginChild("AtMainBody", ImVec2(size.x - 225, size.y - 30), false);
+		RenderCurrentTabContent(current_tab, 1.0f);
+		ImGui::EndChild();
 
 		ImGui::End();
 
@@ -1946,75 +1911,12 @@ namespace Menu
 			}
 		};
 
-		// Content Area Routed by Hexagon Tab
-		if (synth_active_tab == 0) // Ragebot
-		{
-			ImGui::SetCursorPos(ImVec2(75, 20));
-			ImGui::BeginChild("SynthRageCol1", ImVec2(330, size.y - 40), false);
-			{
-				ImGui::Checkbox("Enable ragebot", &sets->rage.autoshoot);
-				RenderGearBtn("Enable ragebot");
-
-				ImGui::Checkbox("Silent aimbot", &sets->rage.silent);
-				ImGui::Checkbox("Hit chance", &sets->rage.autowall);
-				DrawEqualizerSlider("Field of view", &sets->legit.aim.fov, 0.0f, 180.0f, "%.0f°");
-
-				static int body_aim = 0;
-				const char* body_items[] = { "Default", "Force", "Off" };
-				ImGui::Combo("Body aimbot", &body_aim, body_items, IM_ARRAYSIZE(body_items));
-
-				static int safe_pts = 0;
-				const char* safe_items[] = { "Body", "Strict", "Off" };
-				ImGui::Combo("Safe points", &safe_pts, safe_items, IM_ARRAYSIZE(safe_items));
-
-				static bool enable_recoil = true;
-				ImGui::Checkbox("Enable recoil", &enable_recoil);
-				RenderGearBtn("Enable recoil");
-
-				static float smoothness = 50.0f;
-				DrawEqualizerSlider("Smoothness", &smoothness, 0.0f, 100.0f, "%.0f%%");
-			}
-			ImGui::EndChild();
-
-			ImGui::SetCursorPos(ImVec2(425, 20));
-			ImGui::BeginChild("SynthRageCol2", ImVec2(330, size.y - 40), false);
-			{
-				DrawEqualizerSlider("Hit chance", &sets->rage.hitchance, 0.0f, 100.0f, "%.0f%%");
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("Hit chance: It displays a tooltip when you hover over an item, a very handy GUI utility\nwith many functions that are not always easy to understand by name.");
-
-				static float max_misses = 50.0f;
-				DrawEqualizerSlider("Max misses", &max_misses, 0.0f, 100.0f, "%.0f%%");
-
-				static bool point_scale = true;
-				ImGui::Checkbox("Static point scale", &point_scale);
-				RenderGearBtn("Static point scale");
-
-				static bool head_safety = true;
-				ImGui::Checkbox("Head safety if lethal", &head_safety);
-
-				static bool triggerbot = true;
-				ImGui::Checkbox("Enable triggerbot", &triggerbot);
-				RenderGearBtn("Enable triggerbot");
-
-				static bool trigger_smoke = true;
-				ImGui::Checkbox("Enable trigger in smoke", &trigger_smoke);
-
-				static float pitch_val = 10.0f, yaw_val = 10.0f;
-				DrawEqualizerSlider("Pitch", &pitch_val, 0.0f, 100.0f, "%.0f%%");
-				DrawEqualizerSlider("Yaw", &yaw_val, 0.0f, 100.0f, "%.0f%%");
-			}
-			ImGui::EndChild();
-		}
-		else
-		{
-			// Honeycomb Tab Routing to full functional tab bodies
-			ImGui::SetCursorPos(ImVec2(75, 20));
-			ImGui::BeginChild("SynthBodyPanel", ImVec2(size.x - 90, size.y - 40), false);
-			int target_subtab = (synth_active_tab == 1) ? 1 : ((synth_active_tab == 2) ? 2 : ((synth_active_tab == 3) ? 3 : ((synth_active_tab == 4) ? 4 : ((synth_active_tab == 5) ? 4 : 5))));
-			RenderCurrentTabContent(target_subtab, 1.0f);
-			ImGui::EndChild();
-		}
+		// Honeycomb Tab Routing to full functional tab bodies
+		ImGui::SetCursorPos(ImVec2(75, 20));
+		ImGui::BeginChild("SynthBodyPanel", ImVec2(size.x - 90, size.y - 40), false);
+		int target_subtab = (synth_active_tab == 0) ? 0 : ((synth_active_tab == 1) ? 1 : ((synth_active_tab == 2) ? 2 : ((synth_active_tab == 3) ? 3 : ((synth_active_tab == 4) ? 4 : 5))));
+		RenderCurrentTabContent(target_subtab, 1.0f);
+		ImGui::EndChild();
 
 		// Floating Keybind Popup Window (When clicking [gear])
 		if (synth_keybind_popup)

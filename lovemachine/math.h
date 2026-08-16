@@ -1,9 +1,4 @@
 #pragma once
-#if defined(__GNUG__) || defined(__clang__)
-#include_next <math.h>
-#else
-#include <math.h>
-#endif
 #include <cmath>
 #include <algorithm>
 using std::max;

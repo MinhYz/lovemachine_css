@@ -338,9 +338,11 @@ namespace hooks
 		//if (!sv_cheats) sv_cheats = _cvar->find_var("sv_cheats");
 		//else surf::font::draw(surf::font::esp_big, 100, 100, color::ptext(), null, to_str(sv_cheats->m_nValue).c_str());
 
-		if (top_panel == 0 || top_panel != vguiPanel || !_engine->in_game() || !global::local || sets->menu.panic) return;
+		if (top_panel == 0 || top_panel != vguiPanel || !_engine->in_game() || sets->menu.panic) return;
 
-		//surf::font::draw(surf::font::esp, 100, 100, color(200, 200, 200), null, "text text text");
+		global::local_id = _engine->get_local_id();
+		if (global::local_id > 0 && _ent_list)
+			global::local = _ent_list->get_centity(global::local_id);
 
 		if (sets->misc.draw_mode == 0) misc::draw::draw();
 
@@ -573,15 +575,14 @@ namespace hooks
 				netchannel = null;
 				o_send_datagram = null;
 			}
-			// TODO: ÃÃÃÃÃÃÃÃ Ã ÃÃÃÃÃÃÃ
-			/*else if (_clientstate && _clientstate->m_NetChannel && !netchannel)
+			else if (_clientstate && _clientstate->m_NetChannel && sets->misc.fake_ping > 0 && !netchannel)
 			{
-				console::write_hex("netchannel", (dword)_clientstate->m_NetChannel, darkgreen);
 				netchannel = new memory::vthook((dword**)_clientstate->m_NetChannel);
-				console::write_hex("/vthook/ netchannel", (dword)netchannel, darkgreen);
-				o_send_datagram = (send_datagram_fn)netchannel->hook_function((dword)send_datagram_hook, 46);
-				console::write_hex("/hook/ o_send_datagram", (dword)o_send_datagram, darkgreen);
-			}*/
+				if (netchannel)
+				{
+					o_send_datagram = (send_datagram_fn)netchannel->hook_function((dword)send_datagram_hook, 46);
+				}
+			}
 
 			// TODO: Ã¨Ã§Ã³Ã·Ã¨Ã²Ã¼ Ã¯Ã®Ã¤Ã°Ã®Ã¡Ã­Ã¥Ã¥
 			/*if (_clientstate)
@@ -739,10 +740,18 @@ namespace hooks
 			//cout << "cl_interp " << cl_interp->m_fValue << endl;
 
 			misc::run();
-			rage::standalone_rcs();
-			rage::anti_aim();
-			rage::magic_bullet();
+			legit::knifebot::run();
+			rage::magic_bullet(orig_angles);
+			if (!(global::cmd->buttons & (IN_ATTACK | IN_ATTACK2)))
+			{
+				rage::anti_aim();
+			}
+			if (global::cmd->buttons & IN_ATTACK)
+			{
+				rage::standalone_rcs();
+			}
 			rage::fix_movement(global::cmd, orig_angles);
+			rage::normalize_angles(global::cmd->viewangles);
 			misc::draw::clear(true);
 
 			//auto p_weapon = global::local->get_weapon();
@@ -864,21 +873,53 @@ namespace hooks
 	}
 
 	memory::vthook* clientmode;
-	/*using override_view_fn = void(__stdcall*)(cviewsetup* p_setup);
+	using override_view_fn = void(__stdcall*)(cviewsetup* p_setup);
 	override_view_fn o_override_view;
-	void __stdcall override_view_hook(cviewsetup* p_setup) // Ã¯Ã®Ã·Ã¥Ã¬Ã³-Ã²Ã® Ã­Ã¥ Ã°Ã Ã¡Ã®Ã²Ã Ã¥Ã², Ã¯Ã°Ã®Ã¡Ã®Ã¢Ã Ã« Ã¢Ã±Ã¥
+	void __stdcall override_view_hook(cviewsetup* p_setup)
 	{
-		cout << p_setup->fov << ", " << p_setup->fovViewmodel << endl;
+		if (p_setup && _engine && _engine->in_game() && global::local && global::local->valid() && !sets->menu.panic)
+		{
+			if (sets->visuals.fov > 0.0f)
+				p_setup->fov = sets->visuals.fov;
 
-		if (cvar(fov).value > 0)
-			p_setup->fov = cvar(fov).value;
+			if (sets->visuals.thirdperson)
+			{
+				qangle view_angles;
+				_engine->get_viewangles(view_angles);
+				if (sets->visuals.thirdperson_reverse)
+				{
+					view_angles.y += 180.0f;
+				}
 
-		if (cvar(vm_fov).value > 0)
-			p_setup->fovViewmodel = cvar(vm_fov).value;
+				Vector forward, right, up;
+				AngleVectors(view_angles, &forward, &right, &up);
 
-		if (cvar(fov).value == 0 && cvar(vm_fov).value == 0)
+				Vector eye_pos = global::local->get_eye_pos();
+				Vector cam_offset = forward * (-sets->visuals.thirdperson_dist);
+				Vector target_pos = eye_pos + cam_offset;
+
+				if (_engine_trace)
+				{
+					trace_t tr;
+					ray_t ray;
+					ray.Init(eye_pos, target_pos, Vector(-10, -10, -10), Vector(10, 10, 10));
+					CSimpleTraceFilter filter((void*)global::local);
+					_engine_trace->trace_ray(ray, MASK_SOLID, &filter, &tr);
+
+					if (tr.fraction < 1.0f)
+					{
+						target_pos = eye_pos + (forward * (-sets->visuals.thirdperson_dist * tr.fraction * 0.9f));
+					}
+				}
+
+				p_setup->origin = target_pos;
+				p_setup->angles = view_angles;
+			}
+		}
+
+		if (o_override_view)
 			o_override_view(p_setup);
-	}*/
+	}
 
 	using get_vm_fov_fn = float(__stdcall*)();
 	get_vm_fov_fn o_get_vm_fov;
@@ -920,35 +961,37 @@ namespace hooks
 	{
 		//cout << "name : " << sample << endl;
 
-		if ((sets->visuals.esp_show[4] || sets->visuals.esp_show[5]) && entity_index >= 0 && entity_index < 64 && entity_index != global::local_id)// && strstr(sample, "footstep"))
+		if ((sets->visuals.sound_esp || sets->visuals.footstep_rings || sets->visuals.esp_show[4] || sets->visuals.esp_show[5]) && entity_index >= 0 && entity_index < 64 && entity_index != global::local_id)
 		{
 			auto player = _ent_list->get_centity(entity_index);
-			if (!sets->visuals.esp_filter[0] || !player || !player->valid() || (!sets->visuals.friends && player->get_team() == global::local->get_team()))
+			if (player && player->valid())
 			{
-				o_emit_sound(filter, entity_index, channel, sample, volume, attenuation, flags, pitch, special_dsp, origin, direction, shit, update_positions, soundtime, speakerentity);
-				return;
-			}
-
-			if (sets->visuals.esp_show[4] && strstr(sample, "footstep"))
-			{
-				server::sound snd;
-				snd.position.x = origin->x;
-				snd.position.y = origin->y;
-				snd.position.z = origin->z;
-				snd.time = global::curtime;
-				snd.col = color(255, 100, 0);
-				server::sounds.push_back(snd);
-			}
-			else if (sets->visuals.esp_show[5] && sample[0] == ')' && sample[1] == 'w' && sample[2] == 'e' && player->is_dormant()) // shot
-			{
-				server::sound snd;
-				auto p_org = player->get_abs_origin();
-				snd.position.x = p_org.x;
-				snd.position.y = p_org.y;
-				snd.position.z = p_org.z;
-				snd.time = global::curtime;
-				snd.col = color(255, 0, 0);
-				server::sounds.push_back(snd);
+				if (sets->visuals.friends || player->get_team() != global::local->get_team())
+				{
+					if (strstr(sample, "footstep") || strstr(sample, "step") || strstr(sample, "player/footsteps"))
+					{
+						server::sound snd;
+						if (origin && !origin->IsZero())
+						{
+							snd.position = *origin;
+						}
+						else
+						{
+							snd.position = player->get_abs_origin();
+						}
+						snd.time = global::curtime;
+						snd.col = (player->get_team() == 2) ? color(255, 100, 50) : color(50, 150, 255);
+						server::sounds.push_back(snd);
+					}
+					else if (sample[0] == ')' && sample[1] == 'w' && sample[2] == 'e') // weapon gunshot
+					{
+						server::sound snd;
+						snd.position = player->get_abs_origin();
+						snd.time = global::curtime;
+						snd.col = color(255, 0, 0);
+						server::sounds.push_back(snd);
+					}
+				}
 			}
 		}
 
@@ -1025,6 +1068,7 @@ namespace hooks
 
 		if (_clientmode && !IsBadReadPtr((void*)_clientmode, sizeof(DWORD))) {
 			clientmode = new memory::vthook((dword**)_clientmode);
+			o_override_view = (override_view_fn)clientmode->hook_function((dword)override_view_hook, 16);
 			o_get_vm_fov = (get_vm_fov_fn)clientmode->hook_function((dword)get_vm_fov_hook, 32);
 			log << "[+] clientmode hooked" << std::endl;
 		}

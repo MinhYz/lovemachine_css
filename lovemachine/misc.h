@@ -299,56 +299,125 @@ namespace misc
 
 	void remove()
 	{
-		static bool st_remove[2] = { false, false };
-
-		if (st_remove[0] != sets->visuals.remove[0] || global::map_changed)
+		// 1. Instant 100% No Flash via NetVars
+		if (global::local && global::local->valid() && sets->visuals.remove[1])
 		{
-			//auto material = _mat_sys->find_material(/*"particle/smokesprites_0015"*//*"particle/smokesprites_0015"*/"particle/smoke1/smoke1_nearcull2", "Other textures");
-			//auto material2 = _mat_sys->find_material(/*"particle/smoke1/smoke1"*/"particle/vistasmokev1/vistasmokev1_nearcull", "Other textures");
-			auto material3 = _mat_sys->find_material("particle/smokesprites_0001"/*"particle/vistasmokev1/vistasmokev1_nearcull"*/, "ClientEffect textures");
-			auto material4 = _mat_sys->find_material("particle/particle_smokegrenade", "ClientEffect textures");
-			auto material5 = _mat_sys->find_material("particle/particle_smokegrenade1", "ClientEffect textures");
-
-			if (sets->visuals.remove[0])
-			{
-				//material->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, true);
-				//material2->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, true);
-				material3->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, true);
-				material4->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, true);
-				material5->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, true);
-			}
-			else
-			{
-				//material->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, false);
-				//material2->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, false);
-				material3->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, false);
-				material4->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, false);
-				material5->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, false);
-			}
-
-			st_remove[0] = sets->visuals.remove[0];
-		}
-		
-		if (st_remove[1] != sets->visuals.remove[1] || global::map_changed)
-		{
-			auto material = _mat_sys->find_material("effects/flashbang", "ClientEffect textures");
-			auto material2 = _mat_sys->find_material("effects/flashbang_white", "ClientEffect textures");
-
-			if (sets->visuals.remove[1])
-			{
-				material->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, true);
-				material2->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, true);
-			}
-			else
-			{
-				material->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, false);
-				material2->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, false);
-			}
-
-			st_remove[1] = sets->visuals.remove[1];
+			if (offsets::flash_max_alpha)
+				*(float*)((DWORD)global::local + offsets::flash_max_alpha) = 0.0f;
+			if (offsets::flash_duration)
+				*(float*)((DWORD)global::local + offsets::flash_duration) = 0.0f;
 		}
 
+		// 2. Comprehensive No Smoke Material System
+		static bool st_smoke = false;
+		if (st_smoke != sets->visuals.remove[0] || global::map_changed)
+		{
+			const char* smoke_materials[] = {
+				"particle/vistasmokev1/vistasmokev1",
+				"particle/vistasmokev1/vistasmokev1_fire",
+				"particle/vistasmokev1/vistasmokev1_nearcull",
+				"particle/vistasmokev1/vistasmokev1_nearcull_nodepth",
+				"particle/vistasmokev1/vistasmokev1_emods",
+				"particle/vistasmokev1/vistasmokev1_emods_impactdust",
+				"particle/smokesprites_0001",
+				"particle/smokesprites_0002",
+				"particle/smokesprites_0003",
+				"particle/smokesprites_0004",
+				"particle/smokesprites_0005",
+				"particle/smokesprites_0006",
+				"particle/smokesprites_0007",
+				"particle/smokesprites_0008",
+				"particle/smokesprites_0009",
+				"particle/smokesprites_0010",
+				"particle/smokesprites_0011",
+				"particle/smokesprites_0012",
+				"particle/smokesprites_0013",
+				"particle/smokesprites_0014",
+				"particle/smokesprites_0015",
+				"particle/smokesprites_0016",
+				"particle/particle_smokegrenade",
+				"particle/particle_smokegrenade1",
+				"particle/particle_smokegrenade2",
+				"particle/particle_smokegrenade3"
+			};
+
+			for (const char* mat_name : smoke_materials)
+			{
+				if (!_mat_sys) continue;
+				auto mat = _mat_sys->find_material(mat_name, "ClientEffect textures");
+				if (mat && !IsBadReadPtr(mat, sizeof(DWORD)))
+				{
+					mat->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, sets->visuals.remove[0]);
+					mat->set_materialvar_flag(MATERIAL_VAR_WIREFRAME, sets->visuals.remove[0]);
+				}
+				auto mat_other = _mat_sys->find_material(mat_name, "Other textures");
+				if (mat_other && !IsBadReadPtr(mat_other, sizeof(DWORD)))
+				{
+					mat_other->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, sets->visuals.remove[0]);
+					mat_other->set_materialvar_flag(MATERIAL_VAR_WIREFRAME, sets->visuals.remove[0]);
+				}
+			}
+			st_smoke = sets->visuals.remove[0];
+		}
+
+		// 3. Flash overlay materials
+		static bool st_flash = false;
+		if (st_flash != sets->visuals.remove[1] || global::map_changed)
+		{
+			if (_mat_sys)
+			{
+				auto material = _mat_sys->find_material("effects/flashbang", "ClientEffect textures");
+				auto material2 = _mat_sys->find_material("effects/flashbang_white", "ClientEffect textures");
+
+				if (material && !IsBadReadPtr(material, sizeof(DWORD)))
+					material->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, sets->visuals.remove[1]);
+				if (material2 && !IsBadReadPtr(material2, sizeof(DWORD)))
+					material2->set_materialvar_flag(MATERIAL_VAR_NO_DRAW, sets->visuals.remove[1]);
+			}
+			st_flash = sets->visuals.remove[1];
+		}
 		global::map_changed = false;
+	}
+
+	void slow_walk()
+	{
+		if (!sets->misc.slow_walk || !global::cmd || !global::local || !global::local->valid())
+			return;
+
+		float speed = sets->misc.slow_walk_speed > 0.0f ? sets->misc.slow_walk_speed : 35.0f;
+		float move_len = sqrtf(global::cmd->forwardmove * global::cmd->forwardmove + global::cmd->sidemove * global::cmd->sidemove);
+		if (move_len > speed)
+		{
+			float ratio = speed / move_len;
+			global::cmd->forwardmove *= ratio;
+			global::cmd->sidemove *= ratio;
+		}
+	}
+
+	void fake_duck()
+	{
+		if (!sets->misc.fake_duck || !global::cmd || !global::local || !global::local->valid())
+			return;
+
+		static int fake_duck_ticks = 0;
+		fake_duck_ticks++;
+
+		if (fake_duck_ticks <= 7)
+		{
+			global::cmd->buttons |= IN_DUCK;
+			global::sendpacket = false;
+		}
+		else if (fake_duck_ticks < 14)
+		{
+			global::cmd->buttons &= ~IN_DUCK;
+			global::sendpacket = false;
+		}
+		else
+		{
+			global::cmd->buttons |= IN_DUCK;
+			global::sendpacket = true;
+			fake_duck_ticks = 0;
+		}
 	}
 
 	void pure_bypass()
@@ -363,8 +432,8 @@ namespace misc
 
 	void run()
 	{
-		pure_bypass();
-		if (!global::local->valid()) return;
+		if (sets->misc.pure_bypass) pure_bypass();
+		if (!global::local || !global::local->valid()) return;
 
 		if (sets->misc.fl_spam_always || sets->misc.fl_spam.is() == bind_true)
 			_engine->clientcmd_unrestricted("impulse 100");
@@ -382,6 +451,10 @@ namespace misc
 		if (sets->misc.autojump) autojump();
 
 		if (sets->misc.autostrafer) autostrafer();
+
+		if (sets->misc.slow_walk) slow_walk();
+
+		if (sets->misc.fake_duck) fake_duck();
 		
 		if ((sets->misc.airstuck.is() == bind_true ||
 			(sets->misc.slowmotion.is() == bind_true && ((GetTickCount64() % sets->misc.sm_speed) == 0))) &&
@@ -389,50 +462,6 @@ namespace misc
 			global::cmd->tick_count += 200;
 
 		misc::draw::run();
-
-		// Thirdperson logic (Bypass sv_cheats for LAN & Multiplayer servers)
-		static bool last_tp_state = false;
-		if (sets->visuals.thirdperson != last_tp_state)
-		{
-			last_tp_state = sets->visuals.thirdperson;
-			auto sv_cheats = _cvar ? _cvar->find_var("sv_cheats") : nullptr;
-			if (sv_cheats)
-			{
-				int old_val = sv_cheats->m_nValue;
-				sv_cheats->m_nValue = 1;
-				if (sets->visuals.thirdperson)
-					_engine->clientcmd_unrestricted("thirdperson");
-				else
-					_engine->clientcmd_unrestricted("firstperson");
-				sv_cheats->m_nValue = old_val;
-			}
-			else
-			{
-				if (sets->visuals.thirdperson)
-					_engine->clientcmd_unrestricted("thirdperson");
-				else
-					_engine->clientcmd_unrestricted("firstperson");
-			}
-		}
-
-		if (sets->visuals.thirdperson && _input)
-		{
-			*_input->m_fCameraInThirdPerson() = true;
-			_input->m_vecCameraOffset()->z = sets->visuals.thirdperson_dist;
-			if (sets->visuals.thirdperson_reverse)
-			{
-				_input->m_vecCameraOffset()->y = 180.0f;
-			}
-			else
-			{
-				_input->m_vecCameraOffset()->y = 0.0f;
-			}
-		}
-		else if (_input)
-		{
-			*_input->m_fCameraInThirdPerson() = false;
-		}
-
 		nightmode();
 	}
 }

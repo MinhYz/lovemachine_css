@@ -248,10 +248,12 @@ public:
 		int weapon_pos = 1;     // 0: Top, 1: Bottom, 2: Right, 3: Left
 		int hp_text_style = 0;  // 0: Next to Bar, 1: Inside Bar, 2: Bottom Text
 
-		// Thirdperson & Inverted Angle
+		// Thirdperson & Inverted Angle & Rainbow Trail
 		bool thirdperson = false;
 		float thirdperson_dist = 120.0f;
 		bool thirdperson_reverse = false;
+		bool rainbow_trail = false;
+		float rainbow_trail_speed = 1.0f;
 	} visuals;
 
 	struct

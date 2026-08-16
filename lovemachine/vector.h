@@ -214,7 +214,7 @@ inline float Vector::Length(void) const
 		movss root, xmm0
 	}
 #else
-	root = std::sqrt(sqsr);
+	root = sqrtf(sqsr);
 #endif
 
 	return root;
@@ -235,7 +235,7 @@ inline float Vector::Length2D(void) const
 		movss root, xmm0
 	}
 #else
-	root = std::sqrt(sqst);
+	root = sqrtf(sqst);
 #endif
 
 	return root;
@@ -284,11 +284,14 @@ inline float Vector::NormalizeInPlace()
 {
 	Vector& v = *this;
 
-	float iradius = 1.f / (this->Length() + 1.192092896e-07F); //FLT_EPSILON
+	float len = this->Length();
+	float iradius = 1.f / (len + 1.192092896e-07F); //FLT_EPSILON
 
 	v.x *= iradius;
 	v.y *= iradius;
 	v.z *= iradius;
+
+	return len;
 }
 //===============================================
 inline Vector Vector::operator+(const Vector& v) const
