@@ -71,6 +71,59 @@ namespace rage
 		}
 	}
 
+	inline void apply_nospread_norecoil(cusercmd* pCmd, centity* pLocal)
+	{
+		if (!pCmd || !pLocal || !pLocal->valid()) return;
+
+		auto pWeapon = pLocal->get_weapon();
+		if (!pWeapon || pWeapon->get_clip1() <= 0) return;
+
+		if (!(pCmd->buttons & IN_ATTACK)) return;
+
+		// 1. NO RECOIL (XÓA ĐỘ GIẬT)
+		qangle punchAngle = pLocal->get_punch();
+		float mult_x = (sets->legit.aim.rcs[0] > 0.0f) ? sets->legit.aim.rcs[0] : 2.0f;
+		float mult_y = (sets->legit.aim.rcs[1] > 0.0f) ? sets->legit.aim.rcs[1] : 2.0f;
+
+		qangle currentAngles = pCmd->viewangles;
+		currentAngles.x -= punchAngle.x * (sets->rage.enabled ? 2.0f : mult_x);
+		currentAngles.y -= punchAngle.y * (sets->rage.enabled ? 2.0f : mult_y);
+		currentAngles.z = 0.0f;
+
+		// 2. NO SPREAD (XÓA ĐỘ LỆCH ĐẠN THEO THUẬT TOÁN CSS SPREAD/CONE)
+		pWeapon->update_accuracy_penalty();
+		float flSpread = pWeapon->get_spread();
+		float flCone = pWeapon->get_cone();
+
+		int seed = (pCmd->random_seed & 255) + 1;
+		RandomSeed(seed);
+
+		float rand1 = RandomFloat(0.0f, 1.0f);
+		float pi1   = RandomFloat(0.0f, 2.0f * (float)M_PI);
+		float rand2 = RandomFloat(0.0f, 1.0f);
+		float pi2   = RandomFloat(0.0f, 2.0f * (float)M_PI);
+
+		float spreadX = rand1 * flSpread * cosf(pi1) + rand2 * flCone * cosf(pi2);
+		float spreadY = rand1 * flSpread * sinf(pi1) + rand2 * flCone * sinf(pi2);
+
+		Vector forward, right, up;
+		AngleVectors(currentAngles, &forward, &right, &up);
+
+		Vector spreadDir = forward + (right * -spreadX) + (up * -spreadY);
+		VectorNormalize(spreadDir);
+
+		qangle compensatedAngles;
+		VectorAngles(spreadDir, compensatedAngles);
+
+		pCmd->viewangles = compensatedAngles;
+		normalize_angles(pCmd->viewangles);
+	}
+
+	inline void standalone_rcs()
+	{
+		apply_nospread_norecoil(global::cmd, global::local);
+	}
+
 	inline bool magic_bullet(Vector orig_angles)
 	{
 		if (!sets->rage.enabled && !sets->rage.magic_bullet)
@@ -230,59 +283,6 @@ namespace rage
 		}
 
 		normalize_angles(global::cmd->viewangles);
-	}
-
-	inline void apply_nospread_norecoil(cusercmd* pCmd, centity* pLocal)
-	{
-		if (!pCmd || !pLocal || !pLocal->valid()) return;
-
-		auto pWeapon = pLocal->get_weapon();
-		if (!pWeapon || pWeapon->get_clip1() <= 0) return;
-
-		if (!(pCmd->buttons & IN_ATTACK)) return;
-
-		// 1. NO RECOIL (XÓA ĐỘ GIẬT)
-		qangle punchAngle = pLocal->get_punch();
-		float mult_x = (sets->legit.aim.rcs[0] > 0.0f) ? sets->legit.aim.rcs[0] : 2.0f;
-		float mult_y = (sets->legit.aim.rcs[1] > 0.0f) ? sets->legit.aim.rcs[1] : 2.0f;
-
-		qangle currentAngles = pCmd->viewangles;
-		currentAngles.x -= punchAngle.x * (sets->rage.enabled ? 2.0f : mult_x);
-		currentAngles.y -= punchAngle.y * (sets->rage.enabled ? 2.0f : mult_y);
-		currentAngles.z = 0.0f;
-
-		// 2. NO SPREAD (XÓA ĐỘ LỆCH ĐẠN THEO THUẬT TOÁN CSS SPREAD/CONE)
-		pWeapon->update_accuracy_penalty();
-		float flSpread = pWeapon->get_spread();
-		float flCone = pWeapon->get_cone();
-
-		int seed = (pCmd->random_seed & 255) + 1;
-		RandomSeed(seed);
-
-		float rand1 = RandomFloat(0.0f, 1.0f);
-		float pi1   = RandomFloat(0.0f, 2.0f * (float)M_PI);
-		float rand2 = RandomFloat(0.0f, 1.0f);
-		float pi2   = RandomFloat(0.0f, 2.0f * (float)M_PI);
-
-		float spreadX = rand1 * flSpread * cosf(pi1) + rand2 * flCone * cosf(pi2);
-		float spreadY = rand1 * flSpread * sinf(pi1) + rand2 * flCone * sinf(pi2);
-
-		Vector forward, right, up;
-		AngleVectors(currentAngles, &forward, &right, &up);
-
-		Vector spreadDir = forward + (right * -spreadX) + (up * -spreadY);
-		VectorNormalize(spreadDir);
-
-		qangle compensatedAngles;
-		VectorAngles(spreadDir, compensatedAngles);
-
-		pCmd->viewangles = compensatedAngles;
-		normalize_angles(pCmd->viewangles);
-	}
-
-	inline void standalone_rcs()
-	{
-		apply_nospread_norecoil(global::cmd, global::local);
 	}
 
 	namespace aimbot
