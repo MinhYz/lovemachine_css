@@ -44,9 +44,14 @@ jobs:
       - name: Build Solution (lovemachine.sln)
         run: msbuild lovemachine.sln /p:Configuration=Release /p:Platform=Win32 /m
 
-      - name: Create Zip Package
+      - name: Prepare Release Package (Binaries, Scripts, Custom Models & Fonts)
+        shell: powershell
         run: |
-          powershell Compress-Archive -Path output\* -DestinationPath lovemachine-release-x86.zip -Force
+          if (Test-Path "scripts") {
+            Copy-Item -Path "scripts" -Destination "output\scripts" -Recurse -Force
+            Write-Host "[+] Copied 'scripts/' folder with custom models, fonts, and configs to output package!"
+          }
+          Compress-Archive -Path output\* -DestinationPath lovemachine-release-x86.zip -Force
 
       - name: Upload Built Artifacts
         uses: actions/upload-artifact@v4
