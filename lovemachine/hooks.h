@@ -33,7 +33,7 @@ namespace hooks
 		global::realtime = (float)GetTickCount64() / 1000.f;
 
 		// Toggle Menu Hotkey (Default INSERT or selected key)
-		if (msg == WM_KEYDOWN)
+		if (msg == WM_KEYDOWN && !(l_param & 0x40000000))
 		{
 			if (Menu::is_binding_key)
 			{
@@ -1011,9 +1011,6 @@ namespace hooks
 				p_setup->angles = cam_angles;
 			}
 		}
-
-		if (o_override_view)
-			o_override_view(p_setup);
 	}
 
 	using get_vm_fov_fn = float(__stdcall*)();

@@ -48,6 +48,9 @@ namespace rage
 	{
 		if (!cmd || !global::local || !global::local->valid()) return;
 
+		// Only autostop when on ground, do not kill mid-air bunnyhopping speed
+		if (!(global::local->get_flags() & FL_ONGROUND)) return;
+
 		cvector vel = global::local->get_velocity();
 		float speed = vel.Length2D();
 

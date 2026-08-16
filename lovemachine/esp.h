@@ -339,10 +339,20 @@ namespace esp
 				bool is_enemy = (!local_alive || local_team <= 1 || entity->get_team() != local_team);
 				p_color = visible ? (entity->get_team() == 2 ? sets->visuals.esp_t : sets->visuals.esp_ct) : (is_enemy ? (entity->get_team() == 2 ? sets->visuals.esp_t.with_alpha(180) : sets->visuals.esp_ct.with_alpha(180)) : color::disabled());
 
-				// Asian Hat 3D Conical Rice Hat (Applies to ALL players & local player in 3rd person)
+				// Asian Hat 3D Conical Rice Hat (Applies to enemies, and teammates only if Draw Teammates is enabled)
 				if (sets->visuals.asian_hat && entity->valid())
 				{
-					if (id != global::local_id || sets->visuals.thirdperson)
+					bool allow_hat = false;
+					if (id == global::local_id)
+					{
+						allow_hat = sets->visuals.thirdperson;
+					}
+					else if (!is_teammate || sets->visuals.friends)
+					{
+						allow_hat = true;
+					}
+
+					if (allow_hat)
 					{
 						cvector head_pos = entity->get_hitbox(hitbox_head, matrix);
 						if (head_pos.IsZero())
