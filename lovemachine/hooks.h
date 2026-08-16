@@ -894,17 +894,16 @@ namespace hooks
 
 			if (sets->visuals.thirdperson)
 			{
-				qangle view_angles;
-				_engine->get_viewangles(view_angles);
+				qangle cam_angles = p_setup->angles;
 				if (sets->visuals.thirdperson_reverse)
 				{
-					view_angles.y += 180.0f;
+					cam_angles.y += 180.0f;
 				}
 
 				Vector forward, right, up;
-				AngleVectors(view_angles, &forward, &right, &up);
+				AngleVectors(cam_angles, &forward, &right, &up);
 
-				Vector eye_pos = p_setup->origin;
+				Vector eye_pos = global::local->get_eye_pos();
 				float dist = sets->visuals.thirdperson_dist > 10.0f ? sets->visuals.thirdperson_dist : 120.0f;
 				Vector target_pos = eye_pos - (forward * dist);
 
@@ -923,7 +922,7 @@ namespace hooks
 				}
 
 				p_setup->origin = target_pos;
-				p_setup->angles = view_angles;
+				p_setup->angles = cam_angles;
 			}
 		}
 

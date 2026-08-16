@@ -1258,16 +1258,17 @@ namespace Menu
 		ImGui::BeginChild("SkeetIconSidebar", ImVec2(58, 0), true);
 		struct IconTabMap { const char* icon_char; const char* fallback; int tab_id; };
 		const IconTabMap skeet_icons[] = {
-			{ "C", "(R)", 0 }, // Ragebot (Gun icon in AstriumTabs)
-			{ "I", "(S)", 1 }, // Anti-Aim / Spinbot (Spinner icon)
-			{ "D", "(L)", 2 }, // Legitbot (Target crosshair)
-			{ "E", "(V)", 3 }, // Visuals (Eye icon)
-			{ "G", "(M)", 4 }, // Misc (Module/Toolbox icon)
-			{ "F", "(S)", 5 }  // Settings (Official Gear icon in AstriumTabs)
+			{ "C##tab_0", "(R)##tab_0", 0 }, // Ragebot (Gun icon in AstriumTabs)
+			{ "I##tab_1", "(A)##tab_1", 1 }, // Anti-Aim / Spinbot (Spinner icon)
+			{ "D##tab_2", "(L)##tab_2", 2 }, // Legitbot (Target crosshair)
+			{ "E##tab_3", "(V)##tab_3", 3 }, // Visuals (Eye icon)
+			{ "G##tab_4", "(M)##tab_4", 4 }, // Misc (Module/Toolbox icon)
+			{ "F##tab_5", "(S)##tab_5", 5 }  // Settings (Official Gear icon in AstriumTabs)
 		};
 
 		for (int i = 0; i < IM_ARRAYSIZE(skeet_icons); i++)
 		{
+			ImGui::PushID(i);
 			bool is_sel = (current_tab == skeet_icons[i].tab_id);
 			if (is_sel)
 			{
@@ -1290,6 +1291,7 @@ namespace Menu
 
 			ImGui::PopStyleColor(2);
 			ImGui::Spacing();
+			ImGui::PopID();
 		}
 		ImGui::EndChild();
 
@@ -1986,6 +1988,7 @@ namespace Menu
 			}
 		}
 
+		ImGui::GetIO().ConfigDebugHighlightIdConflicts = false;
 		if (!show_menu) return;
 
 		static int prev_layout = -1;

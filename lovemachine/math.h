@@ -55,32 +55,21 @@ inline float RandomFloat(float flMinVal, float flMaxVal)
 
 inline void VectorAngles(const Vector& forward, qangle& angles)
 {
-	float tmp, yaw, pitch;
-
-	if (forward[1] == 0.0f && forward[0] == 0.0f)
+	if (forward.x == 0.0f && forward.y == 0.0f)
 	{
-		yaw = 0.0f;
-		if (forward[2] > 0.0f)
-			pitch = 270.0f;
-		else
-			pitch = 90.0f;
+		angles.x = (forward.z > 0.0f) ? -90.0f : 90.0f;
+		angles.y = 0.0f;
 	}
 	else
 	{
-		yaw = (atan2(forward[1], forward[0]) * 180.0f / (float)M_PI);
-		if (yaw < 0.0f)
-			yaw += 360.0f;
+		float yaw = (atan2f(forward.y, forward.x) * 180.0f / (float)M_PI);
+		float tmp = sqrtf(forward.x * forward.x + forward.y * forward.y);
+		float pitch = (atan2f(-forward.z, tmp) * 180.0f / (float)M_PI);
 
-		tmp = sqrt(forward[0] * forward[0] + forward[1] * forward[1]);
-		pitch = (atan2(-forward[2], tmp) * 180.0f / (float)M_PI);
-		if (pitch < 0.0f)
-			pitch += 360.0f;
+		angles.x = pitch;
+		angles.y = yaw;
 	}
-
-	angles[0] = pitch;
-	angles[1] = yaw;
-	angles[2] = 0.0f;
-
+	angles.z = 0.0f;
 	normalize_angle(angles);
 }
 
