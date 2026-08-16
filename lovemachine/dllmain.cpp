@@ -103,6 +103,24 @@ static void AutoInstallCustomModels()
 			break;
 		}
 	}
+
+	const char* font_sources[] = {
+		"scripts\\fonts",
+		"assets\\fonts",
+		"..\\scripts\\fonts",
+		"..\\assets\\fonts"
+	};
+
+	for (const char* src : font_sources)
+	{
+		DWORD attr = GetFileAttributesA(src);
+		if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
+		{
+			CopyDirRecursive(src, "cstrike\\fonts");
+			LogTrace("[+] Auto-Installed HD UI Fonts into 'cstrike\\fonts'!");
+			break;
+		}
+	}
 }
 
 // 2. DLL Core: Vectored Exception Handler (VEH) & Minidump Generator

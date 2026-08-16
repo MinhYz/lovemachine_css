@@ -126,6 +126,80 @@ namespace hooks
 
 			// Initialize ImGui DX9 & Win32 Backends
 			ImGui::CreateContext();
+			ImGuiIO& io = ImGui::GetIO();
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+			io.ConfigDebugHighlightIdConflicts = false;
+
+			// Check font paths
+			const char* font_dirs[] = {
+				"scripts/fonts/",
+				"assets/fonts/",
+				"cstrike/fonts/",
+				"../scripts/fonts/",
+				"../assets/fonts/"
+			};
+
+			std::string found_font_dir = "";
+			for (const char* dir : font_dirs)
+			{
+				std::string test_file = std::string(dir) + "AstriumTabs.ttf";
+				FILE* f = fopen(test_file.c_str(), "rb");
+				if (f)
+				{
+					fclose(f);
+					found_font_dir = dir;
+					break;
+				}
+			}
+
+			if (!found_font_dir.empty())
+			{
+				// 1. Base Main Font
+				ImFontConfig font_cfg;
+				font_cfg.OversampleH = 2;
+				font_cfg.OversampleV = 2;
+				font_cfg.PixelSnapH = true;
+				std::string f_main = found_font_dir + "Museo500.ttf";
+				Menu::font_main = io.Fonts->AddFontFromFileTTF(f_main.c_str(), 14.0f, &font_cfg);
+				if (!Menu::font_main)
+				{
+					std::string f_goth = found_font_dir + "GothamPro.ttf";
+					Menu::font_main = io.Fonts->AddFontFromFileTTF(f_goth.c_str(), 14.0f, &font_cfg);
+				}
+
+				// 2. FontAwesome Icon Merge into Default Font
+				ImFontConfig fa_cfg;
+				fa_cfg.MergeMode = true;
+				fa_cfg.PixelSnapH = true;
+				fa_cfg.OversampleH = 2;
+				fa_cfg.OversampleV = 2;
+				static const ImWchar fa_ranges[] = { 0xf000, 0xf976, 0 };
+				std::string f_fa = found_font_dir + "FontAwesome.ttf";
+				io.Fonts->AddFontFromFileTTF(f_fa.c_str(), 13.0f, &fa_cfg, fa_ranges);
+
+				// 3. Large Brand Header Font
+				ImFontConfig brand_cfg;
+				brand_cfg.OversampleH = 2;
+				brand_cfg.OversampleV = 2;
+				brand_cfg.PixelSnapH = true;
+				std::string f_brand = found_font_dir + "Museo900.ttf";
+				Menu::font_brand_title = io.Fonts->AddFontFromFileTTF(f_brand.c_str(), 24.0f, &brand_cfg);
+
+				// 4. Gamesense Vector Icon Font (AstriumTabs)
+				ImFontConfig skeet_cfg;
+				skeet_cfg.OversampleH = 2;
+				skeet_cfg.OversampleV = 2;
+				skeet_cfg.PixelSnapH = true;
+				static const ImWchar skeet_ranges[] = { 0x0020, 0x00FF, 0 };
+				std::string f_skeet = found_font_dir + "AstriumTabs.ttf";
+				Menu::font_skeet_icons = io.Fonts->AddFontFromFileTTF(f_skeet.c_str(), 22.0f, &skeet_cfg, skeet_ranges);
+			}
+
+			if (!Menu::font_main)
+			{
+				Menu::font_main = io.Fonts->AddFontDefault();
+			}
+
 			ImGui_ImplWin32_Init(global::window);
 			ImGui_ImplDX9_Init(device);
 			Menu::SetupStyle();
