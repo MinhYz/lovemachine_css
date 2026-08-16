@@ -12,6 +12,12 @@ using std::min;
 #endif
 #define rad2deg( x )  ( (float)(x) * (float)(180.f / (float)M_PI) )
 #define deg2rad( x )  ( (float)(x) * (float)((float)M_PI / 180.f) )
+#ifndef DEG2RAD
+#define DEG2RAD( x )  ( (float)(x) * (float)((float)M_PI / 180.f) )
+#endif
+#ifndef RAD2DEG
+#define RAD2DEG( x )  ( (float)(x) * (float)(180.f / (float)M_PI) )
+#endif
 
 inline void normalize_angle(qangle& angle)
 {

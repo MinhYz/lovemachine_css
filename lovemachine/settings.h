@@ -180,6 +180,7 @@ public:
 
 		// Viewmodel FOV (Arm/Hand Length)
 		float viewmodel_fov = 90.0f;
+		float fov = 0.0f;
 
 		// Asian Hat (Mũ Asian / Rice Hat)
 		bool asian_hat = false;

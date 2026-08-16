@@ -154,4 +154,4 @@ namespace game
 #define _input game::interfaces::input
 #define _clientmode game::signatures::clientmode
 #define _phys game::interfaces::physics
-//#define _clientstate game::signatures::clientstate
+#define _clientstate game::signatures::clientstate

@@ -108,7 +108,7 @@ namespace rage
 			if (!enemy->get_hitbox_matrix(matrix, global::curtime)) continue;
 
 			// Check hitboxes (Head -> Neck -> Chest -> Pelvis)
-			int hitboxes_to_check[] = { hitbox_head, hitbox_neck, hitbox_lower_chest, hitbox_pelvis };
+			int hitboxes_to_check[] = { hitbox_head, hitbox_neck, hitbox_upper_chest, hitbox_chest, hitbox_pelvis };
 			cvector target_pos(0, 0, 0);
 
 			for (int hb : hitboxes_to_check)
