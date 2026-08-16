@@ -1953,40 +1953,17 @@ namespace Menu
 
 	void Render()
 	{
-		// Global toggle hotkey check (checks every frame)
+#ifndef _WIN32
+		// Global toggle hotkey check for Standalone Test Mode (macOS/Linux)
 		if (!is_binding_key && sets)
 		{
-			for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++)
+			if (ImGui::IsKeyPressed(ImGuiKey_Insert, false))
 			{
-				if (ImGui::IsKeyPressed((ImGuiKey)k, false))
-				{
-					int vk = 0x2D;
-					if (k >= ImGuiKey_F1 && k <= ImGuiKey_F12) vk = 0x70 + (k - ImGuiKey_F1);
-					else if (k >= ImGuiKey_0 && k <= ImGuiKey_9) vk = 0x30 + (k - ImGuiKey_0);
-					else if (k >= ImGuiKey_A && k <= ImGuiKey_Z) vk = 0x41 + (k - ImGuiKey_A);
-					else if (k == ImGuiKey_Insert) vk = 0x2D;
-					else if (k == ImGuiKey_Delete) vk = 0x2E;
-					else if (k == ImGuiKey_Home) vk = 0x24;
-					else if (k == ImGuiKey_End) vk = 0x23;
-					else if (k == ImGuiKey_PageUp) vk = 0x21;
-					else if (k == ImGuiKey_PageDown) vk = 0x22;
-					else if (k == ImGuiKey_GraveAccent) vk = 0xC0;
-					else if (k == ImGuiKey_RightShift) vk = 0xA1;
-					else if (k == ImGuiKey_LeftShift) vk = 0xA0;
-					else if (k == ImGuiKey_RightCtrl) vk = 0xA3;
-					else if (k == ImGuiKey_LeftCtrl) vk = 0xA2;
-					else if (k == ImGuiKey_Tab) vk = 0x09;
-					else vk = k;
-
-					if (vk == sets->menu.menu_key || vk == 0x2D || k == sets->menu.menu_key || k == ImGuiKey_Insert)
-					{
-						show_menu = !show_menu;
-						sets->menu.opened = show_menu;
-						break;
-					}
-				}
+				show_menu = !show_menu;
+				sets->menu.opened = show_menu;
 			}
 		}
+#endif
 
 		ImGui::GetIO().ConfigDebugHighlightIdConflicts = false;
 		if (!show_menu) return;

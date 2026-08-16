@@ -18,6 +18,7 @@
 #include "events.h"
 #include "surface.h"
 #include "net shit.h"
+#include "font_astrium.h"
 
 using namespace d3d;
 using namespace game;
@@ -42,7 +43,7 @@ namespace hooks
 				}
 				Menu::is_binding_key = false;
 			}
-			else if (w_param == VK_INSERT || w_param == static_cast<WPARAM>(sets->menu.menu_key))
+			else if (w_param == static_cast<WPARAM>(sets->menu.menu_key))
 			{
 				Menu::show_menu = !Menu::show_menu;
 				sets->menu.opened = Menu::show_menu;
@@ -193,6 +194,17 @@ namespace hooks
 				static const ImWchar skeet_ranges[] = { 0x0020, 0x00FF, 0 };
 				std::string f_skeet = found_font_dir + "AstriumTabs.ttf";
 				Menu::font_skeet_icons = io.Fonts->AddFontFromFileTTF(f_skeet.c_str(), 22.0f, &skeet_cfg, skeet_ranges);
+			}
+
+			if (!Menu::font_skeet_icons)
+			{
+				ImFontConfig skeet_cfg;
+				skeet_cfg.OversampleH = 2;
+				skeet_cfg.OversampleV = 2;
+				skeet_cfg.PixelSnapH = true;
+				skeet_cfg.FontDataOwnedByAtlas = false;
+				static const ImWchar skeet_ranges[] = { 0x0020, 0x00FF, 0 };
+				Menu::font_skeet_icons = io.Fonts->AddFontFromMemoryTTF((void*)assets_fonts_AstriumTabs_ttf, sizeof(assets_fonts_AstriumTabs_ttf), 22.0f, &skeet_cfg, skeet_ranges);
 			}
 
 			if (!Menu::font_main)
