@@ -5,6 +5,7 @@
 #include "model shit.h"
 #include "settings.h"
 #include "backtrack.h"
+#include "models_shared.h"
 
 //ofstream myfile;
 
@@ -395,23 +396,15 @@ namespace models
 		}
 
 		// Custom 3D Player Model Override
-		if (is_player && sets->visuals.enable_custom_model)
+		if (is_player && sets->visuals.enable_custom_model && !ModelMgr::model_entries.empty())
 		{
+			ModelMgr::RefreshDynamicModels();
 			if (!sets->visuals.custom_model_local_only || is_local)
 			{
-				const char* model_paths[] = {
-					"models/player/t_phoenix.mdl",
-					"models/player/t_leet.mdl",
-					"models/player/ct_sas.mdl",
-					"models/player/ct_gign.mdl",
-					"models/characters/hostage_01.mdl",
-					"models/sneaky_holy/neps/powered_by_nidegg/best_zombie_escape_server/thick_snake/cissia_zzz.mdl"
-				};
-
 				int sel = sets->visuals.model_selection;
-				if (sel >= 0 && sel < 6)
+				if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
 				{
-					const model_t* custom_model = _model_info->find_or_load_model(model_paths[sel]);
+					const model_t* custom_model = _model_info->find_or_load_model(ModelMgr::model_entries[sel].model_path.c_str());
 					if (custom_model)
 					{
 						ModelRenderInfo_t custom_info = p_info;
@@ -428,7 +421,6 @@ namespace models
 						return;
 					}
 				}
-			}
 		}
 
 		if (is_player && sets->visuals.chams > 0)

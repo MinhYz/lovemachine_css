@@ -3,6 +3,7 @@
 #include "imgui_internal.h"
 #include "configs.h"
 #include "phoenix_mesh.h"
+#include "models_shared.h"
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -949,16 +950,17 @@ namespace Menu
 			{
 				AnimatedSwitch("Local Player Only (Only You)", &sets->visuals.custom_model_local_only);
 			}
-			const char* custom_models[] = {
-				"Phoenix Terrorist (T)",
-				"Leet Krew (T)",
-				"SAS Gasmask (CT)",
-				"GIGN SWAT (CT)",
-				"Hostage (Scientist)",
-				"Cissia ZZZ (Zenless Zone Zero)"
-			};
+			ModelMgr::RefreshDynamicModels();
+			std::vector<const char*> custom_models_items;
+			for (auto& item : ModelMgr::model_entries)
+			{
+				custom_models_items.push_back(item.display_name.c_str());
+			}
 			ImGui::SetNextItemWidth(180);
-			ImGui::Combo("Character Model", &sets->visuals.model_selection, custom_models, IM_ARRAYSIZE(custom_models));
+			if (!custom_models_items.empty())
+			{
+				ImGui::Combo("Character Model", &sets->visuals.model_selection, custom_models_items.data(), (int)custom_models_items.size());
+			}
 			EndGroupbox();
 
 			BeginGroupbox("3D Asian Rice Hat");
@@ -1142,44 +1144,51 @@ namespace Menu
 			}
 			else
 			{
-				const char* kname = "INSERT";
 				int vk = sets->menu.menu_key;
-				switch (vk)
+#ifdef _WIN32
+				char win_key_name[64] = { 0 };
+				UINT scanCode = MapVirtualKeyA(vk, MAPVK_VK_TO_VSC);
+				if (scanCode != 0 && GetKeyNameTextA(scanCode << 16, win_key_name, sizeof(win_key_name)) > 0)
 				{
-				case 0x2D: kname = "INSERT"; break;
-				case 0x2E: kname = "DELETE"; break;
-				case 0x24: kname = "HOME"; break;
-				case 0x23: kname = "END"; break;
-				case 0x21: kname = "PAGE UP"; break;
-				case 0x22: kname = "PAGE DOWN"; break;
-				case 0x70: kname = "F1"; break;
-				case 0x71: kname = "F2"; break;
-				case 0x72: kname = "F3"; break;
-				case 0x73: kname = "F4"; break;
-				case 0x74: kname = "F5"; break;
-				case 0x75: kname = "F6"; break;
-				case 0x76: kname = "F7"; break;
-				case 0x77: kname = "F8"; break;
-				case 0x78: kname = "F9"; break;
-				case 0x79: kname = "F10"; break;
-				case 0x7A: kname = "F11"; break;
-				case 0x7B: kname = "F12"; break;
-				case 0xC0: kname = "TILDE (~)"; break;
-				case 0xA1: kname = "RIGHT SHIFT"; break;
-				case 0xA0: kname = "LEFT SHIFT"; break;
-				case 0xA3: kname = "RIGHT CTRL"; break;
-				case 0xA2: kname = "LEFT CTRL"; break;
-				case 0x09: kname = "TAB"; break;
-				default:
-					if (vk >= 0x41 && vk <= 0x5A) { static char b[2] = {0,0}; b[0] = (char)vk; kname = b; }
-					else if (vk >= 0x30 && vk <= 0x39) { static char b[2] = {0,0}; b[0] = (char)vk; kname = b; }
-					else if (vk >= ImGuiKey_NamedKey_BEGIN && vk < ImGuiKey_NamedKey_END) {
-						const char* n = ImGui::GetKeyName((ImGuiKey)vk);
-						if (n && strlen(n) > 0) kname = n;
-					}
-					break;
+					snprintf(key_btn_text, sizeof(key_btn_text), "[ %s ]", win_key_name);
 				}
-				snprintf(key_btn_text, sizeof(key_btn_text), "[ %s ]", kname);
+				else
+#endif
+				{
+					const char* kname = "INSERT";
+					switch (vk)
+					{
+					case 0x2D: kname = "INSERT"; break;
+					case 0x2E: kname = "DELETE"; break;
+					case 0x24: kname = "HOME"; break;
+					case 0x23: kname = "END"; break;
+					case 0x21: kname = "PAGE UP"; break;
+					case 0x22: kname = "PAGE DOWN"; break;
+					case 0x70: kname = "F1"; break;
+					case 0x71: kname = "F2"; break;
+					case 0x72: kname = "F3"; break;
+					case 0x73: kname = "F4"; break;
+					case 0x74: kname = "F5"; break;
+					case 0x75: kname = "F6"; break;
+					case 0x76: kname = "F7"; break;
+					case 0x77: kname = "F8"; break;
+					case 0x78: kname = "F9"; break;
+					case 0x79: kname = "F10"; break;
+					case 0x7A: kname = "F11"; break;
+					case 0x7B: kname = "F12"; break;
+					case 0xC0: kname = "TILDE (~)"; break;
+					case 0xA1: kname = "RIGHT SHIFT"; break;
+					case 0xA0: kname = "LEFT SHIFT"; break;
+					case 0xA3: kname = "RIGHT CTRL"; break;
+					case 0xA2: kname = "LEFT CTRL"; break;
+					case 0x09: kname = "TAB"; break;
+					default:
+						if (vk >= 0x41 && vk <= 0x5A) { static char b[2] = {0,0}; b[0] = (char)vk; kname = b; }
+						else if (vk >= 0x30 && vk <= 0x39) { static char b[2] = {0,0}; b[0] = (char)vk; kname = b; }
+						break;
+					}
+					snprintf(key_btn_text, sizeof(key_btn_text), "[ %s ]", kname);
+				}
 			}
 
 			if (ImGui::Button(key_btn_text, ImVec2(170, 30)))

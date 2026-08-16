@@ -354,7 +354,11 @@ namespace esp
 
 					if (allow_hat)
 					{
-						cvector head_pos = entity->get_hitbox(hitbox_head, matrix);
+						cvector head_pos(0, 0, 0);
+						if (has_matrix)
+						{
+							head_pos = entity->get_hitbox(hitbox_head, matrix);
+						}
 						if (head_pos.IsZero())
 						{
 							head_pos = entity->get_eye_pos() + cvector(0, 0, 4.0f);
