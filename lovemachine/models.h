@@ -421,6 +421,7 @@ namespace models
 						return;
 					}
 				}
+			}
 		}
 
 		if (is_player && sets->visuals.chams > 0)

@@ -286,6 +286,13 @@ namespace rage
 		}
 
 		normalize_angles(global::cmd->viewangles);
+
+		// Apply spinbot angles directly to local player render angle so thirdperson visibly rotates
+		if (global::local && global::local->valid())
+		{
+			*(float*)((DWORD)global::local + 0x1404) = global::cmd->viewangles.x;
+			*(float*)((DWORD)global::local + 0x1408) = global::cmd->viewangles.y;
+		}
 	}
 
 	namespace aimbot
