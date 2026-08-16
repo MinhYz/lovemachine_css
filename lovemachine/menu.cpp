@@ -733,10 +733,11 @@ namespace Menu
 
 	static void BeginGroupbox(const char* title, float height = 0.0f)
 	{
+		ImGui::PushID(title);
 		ImGuiChildFlags flags = ImGuiChildFlags_Borders;
 		if (height <= 0.0f)
 			flags |= ImGuiChildFlags_AutoResizeY;
-		ImGui::BeginChild(title, ImVec2(0, height), flags);
+		ImGui::BeginChild("##grpbox", ImVec2(0, height), flags);
 		ImGui::TextColored(ui_accent_color, "%s", title);
 		ImGui::Separator();
 		ImGui::Spacing();
@@ -746,6 +747,7 @@ namespace Menu
 	{
 		ImGui::EndChild();
 		ImGui::Spacing();
+		ImGui::PopID();
 	}
 
 	static void RenderRagebotTab(float tab_alpha)
@@ -756,20 +758,20 @@ namespace Menu
 		ImGui::BeginChild("RageCol1", ImVec2(col_w, 0), false);
 		{
 			BeginGroupbox("MAIN");
-			AnimatedSwitch("Enabled", &sets->rage.enabled);
-			AnimatedSwitch("Auto Knife (Knifebot)", &sets->legit.knifebot);
-			AnimatedSwitch("Silent Aim", &sets->rage.silent);
-			AnimatedSwitch("Automatic Fire", &sets->rage.autoshoot);
-			AnimatedSwitch("Aim Through Walls", &sets->rage.autowall);
+			AnimatedSwitch("Enable Ragebot##rage_main", &sets->rage.enabled);
+			AnimatedSwitch("Auto Knife (Knifebot)##rage_kb", &sets->legit.knifebot);
+			AnimatedSwitch("Silent Aim##rage_silent", &sets->rage.silent);
+			AnimatedSwitch("Automatic Fire##rage_autoshoot", &sets->rage.autoshoot);
+			AnimatedSwitch("Aim Through Walls##rage_autowall", &sets->rage.autowall);
 			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Field of View", &sets->rage.hitchance, 0.0f, 180.0f, "%.1f°");
+			ImGui::SliderFloat("Field of View##rage_fov", &sets->rage.hitchance, 0.0f, 180.0f, "%.1f°");
 			EndGroupbox();
 
 			BeginGroupbox("SELECTION");
 			const char* hit_modes[] = { "Hit Chance", "Damage", "Distance" };
 			static int sel_hit = 0;
 			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("Target", &sel_hit, hit_modes, IM_ARRAYSIZE(hit_modes));
+			ImGui::Combo("Target##rage_target", &sel_hit, hit_modes, IM_ARRAYSIZE(hit_modes));
 			EndGroupbox();
 		}
 		ImGui::EndChild();
@@ -783,20 +785,20 @@ namespace Menu
 			const char* hist_modes[] = { "Low", "Medium", "High" };
 			static int sel_hist = 0;
 			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("History", &sel_hist, hist_modes, IM_ARRAYSIZE(hist_modes));
-			AnimatedSwitch("Delay Shot", &sets->rage.autostop);
-			AnimatedSwitch("Remove Recoil", &sets->rage.silent);
-			AnimatedSwitch("Remove Spread", &sets->rage.autoscope);
-			AnimatedSwitch("Duck Peek Assist", &sets->misc.fake_duck);
-			AnimatedSwitch("Quick Peek Assist", &sets->misc.slow_walk);
-			AnimatedSwitch("Double Tap", &sets->rage.magic_bullet);
+			ImGui::Combo("History##rage_hist", &sel_hist, hist_modes, IM_ARRAYSIZE(hist_modes));
+			AnimatedSwitch("Delay Shot##rage_delay", &sets->rage.autostop);
+			AnimatedSwitch("Remove Recoil##rage_rcs", &sets->rage.silent);
+			AnimatedSwitch("Remove Spread##rage_nospread", &sets->rage.autoscope);
+			AnimatedSwitch("Duck Peek Assist##rage_fakeduck", &sets->misc.fake_duck);
+			AnimatedSwitch("Quick Peek Assist##rage_slowwalk", &sets->misc.slow_walk);
+			AnimatedSwitch("Double Tap##rage_dt", &sets->rage.magic_bullet);
 			EndGroupbox();
 
 			BeginGroupbox("ANTI-AIM");
-			AnimatedSwitch("Enabled", &sets->rage.spinbot);
+			AnimatedSwitch("Enable Anti-Aim##rage_aa_enable", &sets->rage.spinbot);
 			const char* pitch_modes[] = { "Off", "Down", "Up", "Zero" };
 			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("Pitch", &sets->rage.pitch_aa, pitch_modes, IM_ARRAYSIZE(pitch_modes));
+			ImGui::Combo("Pitch##rage_pitch", &sets->rage.pitch_aa, pitch_modes, IM_ARRAYSIZE(pitch_modes));
 			EndGroupbox();
 		}
 		ImGui::EndChild();
