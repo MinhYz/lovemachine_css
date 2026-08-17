@@ -40,8 +40,8 @@ namespace rage
 		if (right_scale > 0.0001f)
 			cmd->sidemove = (wish_dir.x * right_new.x + wish_dir.y * right_new.y) / right_scale;
 
-		cmd->forwardmove = std::clamp(cmd->forwardmove, -450.0f, 450.0f);
-		cmd->sidemove = std::clamp(cmd->sidemove, -450.0f, 450.0f);
+		cmd->forwardmove = (cmd->forwardmove < -450.0f) ? -450.0f : ((cmd->forwardmove > 450.0f) ? 450.0f : cmd->forwardmove);
+		cmd->sidemove = (cmd->sidemove < -450.0f) ? -450.0f : ((cmd->sidemove > 450.0f) ? 450.0f : cmd->sidemove);
 	}
 
 	inline void autostop(cusercmd* cmd, Vector orig_angles)
@@ -64,8 +64,8 @@ namespace rage
 			AngleVectors(move_ang, &forward, nullptr, nullptr);
 			Vector stop_dir = forward * 450.0f;
 
-			cmd->forwardmove = std::clamp(stop_dir.x, -450.0f, 450.0f);
-			cmd->sidemove = std::clamp(stop_dir.y, -450.0f, 450.0f);
+			cmd->forwardmove = (stop_dir.x < -450.0f) ? -450.0f : ((stop_dir.x > 450.0f) ? 450.0f : stop_dir.x);
+			cmd->sidemove = (stop_dir.y < -450.0f) ? -450.0f : ((stop_dir.y > 450.0f) ? 450.0f : stop_dir.y);
 		}
 		else
 		{

@@ -257,12 +257,14 @@ namespace esp
 	void bar(bool vertical, bool text_on_left, int left, int top, int right, int bottom, float value, float vmax, color front, color back, const char* output = "%i")
 	{
 		if (vmax <= 0.0f) vmax = 1.0f;
-		float clamped_val = std::clamp(value, 0.0f, vmax);
+		float clamped_val = (value < 0.0f) ? 0.0f : ((value > vmax) ? vmax : value);
 
 		surf::prim::filled_box(left - 1, top - 1, right + 1, bottom + 1, color::outline().with_alpha(front.a));
 		surf::prim::filled_box(left, top, right, bottom, back);
 
-		const auto amount = vertical ? std::max<int>(top, static_cast<int>(bottom - ((bottom - top) * (clamped_val / vmax)))) : std::min<int>(right, static_cast<int>(left + ((right - left) * (clamped_val / vmax))));
+		int v_calc = static_cast<int>(bottom - ((bottom - top) * (clamped_val / vmax)));
+		int h_calc = static_cast<int>(left + ((right - left) * (clamped_val / vmax)));
+		const auto amount = vertical ? (top > v_calc ? top : v_calc) : (right < h_calc ? right : h_calc);
 
 		surf::prim::filled_box(left, vertical ? amount : top, vertical ? right : amount, bottom, front);
 		if (value != vmax)
@@ -305,7 +307,7 @@ namespace esp
 		bool world_filters = sets->visuals.esp_filter[1] || sets->visuals.esp_filter[2] || sets->visuals.esp_filter[3] || sets->visuals.esp_filter[4] || sets->visuals.esp_filter[5] || sets->visuals.bomb_timer;
 		int max_clients = _engine->get_max_clients();
 		int highest_ent = _ent_list->get_highest_entity_index();
-		int max_ents = world_filters ? std::min(highest_ent + 1, 512) : std::min(max_clients + 1, 65);
+		int max_ents = world_filters ? ((highest_ent + 1 < 512) ? (highest_ent + 1) : 512) : ((max_clients + 1 < 65) ? (max_clients + 1) : 65);
 		if (max_ents <= 0) return;
 
 		bool local_alive = (global::local && global::local->valid());

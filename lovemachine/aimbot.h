@@ -207,7 +207,7 @@ namespace legit
 		{
 			if (sets->legit.aim.humanize[axis] <= 0.01f) return 0.f;
 
-			int range = sets->legit.aim.humanize[axis] * sets->legit.aim.smooth[axis];
+			int range = static_cast<int>(sets->legit.aim.humanize[axis] * sets->legit.aim.smooth[axis]);
 			if (range < 2) return 0.f;
 
 			float factor = (float)((float)(rand() % range) / ((float)range * 1000.f));
@@ -357,7 +357,7 @@ namespace legit
 				auto screen = angle_to_screen(delta);
 
 				//if (!cvar(ragemode).value || (sets->rage.autoshoot && (global::weapon->next_primary_attack() - global::curtime) <= 0.f))
-				send_mouse(screen.x, screen.y, MOUSEEVENTF_MOVE);
+				send_mouse((int)screen.x, (int)screen.y, MOUSEEVENTF_MOVE);
 
 				if (cvar(ragemode).value)
 				{
@@ -414,8 +414,8 @@ namespace legit
 				}
 				else _engine->set_viewangles(global::cmd->viewangles);
 
-				global::cmd->mousedx -= (delta.y / 0.0748f);
-				global::cmd->mousedy += (delta.x / 0.0748f);
+				global::cmd->mousedx -= static_cast<short>(delta.y / 0.0748f);
+				global::cmd->mousedy += static_cast<short>(delta.x / 0.0748f);
 			}
 		}
 	}

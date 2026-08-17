@@ -149,7 +149,9 @@ inline float get_fov(const qangle& viewAngle, const qangle& aimAngle)
 	float len_sqr = aim.LengthSqr();
 	if (len_sqr <= 0.00001f) return 180.0f;
 
-	float dot = std::clamp(aim.Dot(ang) / len_sqr, -1.0f, 1.0f);
+	float dot = aim.Dot(ang) / len_sqr;
+	if (dot < -1.0f) dot = -1.0f;
+	else if (dot > 1.0f) dot = 1.0f;
 	return rad2deg(acosf(dot));
 }
 

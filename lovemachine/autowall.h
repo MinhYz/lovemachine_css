@@ -77,7 +77,7 @@ namespace rage
 
 			int iPenetration = wiWeaponInfo.iPenetration;
 
-			float fCurrentDamage = wiWeaponInfo.iDamage;
+			float fCurrentDamage = (float)wiWeaponInfo.iDamage;
 
 			float fPenetrationPower = wiWeaponInfo.fPenetrationPower;
 

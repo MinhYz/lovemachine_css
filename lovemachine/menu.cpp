@@ -1479,9 +1479,9 @@ namespace Menu
 		{
 			configs::write("neverlose_profile");
 			config_saved_notify = true;
-			notify_timer = ImGui::GetTime() + 3.0f;
+			notify_timer = (float)ImGui::GetTime() + 3.0f;
 		}
-		if (config_saved_notify && ImGui::GetTime() < notify_timer)
+		if (config_saved_notify && (float)ImGui::GetTime() < notify_timer)
 		{
 			ImGui::SameLine();
 			ImGui::TextColored(ImVec4(0.0f, 0.9f, 0.5f, 1.0f), ICON_FA_CHECK " Saved!");
