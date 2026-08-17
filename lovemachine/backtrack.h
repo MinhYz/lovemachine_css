@@ -120,6 +120,8 @@ namespace legit
 					if (angle != nullptr) *angle = calced;
 					return p_point.vector;
 				}
+
+				return cvector(0.f, 0.f, 0.f);
 			}
 
 		private:

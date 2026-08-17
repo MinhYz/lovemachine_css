@@ -73,7 +73,7 @@ namespace rage
 			Vector vSource = vStart, vEnding, vDir = (vEnd - vStart), vClip;
 			vDir.NormalizeInPlace();
 
-			float fTmpLength, fSumDist, fPow;
+			float fTmpLength = 0.0f, fSumDist = 0.0f, fPow = 1.0f;
 
 			int iPenetration = wiWeaponInfo.iPenetration;
 

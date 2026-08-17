@@ -207,34 +207,49 @@ namespace esp
 		surf::font::draw(surf::font::esp, (int)cx, (int)cy + 10, color(230, 230, 230), DT_CENTER, "%.0fm", dist);
 	}
 
+	static const int s_hat_points = 24;
+	static const float s_hat_cos[24] = {
+		1.000000f, 0.965926f, 0.866025f, 0.707107f, 0.500000f, 0.258819f,
+		0.000000f, -0.258819f, -0.500000f, -0.707107f, -0.866025f, -0.965926f,
+		-1.000000f, -0.965926f, -0.866025f, -0.707107f, -0.500000f, -0.258819f,
+		0.000000f, 0.258819f, 0.500000f, 0.707107f, 0.866025f, 0.965926f
+	};
+	static const float s_hat_sin[24] = {
+		0.000000f, 0.258819f, 0.500000f, 0.707107f, 0.866025f, 0.965926f,
+		1.000000f, 0.965926f, 0.866025f, 0.707107f, 0.500000f, 0.258819f,
+		0.000000f, -0.258819f, -0.500000f, -0.707107f, -0.866025f, -0.965926f,
+		-1.000000f, -0.965926f, -0.866025f, -0.707107f, -0.500000f, -0.258819f
+	};
+
 	void draw_sounds()
 	{
 		if (server::sounds.empty()) return;
 
-		for (size_t i = 0; i < server::sounds.size(); )
+		auto it = server::sounds.begin();
+		while (it != server::sounds.end())
 		{
-			float delta = fabsf(server::sounds[i].time - global::curtime);
+			float delta = fabsf(it->time - global::curtime);
 			if (delta > 2.0f)
 			{
-				server::sounds.erase(server::sounds.begin() + i);
+				it = server::sounds.erase(it);
 				continue;
 			}
 
 			float radius = (sets->visuals.footstep_rings ? (10.0f + delta * 45.0f) : (5.0f + delta * 15.0f));
-			int alpha_val = (int)(255.0f - (delta / 2.0f) * 255.0f);
+			int alpha_val = (int)(255.0f - (delta * 0.5f) * 255.0f);
 			if (alpha_val < 0) alpha_val = 0;
 
-			circle_3d(server::sounds[i].position, radius, 20.0f, server::sounds[i].col.with_alpha(alpha_val));
+			circle_3d(it->position, radius, 16.0f, it->col.with_alpha(alpha_val));
 			
 			if (sets->visuals.sound_esp)
 			{
 				cvector screen;
-				if (w2s(server::sounds[i].position + cvector(0, 0, 15.0f), screen))
+				if (w2s(it->position + cvector(0, 0, 15.0f), screen))
 				{
-					surf::font::draw(surf::font::esp, (int)screen.x, (int)screen.y, server::sounds[i].col.with_alpha(alpha_val), DT_CENTER, "[STEP]");
+					surf::font::draw(surf::font::esp, (int)screen.x, (int)screen.y, it->col.with_alpha(alpha_val), DT_CENTER, "[STEP]");
 				}
 			}
-			i++;
+			++it;
 		}
 	}
 
@@ -263,9 +278,6 @@ namespace esp
 		else return to;
 	}
 
-	//float oldx, oldy, dx, dy, lastx, lasty;
-	// Ã®Ã·Ã¥Ã­Ã¼ Ã«Ã Ã£Ã Ã¥Ã² w2s, Ã¥Ã±Ã¯ Ã­Ã¥ Ã¡Ã³Ã¤Ã¥Ã² Ã¯Ã®ÃªÃ  w2s Ã­Ã¥ Ã¯Ã°Ã¨Ã¬Ã¥Ã² ÃµÃ°Ã¨Ã±Ã²Ã¨Ã³Ã Ã­Ã±Ã²Ã¢Ã® Ã¢Ã­Ã®Ã¢Ã¼
-	// Ã¢Ã±Ã¥ Ã²Ã ÃªÃ¨ Ã¯Ã°Ã¨Ã­Ã¿Ã«Ã®, Ã§Ã  Ã°Ã Ã¡Ã®Ã²Ã³
 	void draw()
 	{
 		if (!sets->visuals.enabled || !_engine || !_engine->in_game() || !_ent_list)
@@ -290,8 +302,11 @@ namespace esp
 		color p_color;
 		static short alpha[65];
 
-		int max_ents = _ent_list->get_highest_entity_index();
-		if (max_ents <= 0 || max_ents > 2048) return;
+		bool world_filters = sets->visuals.esp_filter[1] || sets->visuals.esp_filter[2] || sets->visuals.esp_filter[3] || sets->visuals.esp_filter[4] || sets->visuals.esp_filter[5] || sets->visuals.bomb_timer;
+		int max_clients = _engine->get_max_clients();
+		int highest_ent = _ent_list->get_highest_entity_index();
+		int max_ents = world_filters ? std::min(highest_ent + 1, 512) : std::min(max_clients + 1, 65);
+		if (max_ents <= 0) return;
 
 		bool local_alive = (global::local && global::local->valid());
 		int local_team = (global::local ? global::local->get_team() : 0);
@@ -301,16 +316,16 @@ namespace esp
 			if (id == global::local_id && !sets->visuals.thirdperson && local_alive) continue;			
 
 			entity = _ent_list->get_centity(id);
-			if (!entity || IsBadReadPtr(entity, sizeof(centity)) || entity->get_origin().IsZero() || entity == global::local_observed) continue;
+			if (!entity || entity->get_origin().IsZero() || entity == global::local_observed) continue;
 
 			networkable = entity->get_clientnetworkable();
-			if (!networkable || IsBadReadPtr(networkable, sizeof(iclientnetworkable))) continue;
+			if (!networkable) continue;
 
 			dormant = networkable->is_dormant();
 			if ((!sets->visuals.fade || id >= 64) && dormant) continue;
 
 			client_class = networkable->get_clientclass();
-			if (!client_class || IsBadReadPtr(client_class, sizeof(clientclass))) continue;
+			if (!client_class) continue;
 
 			class_id = client_class->class_id;
 			name = client_class->name;
@@ -371,22 +386,20 @@ namespace esp
 							cvector screen_apex;
 							bool apex_valid = w2s(apex, screen_apex);
 
-							const int points_cnt = 24;
 							cvector rim_screens[24];
 							bool rim_valid[24];
 
-							for (int i = 0; i < points_cnt; i++)
+							for (int i = 0; i < s_hat_points; i++)
 							{
-								float angle_rad = (float)i * (2.0f * (float)M_PI / (float)points_cnt);
-								cvector rim_pos = head_pos + cvector(cosf(angle_rad) * sets->visuals.asian_hat_size, sinf(angle_rad) * sets->visuals.asian_hat_size, 0.0f);
+								cvector rim_pos = head_pos + cvector(s_hat_cos[i] * sets->visuals.asian_hat_size, s_hat_sin[i] * sets->visuals.asian_hat_size, 0.0f);
 								rim_valid[i] = w2s(rim_pos, rim_screens[i]);
 							}
 
 							int hat_alpha = (id == global::local_id) ? 255 : (alpha[alpha_idx] > 0 ? alpha[alpha_idx] : 255);
 							color base_col = sets->visuals.asian_hat_color.with_alpha(hat_alpha);
-							for (int i = 0; i < points_cnt; i++)
+							for (int i = 0; i < s_hat_points; i++)
 							{
-								int next_i = (i + 1) % points_cnt;
+								int next_i = (i + 1) % s_hat_points;
 
 								if (rim_valid[i] && rim_valid[next_i])
 								{

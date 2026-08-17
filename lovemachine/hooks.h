@@ -360,26 +360,17 @@ namespace hooks
 			events::on_draw();
 		}
 
-		IDirect3DStateBlock9* stateBlock = nullptr;
-		if (device && SUCCEEDED(device->CreateStateBlock(D3DSBT_ALL, &stateBlock)) && stateBlock)
+		if (Menu::show_menu || sets->menu.opened)
 		{
-			stateBlock->Capture();
-		}
+			ImGui_ImplDX9_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
 
-		ImGui_ImplDX9_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
+			Menu::Render();
 
-		Menu::Render();
-
-		ImGui::EndFrame();
-		ImGui::Render();
-		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-
-		if (stateBlock)
-		{
-			stateBlock->Apply();
-			stateBlock->Release();
+			ImGui::EndFrame();
+			ImGui::Render();
+			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 		}
 
 		return o_endscene(device);
@@ -626,10 +617,10 @@ namespace hooks
 		DWORD* p_ebp = nullptr;
 		__asm mov p_ebp, ebp;
 
-		if (p_ebp && !IsBadReadPtr(p_ebp, sizeof(DWORD)))
+		if (p_ebp)
 		{
 			DWORD ebp_val = *p_ebp;
-			if (ebp_val && !IsBadReadPtr((void*)(ebp_val - 0x1), sizeof(byte)))
+			if (ebp_val > 0x10000 && ebp_val < 0x7FFE0000)
 			{
 				p_sendpacket = (byte*)(ebp_val - 0x1);
 				global::sendpacket = *p_sendpacket;
@@ -637,15 +628,15 @@ namespace hooks
 		}
 
 		c_verified_usercmd* verified_usercmd = nullptr;
-		if (_input && !IsBadReadPtr((void*)((DWORD)_input + USERCMDOFFSET), sizeof(DWORD)))
+		if (_input)
 		{
 			DWORD usercmd_ptr = *(DWORD*)((DWORD)_input + USERCMDOFFSET);
-			if (usercmd_ptr && !IsBadReadPtr((void*)usercmd_ptr, sizeof(cusercmd) * MULTIPLAYER_BACKUP))
+			if (usercmd_ptr > 0x10000)
 			{
 				global::cmd = &((cusercmd*)usercmd_ptr)[sequence_number % MULTIPLAYER_BACKUP];
 			}
 			DWORD verified_ptr = *(DWORD*)((DWORD)_input + VERIFIEDCMDOFFSET);
-			if (verified_ptr && !IsBadReadPtr((void*)verified_ptr, sizeof(c_verified_usercmd) * MULTIPLAYER_BACKUP))
+			if (verified_ptr > 0x10000)
 			{
 				verified_usercmd = &((c_verified_usercmd*)verified_ptr)[sequence_number % MULTIPLAYER_BACKUP];
 			}
@@ -670,23 +661,6 @@ namespace hooks
 				}
 			}
 
-			// TODO: Ã¨Ã§Ã³Ã·Ã¨Ã²Ã¼ Ã¯Ã®Ã¤Ã°Ã®Ã¡Ã­Ã¥Ã¥
-			/*if (_clientstate)
-			{
-				if (_clientstate->m_NetChannel && global::map_changed)
-				{
-					myfile << "_clientstate : " << (dword)_clientstate << endl;
-					myfile << "netchannel : " << (dword)(_clientstate + 0x0010) << endl;
-					netchannel = new memory::vthook((dword**)(_clientstate + 0x0010));
-					myfile << "/hook/ netchannel : " << (dword)netchannel << endl;
-					if (netchannel)
-						o_send_datagram = (send_datagram_fn)netchannel->hook_function((dword)send_datagram_hook, 46);
-					//console::write_hex("/hook/ o_send_datagram", (dword)o_send_datagram, darkgreen);
-					myfile << "/hook/ o_send_datagram : " << (dword)o_send_datagram << endl;
-				}
-			}*/
-
-			misc::nightmode();
 			misc::remove();
 			_globals = interfaces::pl_info_manager->get_globalvars();
 			global::curtime = (float)global::local->get_tickbase() * _globals->interval_per_tick;

@@ -139,14 +139,18 @@ inline qangle calc_angle(const cvector& src, const cvector& dst)
 	return angles;
 }
 
-float get_fov(const qangle& viewAngle, const qangle& aimAngle)
+inline float get_fov(const qangle& viewAngle, const qangle& aimAngle)
 {
 	Vector ang, aim;
 
 	anglevectors(viewAngle, &aim);
 	anglevectors(aimAngle, &ang);
 
-	return rad2deg(acos(aim.Dot(ang) / aim.LengthSqr()));
+	float len_sqr = aim.LengthSqr();
+	if (len_sqr <= 0.00001f) return 180.0f;
+
+	float dot = std::clamp(aim.Dot(ang) / len_sqr, -1.0f, 1.0f);
+	return rad2deg(acosf(dot));
 }
 
 struct matrix3x4_t;
