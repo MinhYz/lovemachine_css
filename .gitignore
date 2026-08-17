@@ -1,105 +1,53 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
+# Build and Object Files
 *.o
 *.obj
-
-# Precompiled Headers
+*.slo
+*.lo
+*.d
 *.gch
 *.pch
 
-# Compiled Dynamic libraries
+# Compiled Libraries & Executables
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
 *.lib
-
-# Executables
+*.lai
+*.la
 *.exe
 *.out
 *.app
-
-*.vsidx
-*.lock
-*.suo
-*.db
 *.pdb
-*.recipe
-*.log
-*.tlog
-*.ipch
-*.db-shm
-*.db-wal
-*.opendb
-donttouch.txt
-lovemachine_test
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-*.vsidx
-*.lock
-*.db
-*.db-shm
-*.db-wal
-*.opendb
-*.ipch
-.vs/lovemachine v2/v17/.suo
-*.log
 *.iobj
 *.ipdb
+
+# Visual Studio & IDE Caches
+.vs/
+*.vsidx
+*.suo
+*.user
+*.lock
+*.db
+*.db-shm
+*.db-wal
+*.opendb
+*.ipch
+*.log
 *.tlog
 *.recipe
-lovemachine/Release/lovemachine.vcxproj.FileListAbsolute.txt
-Xenos_2.3.2_\[unknowncheats.me\]_/XenosCurrentProfile.xpr
+Release/
+Debug/
+x86/
+x64/
+output/
+lovemachine-release-x86.zip
 
-# OS & Build Artifacts
+# Runtime & OS Artifacts
 .DS_Store
+*.ini
+donttouch.txt
 lovemachine_test
 DXSDK_Jun10.exe
-skeetmenu_ref/
-neverlose-last/
-imguimenu_s/
-ImGuiMenu-s-main/
 releases_downloads/
 imgui_releases_extracted/

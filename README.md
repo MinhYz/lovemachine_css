@@ -61,12 +61,14 @@
 
 ```
 lovemachine_css/
-├── lovemachine/          # Core C++ cheat source files (Hooks, Visuals, Ragebot, Legitbot)
-├── scripts/              # External customizable assets
+├── .github/workflows/    # CI/CD automated build workflow
+├── lovemachine/          # Core C++ cheat source files (Hooks, Visuals, Ragebot, Legitbot, ImGui)
+├── scripts/              # Customizable resources (Configs, HD Fonts, Custom 3D Models)
 │   ├── configs/          # Config profiles (.ini)
+│   ├── fonts/            # TTF vector fonts (Museo, GothamPro, FontAwesome, AstriumTabs)
 │   └── models/           # Custom 3D character packages (Cissia ZZZ, etc.)
-├── assets/               # Built-in fonts and textures
-└── lovemachine_test      # Standalone UI preview executable (macOS / Linux / Windows)
+├── lovemachine.sln       # Visual Studio Solution
+└── README.md             # Project documentation
 ```
 
 ---
