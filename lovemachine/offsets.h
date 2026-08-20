@@ -41,6 +41,7 @@ namespace offsets
 	dword m4a1_silencer;
 	dword flash_duration;
 	dword flash_max_alpha;
+	dword is_scoped;
 
 	// TODO : ïåðåðàáîòàòü cout â console::write
 	const char* initialize_tables()
@@ -192,5 +193,6 @@ namespace offsets
 		m4a1_silencer = get_offset("DT_WeaponM4A1", "m_bSilencerOn");
 		flash_duration = get_offset("DT_CSPlayer", "m_flFlashDuration");
 		flash_max_alpha = get_offset("DT_CSPlayer", "m_flFlashMaxAlpha");
+		is_scoped = get_offset("DT_CSPlayer", "m_bIsScoped");
 	}
 }

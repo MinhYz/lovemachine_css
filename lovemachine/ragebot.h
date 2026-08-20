@@ -138,9 +138,7 @@ namespace rage
 			return false;
 
 		// Auto-Scope for Snipers (AWP, Scout, G3SG1, SG550)
-		int weapon_id = weapon->get_weaponid();
-		bool is_sniper = (weapon_id == WEAPON_AWP || weapon_id == WEAPON_SCOUT || weapon_id == WEAPON_G3SG1 || weapon_id == WEAPON_SG550);
-		if (is_sniper && !global::local->is_scoped())
+		if (weapon->get_type() == weap_snip && !global::local->is_scoped())
 		{
 			global::cmd->buttons |= IN_ATTACK2;
 		}

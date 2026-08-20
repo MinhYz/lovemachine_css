@@ -128,6 +128,12 @@ public:
 		return *(int*)((dword)this + offsets::account);
 	}
 
+	bool is_scoped()
+	{
+		if (!offsets::is_scoped) return false;
+		return *(bool*)((dword)this + offsets::is_scoped);
+	}
+
 	int get_shots()
 	{
 		return *(int*)((dword)this + offsets::shots_fired);
