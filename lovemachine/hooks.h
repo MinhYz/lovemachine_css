@@ -890,20 +890,10 @@ namespace hooks
 					{
 						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
 						int custom_idx = _model_info->get_model_index(m_path);
-						if (custom_idx <= 0 && game::signatures::GetModelForName)
-						{
-							game::signatures::GetModelForName(m_path, 1);
-							custom_idx = _model_info->get_model_index(m_path);
-						}
 						if (custom_idx <= 0)
 						{
 							std::string dl_path = "download/" + std::string(m_path);
 							custom_idx = _model_info->get_model_index(dl_path.c_str());
-							if (custom_idx <= 0 && game::signatures::GetModelForName)
-							{
-								game::signatures::GetModelForName(dl_path.c_str(), 1);
-								custom_idx = _model_info->get_model_index(dl_path.c_str());
-							}
 						}
 
 						if (custom_idx > 0)
@@ -937,20 +927,10 @@ namespace hooks
 					{
 						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
 						int custom_idx = _model_info->get_model_index(m_path);
-						if (custom_idx <= 0 && game::signatures::GetModelForName)
-						{
-							game::signatures::GetModelForName(m_path, 1);
-							custom_idx = _model_info->get_model_index(m_path);
-						}
 						if (custom_idx <= 0)
 						{
 							std::string dl_path = "download/" + std::string(m_path);
 							custom_idx = _model_info->get_model_index(dl_path.c_str());
-							if (custom_idx <= 0 && game::signatures::GetModelForName)
-							{
-								game::signatures::GetModelForName(dl_path.c_str(), 1);
-								custom_idx = _model_info->get_model_index(dl_path.c_str());
-							}
 						}
 
 						if (custom_idx > 0 && sets->visuals.custom_model_local_only)
