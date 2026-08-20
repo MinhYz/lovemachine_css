@@ -19,8 +19,20 @@ namespace ModelMgr
 		{ "GIGN (CT)", "models/player/ct_gign.mdl" },
 		{ "Hostage 01", "models/characters/hostage_01.mdl" },
 		{ "Akame (Akame ga Kill)", "models/player/legion/akame/akame_fix.mdl" },
-		{ "Akame Fix", "models/player/legion/akame/akame_fix.mdl" },
-		{ "Akame Custom", "models/player/custom/akame/akame.mdl" },
+		{ "Katarina", "models/player/knifelemon/katarina.mdl" },
+		{ "Serah (Final Fantasy)", "models/player/hhp227/tenten_loveff/serah.mdl" },
+		{ "Harley Quinn", "models/player/slow/arkham_asylum/harley_quinn/slow.mdl" },
+		{ "Ayumi (X-Blades)", "models/player/slow/ayumi/slow.mdl" },
+		{ "Saki Anime (CT)", "models/player/stenli/saki_ct.mdl" },
+		{ "Saki Anime (T)", "models/player/stenli/saki_t.mdl" },
+		{ "Jill Valentine (RE1)", "models/player/pil/re1/jill_re1/jill_sandwich_pil1.mdl" },
+		{ "Iron Man Mark 3", "models/player/techknow/ironman_v3/ironman3.mdl" },
+		{ "Captain America", "models/player/techknow/cpt_america/cpt_a.mdl" },
+		{ "Batman (MK vs DC)", "models/player/slow/jamis/mkvsdcu/batman/slow_pub_v2.mdl" },
+		{ "Venom (WoS)", "models/player/slow/jamis/venom_wos/slow_v2.mdl" },
+		{ "Nanosuit (Crysis)", "models/player/slow/nanosuit/slow_nanosuit.mdl" },
+		{ "Corvo (Dishonored)", "models/player/vad36dishonored/corvo.mdl" },
+		{ "Lolli Juliet", "models/player/vad36lollipop/lolli_new.mdl" },
 		{ "Cissia ZZZ (Zenless Zone Zero)", "models/sneaky_holy/neps/powered_by_nidegg/best_zombie_escape_server/thick_snake/cissia_zzz.mdl" }
 	};
 

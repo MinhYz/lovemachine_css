@@ -210,6 +210,103 @@ bool InjectDll(DWORD pid, const std::string& dllPath)
 	return true;
 }
 
+void CopyDirectoryRecursive(const std::string& sourceDir, const std::string& destDir)
+{
+	std::string searchPath = sourceDir + "\\*";
+	WIN32_FIND_DATAA fd;
+	HANDLE hFind = FindFirstFileA(searchPath.c_str(), &fd);
+	if (hFind == INVALID_HANDLE_VALUE) return;
+
+	CreateDirectoryA(destDir.c_str(), NULL);
+
+	do {
+		if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0) continue;
+
+		std::string srcFile = sourceDir + "\\" + fd.cFileName;
+		std::string dstFile = destDir + "\\" + fd.cFileName;
+
+		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
+			CopyDirectoryRecursive(srcFile, dstFile);
+		}
+		else
+		{
+			CopyFileA(srcFile.c_str(), dstFile.c_str(), FALSE);
+		}
+	} while (FindNextFileA(hFind, &fd));
+	FindClose(hFind);
+}
+
+std::string GetProcessDirectory(DWORD pid)
+{
+	char processPath[MAX_PATH] = { 0 };
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+	if (hProcess)
+	{
+		DWORD size = MAX_PATH;
+		QueryFullProcessImageNameA(hProcess, 0, processPath, &size);
+		CloseHandle(hProcess);
+	}
+	std::string path(processPath);
+	size_t pos = path.find_last_of("\\/");
+	if (pos != std::string::npos) path = path.substr(0, pos);
+	return path;
+}
+
+void AutoSyncCustomSkins(DWORD pid)
+{
+	std::string gameDir = GetProcessDirectory(pid);
+	if (gameDir.empty()) return;
+
+	std::string cstrikeDir = gameDir + "\\cstrike";
+	DWORD attr = GetFileAttributesA(cstrikeDir.c_str());
+	if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY)) return;
+
+	char injectorPath[MAX_PATH];
+	GetModuleFileNameA(NULL, injectorPath, MAX_PATH);
+	std::string injDir(injectorPath);
+	size_t pos = injDir.find_last_of("\\/");
+	if (pos != std::string::npos) injDir = injDir.substr(0, pos);
+
+	std::vector<std::string> skinFolders = {
+		injDir + "\\models",
+		injDir + "\\materials",
+		injDir + "\\skins",
+		injDir + "\\custom",
+		injDir + "\\scripts\\models"
+	};
+
+	bool copiedAny = false;
+	for (const auto& folder : skinFolders)
+	{
+		DWORD fattr = GetFileAttributesA(folder.c_str());
+		if (fattr != INVALID_FILE_ATTRIBUTES && (fattr & FILE_ATTRIBUTE_DIRECTORY))
+		{
+			if (folder.find("models") != std::string::npos)
+			{
+				CopyDirectoryRecursive(folder, cstrikeDir + "\\models");
+				copiedAny = true;
+			}
+			else if (folder.find("materials") != std::string::npos)
+			{
+				CopyDirectoryRecursive(folder, cstrikeDir + "\\materials");
+				copiedAny = true;
+			}
+			else
+			{
+				CopyDirectoryRecursive(folder, cstrikeDir);
+				copiedAny = true;
+			}
+		}
+	}
+
+	if (copiedAny)
+	{
+		Color::Set(Color::GREEN);
+		std::cout << "[+] Auto-Detected & Synced Custom 3D Skin Packs -> " << cstrikeDir << "\n\n";
+	}
+}
+
 int main()
 {
 	SetConsoleTitleA("LOVEMACHINE // CS:S Injector v3.5");
@@ -254,6 +351,9 @@ int main()
 	std::cout << "\n\n";
 	Color::Set(Color::GREEN);
 	std::cout << "[+] Found " << processName << " with Process ID: " << pid << "\n\n";
+
+	// Auto-Detect and Copy custom skins to cstrike
+	AutoSyncCustomSkins(pid);
 
 	// 3. Perform Injection
 	Color::Set(Color::LIGHT_RED);
