@@ -669,13 +669,14 @@ namespace esp
 		float max_len = sets->visuals.laser_sight_length > 100.0f ? sets->visuals.laser_sight_length : 1500.0f;
 		cvector end = eye + fwd * max_len;
 
-		if (_game && _game->engine_trace)
+		if (_engine_trace)
 		{
 			ray_t ray;
 			ray.Init(eye, end);
 			trace_t tr;
-			c_trace_filter filter(global::local);
-			_game->engine_trace->trace_ray(ray, MASK_SOLID, (itracefilter*)&filter, &tr);
+			itracefilter filter;
+			filter.skip = global::local;
+			_engine_trace->trace_ray(ray, MASK_SHOT_CSS, &filter, &tr);
 			end = tr.endpos;
 		}
 
