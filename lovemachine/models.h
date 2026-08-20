@@ -401,7 +401,7 @@ namespace models
 		}
 
 		// Thirdperson Local Visual Spinbot (Rotate 3D bones around origin)
-		if (is_local && p_custom_bone_to_world && (sets->rage.anti_aim || sets->rage.spinbot || sets->rage.pitch_aa != 0 || sets->rage.yaw_aa != 0))
+		if (is_local && p_custom_bone_to_world && !IsBadWritePtr(p_custom_bone_to_world, sizeof(matrix3x4_t) * 128) && (sets->rage.anti_aim || sets->rage.spinbot || sets->rage.pitch_aa != 0 || sets->rage.yaw_aa != 0))
 		{
 			if (!(global::cmd && (global::cmd->buttons & IN_ATTACK)))
 			{
