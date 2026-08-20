@@ -41,6 +41,7 @@ namespace legit
 				return sets->legit.trigger.hitbox[4];
 				break;
 			}
+			return false;
 		}
 
 		// ÿ íå çíàþ êàê ýòî íàçâàòü

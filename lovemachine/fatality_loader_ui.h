@@ -216,7 +216,8 @@ namespace FatalityLoaderUI
 					// Animated Injection Progress Bar
 					if (current_status == STATUS_MANUAL_MAPPING || current_status == STATUS_SUCCESSFULLY_INJECTED)
 					{
-						inject_progress = std::min(1.0f, inject_progress + io.DeltaTime * 0.8f);
+						float next_prog = inject_progress + io.DeltaTime * 0.8f;
+						inject_progress = (next_prog > 1.0f) ? 1.0f : next_prog;
 						if (inject_progress >= 1.0f && current_status == STATUS_MANUAL_MAPPING)
 						{
 							current_status = STATUS_SUCCESSFULLY_INJECTED;
