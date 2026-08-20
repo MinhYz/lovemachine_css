@@ -400,6 +400,37 @@ namespace models
 			chams::players::run(model_material[0], entity, state, p_info, p_custom_bone_to_world);
 		}
 
+		// Thirdperson Local Visual Spinbot (Rotate 3D bones around origin)
+		if (is_local && p_custom_bone_to_world && (sets->rage.anti_aim || sets->rage.spinbot || sets->rage.pitch_aa != 0 || sets->rage.yaw_aa != 0))
+		{
+			if (!(global::cmd && (global::cmd->buttons & IN_ATTACK)))
+			{
+				qangle cur_view;
+				_engine->get_viewangles(cur_view);
+				float delta_yaw = (global::last_sent_angles.y - cur_view.y) * ((float)M_PI / 180.0f);
+				float cos_y = cosf(delta_yaw);
+				float sin_y = sinf(delta_yaw);
+
+				Vector origin = global::local->get_origin();
+
+				for (int b = 0; b < 128; b++)
+				{
+					float ox = p_custom_bone_to_world[b][0][3] - origin.x;
+					float oy = p_custom_bone_to_world[b][1][3] - origin.y;
+					p_custom_bone_to_world[b][0][3] = origin.x + (ox * cos_y - oy * sin_y);
+					p_custom_bone_to_world[b][1][3] = origin.y + (ox * sin_y + oy * cos_y);
+
+					for (int c = 0; c < 3; c++)
+					{
+						float m0 = p_custom_bone_to_world[b][0][c];
+						float m1 = p_custom_bone_to_world[b][1][c];
+						p_custom_bone_to_world[b][0][c] = m0 * cos_y - m1 * sin_y;
+						p_custom_bone_to_world[b][1][c] = m0 * sin_y + m1 * cos_y;
+					}
+				}
+			}
+		}
+
 		// Custom Hand & Arm Color Chams
 		if (!is_player && sets->visuals.hand_chams > 0 && name && (strstr(name, "arms") || strstr(name, "hands") || strstr(name, "v_hands") || strstr(name, "v_sleeve") || (strstr(name, "models/weapons/v_") && !strstr(name, "w_"))))
 		{

@@ -90,7 +90,7 @@ namespace rage
 		currentAngles.y -= punchAngle.y * 2.0f;
 		currentAngles.z = 0.0f;
 
-		// 2. NO SPREAD (TRIỆT TIÊU ĐỘ LỆCH ĐẠN CSS)
+		// 2. NO SPREAD (TRIỆT TIÊU ĐỘ LỆCH ĐẠN KHI CHẠY / NHẢY TRÊN KHÔNG)
 		if (sets->rage.no_spread)
 		{
 			int seed = (pCmd->random_seed & 255) + 1;
@@ -98,7 +98,9 @@ namespace rage
 
 			float x = RandomFloat(-0.5f, 0.5f) + RandomFloat(-0.5f, 0.5f);
 			float y = RandomFloat(-0.5f, 0.5f) + RandomFloat(-0.5f, 0.5f);
-			float flSpread = pWeapon->get_spread();
+			
+			float flSpread = pWeapon->get_spread() + pWeapon->get_cone();
+			if (flSpread <= 0.0f) flSpread = 0.0001f;
 
 			Vector forward, right, up;
 			AngleVectors(currentAngles, &forward, &right, &up);
@@ -134,6 +136,14 @@ namespace rage
 		auto weapon = global::local->get_weapon();
 		if (!weapon || weapon->get_clip1() <= 0)
 			return false;
+
+		// Auto-Scope for Snipers (AWP, Scout, G3SG1, SG550)
+		int weapon_id = weapon->get_weaponid();
+		bool is_sniper = (weapon_id == WEAPON_AWP || weapon_id == WEAPON_SCOUT || weapon_id == WEAPON_G3SG1 || weapon_id == WEAPON_SG550);
+		if (is_sniper && !global::local->is_scoped())
+		{
+			global::cmd->buttons |= IN_ATTACK2;
+		}
 
 		bool is_attacking = (global::cmd->buttons & IN_ATTACK) != 0;
 		if (!is_attacking && !sets->rage.autoshoot)
@@ -174,46 +184,37 @@ namespace rage
 
 			std::vector<HitboxCandidate> candidates;
 
-			// Head multi-point (Center + Multi-angles)
+			// Head multi-point (100% Full Headshot Priority)
 			cvector head_center = enemy->get_hitbox(hitbox_head, matrix);
 			if (!head_center.IsZero())
 			{
-				candidates.push_back({ head_center, 5000.0f });
-				candidates.push_back({ head_center + cvector(0, 0, 3.2f), 5000.0f }); // Top of head
-				candidates.push_back({ head_center + cvector(2.0f, 0, 0), 4800.0f });
-				candidates.push_back({ head_center + cvector(-2.0f, 0, 0), 4800.0f });
-				candidates.push_back({ head_center + cvector(0, 2.0f, 0), 4800.0f });
-				candidates.push_back({ head_center + cvector(0, -2.0f, 0), 4800.0f });
+				candidates.push_back({ head_center, 100000.0f });
+				candidates.push_back({ head_center + cvector(0, 0, 3.2f), 99000.0f }); // Top of head
+				candidates.push_back({ head_center + cvector(0, 0, -1.8f), 98000.0f }); // Jaw
+				candidates.push_back({ head_center + cvector(1.8f, 0, 0), 96000.0f });
+				candidates.push_back({ head_center + cvector(-1.8f, 0, 0), 96000.0f });
+				candidates.push_back({ head_center + cvector(0, 1.8f, 0), 96000.0f });
+				candidates.push_back({ head_center + cvector(0, -1.8f, 0), 96000.0f });
 			}
 
-			// Neck & Body Hitboxes
 			cvector neck = enemy->get_hitbox(hitbox_neck, matrix);
-			if (!neck.IsZero()) candidates.push_back({ neck, 3000.0f });
+			if (!neck.IsZero()) candidates.push_back({ neck, 90000.0f });
 
-			cvector upper_chest = enemy->get_hitbox(hitbox_upper_chest, matrix);
-			if (!upper_chest.IsZero()) candidates.push_back({ upper_chest, 2000.0f });
+			// Body Hitboxes (Only if Head is occluded)
+			if (sets->rage.hitbox[1] || sets->rage.hitbox[2] || sets->rage.body_aim_mode > 0)
+			{
+				cvector upper_chest = enemy->get_hitbox(hitbox_upper_chest, matrix);
+				if (!upper_chest.IsZero()) candidates.push_back({ upper_chest, 2000.0f });
 
-			cvector chest = enemy->get_hitbox(hitbox_chest, matrix);
-			if (!chest.IsZero()) candidates.push_back({ chest, 1500.0f });
+				cvector chest = enemy->get_hitbox(hitbox_chest, matrix);
+				if (!chest.IsZero()) candidates.push_back({ chest, 1500.0f });
 
-			cvector stomach = enemy->get_hitbox(hitbox_stomach, matrix);
-			if (!stomach.IsZero()) candidates.push_back({ stomach, 1200.0f });
+				cvector stomach = enemy->get_hitbox(hitbox_stomach, matrix);
+				if (!stomach.IsZero()) candidates.push_back({ stomach, 1200.0f });
 
-			cvector pelvis = enemy->get_hitbox(hitbox_pelvis, matrix);
-			if (!pelvis.IsZero()) candidates.push_back({ pelvis, 1000.0f });
-
-			// Limbs
-			cvector l_arm = enemy->get_hitbox(hitbox_l_up_arm, matrix);
-			if (!l_arm.IsZero()) candidates.push_back({ l_arm, 500.0f });
-
-			cvector r_arm = enemy->get_hitbox(hitbox_r_up_arm, matrix);
-			if (!r_arm.IsZero()) candidates.push_back({ r_arm, 500.0f });
-
-			cvector l_leg = enemy->get_hitbox(hitbox_l_up_leg, matrix);
-			if (!l_leg.IsZero()) candidates.push_back({ l_leg, 300.0f });
-
-			cvector r_leg = enemy->get_hitbox(hitbox_r_up_leg, matrix);
-			if (!r_leg.IsZero()) candidates.push_back({ r_leg, 300.0f });
+				cvector pelvis = enemy->get_hitbox(hitbox_pelvis, matrix);
+				if (!pelvis.IsZero()) candidates.push_back({ pelvis, 1000.0f });
+			}
 
 			cvector found_target_pos(0, 0, 0);
 			float found_score = -999999.0f;
