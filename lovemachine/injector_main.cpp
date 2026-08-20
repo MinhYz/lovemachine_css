@@ -6,7 +6,6 @@
 #include <tlhelp32.h>
 #include <shlobj.h>
 #include <d3d9.h>
-#include <d3dx9.h>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -19,7 +18,6 @@
 #include "fatality_loader_ui.h"
 
 #pragma comment(lib, "d3d9.lib")
-#pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "shell32.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

@@ -108,6 +108,11 @@ public:
 		return *(int*)((dword)this + offsets::tickbase);
 	}
 
+	int get_movetype()
+	{
+		return *(int*)((dword)this + offsets::move_type);
+	}
+
 	int get_money()
 	{
 		return *(int*)((dword)this + offsets::account);
