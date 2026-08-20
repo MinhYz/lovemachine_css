@@ -133,6 +133,9 @@ public:
 	virtual centity* get_centity_from_handle(DWORD hHandle) = 0;
 	virtual int number_of_ents(bool bIncludeNonNetworkable) = 0;
 	virtual int get_highest_entity_index() = 0;
+
+	centity* get_entity(int iIndex) { return get_centity(iIndex); }
+	centity* get_entity_from_handle(DWORD hHandle) { return get_centity_from_handle(hHandle); }
 };
 
 typedef struct

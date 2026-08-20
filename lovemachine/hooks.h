@@ -868,10 +868,7 @@ namespace hooks
 			}
 			else if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
 			{
-				if (sets->legit.enabled && sets->legit.backtrack.enabled)
-				{
-					legit::backtrack::run(true);
-				}
+				// Backtrack record updates are handled in CreateMove
 			}
 		}
 

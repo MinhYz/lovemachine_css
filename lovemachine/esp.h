@@ -246,6 +246,29 @@ namespace esp
 		}
 	}
 
+	void draw_3d_ring(cvector pos, float radius, color col)
+	{
+		const int points = 16;
+		cvector scr_pts[16];
+		bool valid[16];
+
+		for (int i = 0; i < points; i++)
+		{
+			float a = (float)i * (2.0f * (float)M_PI / (float)points);
+			cvector pt = pos + cvector(cosf(a) * radius, sinf(a) * radius, 0.0f);
+			valid[i] = w2s(pt, scr_pts[i]);
+		}
+
+		for (int i = 0; i < points; i++)
+		{
+			int next = (i + 1) % points;
+			if (valid[i] && valid[next])
+			{
+				surf::prim::line((int)scr_pts[i].x, (int)scr_pts[i].y, (int)scr_pts[next].x, (int)scr_pts[next].y, col);
+			}
+		}
+	}
+
 	void draw_3d_halo(cvector head_pos, color col, float radius)
 	{
 		float bob = sinf(global::realtime * 3.5f) * 1.5f;
@@ -635,7 +658,7 @@ namespace esp
 
 	void draw_laser_sight()
 	{
-		if (!sets->visuals.laser_sight || !global::local || !global::local->valid() || !_engine || !_trace) return;
+		if (!sets->visuals.laser_sight || !global::local || !global::local->valid() || !_engine) return;
 
 		qangle va;
 		_engine->get_viewangles(va);
@@ -643,15 +666,21 @@ namespace esp
 		angle_vectors(va, &fwd);
 
 		cvector eye = global::local->get_eye_pos();
-		cvector end = eye + fwd * (sets->visuals.laser_sight_length > 100.0f ? sets->visuals.laser_sight_length : 1500.0f);
+		float max_len = sets->visuals.laser_sight_length > 100.0f ? sets->visuals.laser_sight_length : 1500.0f;
+		cvector end = eye + fwd * max_len;
 
-		ctrace tr;
-		cray ray;
-		ray.init(eye, end);
-		_trace->trace_ray(ray, MASK_SHOT, nullptr, &tr);
+		if (_game && _game->engine_trace)
+		{
+			ray_t ray;
+			ray.Init(eye, end);
+			trace_t tr;
+			c_trace_filter filter(global::local);
+			_game->engine_trace->trace_ray(ray, MASK_SOLID, (itracefilter*)&filter, &tr);
+			end = tr.endpos;
+		}
 
 		cvector s_start, s_end;
-		if (w2s(eye + cvector(0.0f, 0.0f, -4.0f), s_start) && w2s(tr.endpos, s_end))
+		if (w2s(eye + cvector(0.0f, 0.0f, -4.0f), s_start) && w2s(end, s_end))
 		{
 			surf::prim::line((int)s_start.x, (int)s_start.y, (int)s_end.x, (int)s_end.y, sets->visuals.laser_sight_color);
 			surf::prim::line((int)s_start.x, (int)s_start.y + 1, (int)s_end.x, (int)s_end.y + 1, sets->visuals.laser_sight_color.with_alpha(120));

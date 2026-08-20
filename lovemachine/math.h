@@ -96,6 +96,11 @@ void anglevectors(const qangle& angles, cvector* forward)
 	forward->z = -sp;
 }
 
+inline void angle_vectors(const qangle& angles, cvector* forward)
+{
+	anglevectors(angles, forward);
+}
+
 inline void AngleVectors(const Vector& angles, Vector* forward, Vector* right = nullptr, Vector* up = nullptr)
 {
 	float sp, sy, sr, cp, cy, cr;
