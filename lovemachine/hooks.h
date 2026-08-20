@@ -942,36 +942,8 @@ namespace hooks
 				p_setup->origin.z = global::local->get_origin().z + 64.0f;
 			}
 
-			static bool prev_tp_state = false;
-			if (sets->visuals.thirdperson != prev_tp_state)
-			{
-				bypass_cheats_thirdperson();
-				if (sets->visuals.thirdperson)
-				{
-					_engine->clientcmd_unrestricted("thirdperson");
-					if (_input)
-					{
-						*(bool*)((DWORD)_input + 0xAD) = true;
-					}
-				}
-				else
-				{
-					_engine->clientcmd_unrestricted("firstperson");
-					if (_input)
-					{
-						*(bool*)((DWORD)_input + 0xAD) = false;
-					}
-				}
-				prev_tp_state = sets->visuals.thirdperson;
-			}
-
 			if (sets->visuals.thirdperson)
 			{
-				if (_input)
-				{
-					*(bool*)((DWORD)_input + 0xAD) = true;
-				}
-
 				qangle cam_angles = p_setup->angles;
 				if (sets->visuals.thirdperson_reverse)
 				{
@@ -989,8 +961,9 @@ namespace hooks
 				{
 					trace_t tr;
 					ray_t ray;
-					ray.Init(eye_pos, target_pos, Vector(-4, -4, -4), Vector(4, 4, 4));
-					CSimpleTraceFilter filter((void*)global::local);
+					ray.Init(eye_pos, target_pos, Vector(-6, -6, -6), Vector(6, 6, 6));
+					itracefilter filter;
+					filter.skip = global::local;
 					_engine_trace->trace_ray(ray, MASK_SOLID, &filter, &tr);
 
 					if (tr.fraction < 1.0f)

@@ -398,7 +398,6 @@ namespace models
 		// Custom 3D Player Model Override
 		if (is_player && sets->visuals.enable_custom_model && !ModelMgr::model_entries.empty())
 		{
-			ModelMgr::RefreshDynamicModels();
 			if (!sets->visuals.custom_model_local_only || is_local)
 			{
 				int sel = sets->visuals.model_selection;

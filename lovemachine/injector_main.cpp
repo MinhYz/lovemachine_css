@@ -1,23 +1,100 @@
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <windows.h>
 #include <tlhelp32.h>
 #include <shlobj.h>
-#include <iostream>
+#include <d3d9.h>
+#include <d3dx9.h>
 #include <string>
-#include <iomanip>
+#include <vector>
+#include <iostream>
+#include <thread>
+#include <chrono>
 
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx9.h"
+#include "fatality_loader_ui.h"
+
+#pragma comment(lib, "d3d9.lib")
+#pragma comment(lib, "d3dx9.lib")
 #pragma comment(lib, "shell32.lib")
 
-BOOL IsUserAdmin()
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+static LPDIRECT3D9              g_pD3D = NULL;
+static LPDIRECT3DDEVICE9        g_pd3dDevice = NULL;
+static D3DPRESENT_PARAMETERS    g_d3dpp = {};
+
+bool CreateDeviceD3D(HWND hWnd)
 {
-	BOOL isAdmin = FALSE;
-	PSID adminGroup = NULL;
-	SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
-	if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup))
+	if ((g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL)
+		return false;
+
+	ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
+	g_d3dpp.Windowed = TRUE;
+	g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+	g_d3dpp.EnableAutoDepthStencil = TRUE;
+	g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+	g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
+
+	if (g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &g_d3dpp, &g_pd3dDevice) < 0)
+		return false;
+
+	return true;
+}
+
+void CleanupDeviceD3D()
+{
+	if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
+	if (g_pD3D) { g_pD3D->Release(); g_pD3D = NULL; }
+}
+
+void ResetDevice()
+{
+	ImGui_ImplDX9_InvalidateDeviceObjects();
+	HRESULT hr = g_pd3dDevice->Reset(&g_d3dpp);
+	if (hr == D3DERR_INVALIDCALL)
+		IM_ASSERT(0);
+	ImGui_ImplDX9_CreateDeviceObjects();
+}
+
+LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+		return true;
+
+	switch (msg)
 	{
-		CheckTokenMembership(NULL, adminGroup, &isAdmin);
-		FreeSid(adminGroup);
+	case WM_SIZE:
+		if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED)
+		{
+			g_d3dpp.BackBufferWidth = LOWORD(lParam);
+			g_d3dpp.BackBufferHeight = HIWORD(lParam);
+			ResetDevice();
+		}
+		return 0;
+	case WM_SYSCOMMAND:
+		if ((wParam & 0xfff0) == SC_KEYMENU)
+			return 0;
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	case WM_NCHITTEST:
+	{
+		// Allow dragging window from top bar
+		POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+		ScreenToClient(hWnd, &pt);
+		if (pt.y < 42 && pt.x < 680 - 40)
+			return HTCAPTION;
+		break;
 	}
-	return isAdmin;
+	}
+	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 DWORD GetProcessIdByName(const char* processName)
@@ -55,175 +132,155 @@ std::string GetFullDllPath(const char* dllFilename)
 		path = path.substr(0, pos + 1);
 	}
 	std::string fullPath = path + dllFilename;
-	
 	DWORD attr = GetFileAttributesA(fullPath.c_str());
 	if (attr != INVALID_FILE_ATTRIBUTES && !(attr & FILE_ATTRIBUTE_DIRECTORY))
 	{
 		return fullPath;
 	}
-
 	fullPath = path + "..\\output\\" + dllFilename;
 	return fullPath;
 }
 
-BOOL IsProcess32Bit(HANDLE hProcess)
+bool InjectDll(DWORD pid, const std::string& dllPath)
 {
-	BOOL isWow64 = FALSE;
-	typedef BOOL(WINAPI* LPFN_ISWOW64PROCESS)(HANDLE, PBOOL);
-	LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
-	if (fnIsWow64Process)
+	if (pid == 0 || dllPath.empty()) return false;
+
+	HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, FALSE, pid);
+	if (!hProcess) return false;
+
+	void* pAlloc = VirtualAllocEx(hProcess, NULL, dllPath.length() + 1, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	if (!pAlloc)
 	{
-		if (fnIsWow64Process(hProcess, &isWow64))
-		{
-			return isWow64; // On 64-bit Windows, a 32-bit process returns TRUE for IsWow64
-		}
-	}
-	return TRUE; // Default assume 32-bit on 32-bit OS
-}
-
-int main()
-{
-	SetConsoleTitleA("[INJECTOR] LOVEMACHINE CS:S Diagnostic Loader");
-	std::cout << "=============================================================\n";
-	std::cout << "  LOVEMACHINE CS:S DEEP DIAGNOSTIC LOADER & INJECTOR (x86)   \n";
-	std::cout << "=============================================================\n\n";
-
-	// 1. Environment & Privilege Verification
-	if (!IsUserAdmin())
-	{
-		std::cout << "[!] WARNING: Injector is NOT running as Administrator!\n";
-		std::cout << "[!] Target process memory operations may fail.\n";
-		std::cout << "[!] Please right-click injector and select 'Run as Administrator'.\n\n";
-	}
-	else
-	{
-		std::cout << "[+] Privilege Check: Running with Elevated Administrator Privileges.\n\n";
-	}
-
-	const char* processName = "hl2.exe";
-	const char* dllName = "lovemachine.dll";
-
-	// 2. Process Snapshot & Detection
-	std::cout << "[1/5] Tracing CreateToolhelp32Snapshot for " << processName << "...\n";
-	DWORD processId = GetProcessIdByName(processName);
-
-	while (processId == 0)
-	{
-		std::cout << "[!] Target process " << processName << " not found yet.\n";
-		std::cout << "[!] Please launch Counter-Strike: Source (hl2.exe).\n";
-		std::cout << "[!] Press [ENTER] after launching game to re-scan...\n> ";
-		std::cin.get();
-		processId = GetProcessIdByName(processName);
-		
-		if (processId == 0)
-		{
-			HWND hWnd = FindWindowA("Valve001", NULL);
-			if (hWnd)
-			{
-				GetWindowThreadProcessId(hWnd, &processId);
-			}
-		}
-	}
-
-	std::cout << "[+] STEP 1 SUCCESS: Found " << processName << " (Process ID: " << processId << " / 0x" << std::hex << processId << std::dec << ")\n";
-
-	std::string dllPath = GetFullDllPath(dllName);
-	std::cout << "[+] Target DLL Resolved Path: " << dllPath << "\n";
-
-	DWORD dllAttr = GetFileAttributesA(dllPath.c_str());
-	if (dllAttr == INVALID_FILE_ATTRIBUTES)
-	{
-		std::cout << "[-] ERROR: DLL file not found at " << dllPath << " (Error Code: " << GetLastError() << ")\n";
-		std::cout << "\nPress [ENTER] to exit...";
-		std::cin.get();
-		return 1;
-	}
-
-	// 3. Open Process Handle
-	std::cout << "\n[2/5] Tracing OpenProcess(PROCESS_ALL_ACCESS, PID=" << processId << ")...\n";
-	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
-	if (!hProcess)
-	{
-		DWORD err = GetLastError();
-		std::cout << "[-] STEP 2 FAILED: OpenProcess failed with Error Code: " << err << " (0x" << std::hex << err << std::dec << ")\n";
-		std::cout << "[-] Ensure game is running and injector has Administrator rights.\n";
-		std::cout << "\nPress [ENTER] to exit...";
-		std::cin.get();
-		return 1;
-	}
-	std::cout << "[+] STEP 2 SUCCESS: OpenProcess handle acquired: 0x" << std::hex << hProcess << std::dec << "\n";
-
-	// Verify Architecture Match (x86 32-bit)
-	if (!IsProcess32Bit(hProcess))
-	{
-		std::cout << "[!] WARNING: Target process architecture check warning. Confirming 32-bit compatibility.\n";
-	}
-	else
-	{
-		std::cout << "[+] Architecture Match: Target process hl2.exe is Win32 x86 compatible.\n";
-	}
-
-	// 4. Virtual Memory Allocation
-	size_t pathLen = dllPath.length() + 1;
-	std::cout << "\n[3/5] Tracing VirtualAllocEx(Size=" << pathLen << " bytes)...\n";
-	LPVOID pRemoteBuf = VirtualAllocEx(hProcess, NULL, pathLen, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	if (!pRemoteBuf)
-	{
-		DWORD err = GetLastError();
-		std::cout << "[-] STEP 3 FAILED: VirtualAllocEx failed with Error Code: " << err << " (0x" << std::hex << err << std::dec << ")\n";
 		CloseHandle(hProcess);
-		std::cout << "\nPress [ENTER] to exit...";
-		std::cin.get();
-		return 1;
+		return false;
 	}
-	std::cout << "[+] STEP 3 SUCCESS: Remote memory allocated at address: 0x" << std::hex << (DWORD_PTR)pRemoteBuf << std::dec << "\n";
 
-	// 5. Write Process Memory
-	std::cout << "\n[4/5] Tracing WriteProcessMemory...\n";
-	SIZE_T bytesWritten = 0;
-	if (!WriteProcessMemory(hProcess, pRemoteBuf, dllPath.c_str(), pathLen, &bytesWritten) || bytesWritten != pathLen)
+	if (!WriteProcessMemory(hProcess, pAlloc, dllPath.c_str(), dllPath.length() + 1, NULL))
 	{
-		DWORD err = GetLastError();
-		std::cout << "[-] STEP 4 FAILED: WriteProcessMemory failed with Error Code: " << err << " (0x" << std::hex << err << std::dec << ")\n";
-		VirtualFreeEx(hProcess, pRemoteBuf, 0, MEM_RELEASE);
+		VirtualFreeEx(hProcess, pAlloc, 0, MEM_RELEASE);
 		CloseHandle(hProcess);
-		std::cout << "\nPress [ENTER] to exit...";
-		std::cin.get();
-		return 1;
+		return false;
 	}
-	std::cout << "[+] STEP 4 SUCCESS: Wrote " << bytesWritten << " bytes of DLL path into target memory.\n";
 
-	// 6. Create Remote Thread
-	std::cout << "\n[5/5] Tracing CreateRemoteThread(LoadLibraryA)...\n";
-	LPVOID pLoadLibrary = (LPVOID)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
-	DWORD remoteThreadId = 0;
-	HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)pLoadLibrary, pRemoteBuf, 0, &remoteThreadId);
+	void* pLoadLibrary = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
+	if (!pLoadLibrary)
+	{
+		VirtualFreeEx(hProcess, pAlloc, 0, MEM_RELEASE);
+		CloseHandle(hProcess);
+		return false;
+	}
+
+	HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)pLoadLibrary, pAlloc, 0, NULL);
 	if (!hThread)
 	{
-		DWORD err = GetLastError();
-		std::cout << "[-] STEP 5 FAILED: CreateRemoteThread failed with Error Code: " << err << " (0x" << std::hex << err << std::dec << ")\n";
-		VirtualFreeEx(hProcess, pRemoteBuf, 0, MEM_RELEASE);
+		VirtualFreeEx(hProcess, pAlloc, 0, MEM_RELEASE);
 		CloseHandle(hProcess);
-		std::cout << "\nPress [ENTER] to exit...";
-		std::cin.get();
+		return false;
+	}
+
+	WaitForSingleObject(hThread, 5000);
+	CloseHandle(hThread);
+	VirtualFreeEx(hProcess, pAlloc, 0, MEM_RELEASE);
+	CloseHandle(hProcess);
+	return true;
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+{
+	// Create Application Window
+	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, "LoveMachineLoader", NULL };
+	RegisterClassEx(&wc);
+	HWND hwnd = CreateWindowA(wc.lpszClassName, "LOVEMACHINE CS:S Loader", WS_POPUP, (GetSystemMetrics(SM_CXSCREEN) - 680) / 2, (GetSystemMetrics(SM_CYSCREEN) - 480) / 2, 680, 480, NULL, NULL, wc.hInstance, NULL);
+
+	if (!CreateDeviceD3D(hwnd))
+	{
+		CleanupDeviceD3D();
+		UnregisterClass(wc.lpszClassName, wc.hInstance);
 		return 1;
 	}
-	std::cout << "[+] STEP 5 SUCCESS: Remote thread created! Thread ID: " << remoteThreadId << " (0x" << std::hex << remoteThreadId << std::dec << ")\n";
 
-	std::cout << "[+] Waiting for LoadLibraryA thread completion...\n";
-	WaitForSingleObject(hThread, INFINITE);
-	CloseHandle(hThread);
+	ShowWindow(hwnd, SW_SHOWDEFAULT);
+	UpdateWindow(hwnd);
 
-	VirtualFreeEx(hProcess, pRemoteBuf, 0, MEM_RELEASE);
-	CloseHandle(hProcess);
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.IniFilename = NULL;
 
-	std::cout << "\n=============================================================\n";
-	std::cout << "[+] INJECTION COMPLETE: lovemachine.dll loaded into hl2.exe!\n";
-	std::cout << "[+] Diagnostic Console window will pop up inside game process.\n";
-	std::cout << "[+] Press [INSERT] in-game to toggle the ImGui Menu.\n";
-	std::cout << "=============================================================\n\n";
+	ImGui_ImplWin32_Init(hwnd);
+	ImGui_ImplDX9_Init(g_pd3dDevice);
 
-	std::cout << "Press [ENTER] to close loader console...";
-	std::cin.get();
+	bool running = true;
+	float last_scan = 0.0f;
+
+	while (running)
+	{
+		MSG msg;
+		while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			if (msg.message == WM_QUIT)
+				running = false;
+		}
+		if (!running || !FatalityLoaderUI::show_loader)
+			break;
+
+		// Real-time Process Scanning
+		float current_time = (float)GetTickCount() / 1000.0f;
+		if (current_time - last_scan > 1.0f)
+		{
+			last_scan = current_time;
+			DWORD pid = GetProcessIdByName("hl2.exe");
+			FatalityLoaderUI::process_found = (pid != 0);
+			FatalityLoaderUI::target_pid = pid;
+
+			if (FatalityLoaderUI::current_status == FatalityLoaderUI::STATUS_MANUAL_MAPPING && pid != 0)
+			{
+				std::string dllPath = GetFullDllPath("lovemachine.dll");
+				if (InjectDll(pid, dllPath))
+				{
+					FatalityLoaderUI::current_status = FatalityLoaderUI::STATUS_SUCCESSFULLY_INJECTED;
+					FatalityLoaderUI::AddLog("[SUCCESS] Injected lovemachine.dll into hl2.exe (PID: " + std::to_string(pid) + ")", IM_COL32(46, 204, 113, 255));
+				}
+				else
+				{
+					FatalityLoaderUI::AddLog("[ERROR] Failed to inject DLL into target process.", IM_COL32(255, 60, 60, 255));
+				}
+			}
+		}
+
+		ImGui_ImplDX9_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
+
+		FatalityLoaderUI::RenderLoader(&running);
+
+		ImGui::EndFrame();
+		g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+		g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+		g_pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+		g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_RGBA(14, 14, 18, 255), 1.0f, 0);
+
+		if (g_pd3dDevice->BeginScene() >= 0)
+		{
+			ImGui::Render();
+			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
+			g_pd3dDevice->EndScene();
+		}
+
+		HRESULT result = g_pd3dDevice->Present(NULL, NULL, NULL, NULL);
+		if (result == D3DERR_DEVICELOST && g_pd3dDevice->TestCooperativeLevel() == D3DERR_DEVICENOTRESET)
+			ResetDevice();
+	}
+
+	ImGui_ImplDX9_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
+	CleanupDeviceD3D();
+	DestroyWindow(hwnd);
+	UnregisterClass(wc.lpszClassName, wc.hInstance);
+
 	return 0;
 }

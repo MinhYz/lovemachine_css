@@ -298,41 +298,69 @@ namespace esp
 
 	void draw_3d_devil_horns(cvector head_pos, color col, float size)
 	{
-		// 3D Curved Segmented Devil Horns with 4 cross-sections
+		const int num_rings = 7;
+		const int pts_per_ring = 6;
+		float sc = size * 0.05f + 0.5f;
+
 		for (int side = -1; side <= 1; side += 2)
 		{
 			float s = (float)side;
-			cvector p0 = head_pos + cvector(s * 4.0f, -1.0f, 5.5f);
-			cvector p1 = head_pos + cvector(s * (5.5f + size * 0.2f), -0.5f, 7.5f + size * 0.3f);
-			cvector p2 = head_pos + cvector(s * (7.5f + size * 0.5f), 1.0f, 10.0f + size * 0.7f);
-			cvector p3 = head_pos + cvector(s * (9.0f + size * 0.8f), 2.5f, 13.0f + size);
+			cvector rings[num_rings][pts_per_ring];
+			cvector s_rings[num_rings][pts_per_ring];
+			bool v_rings[num_rings][pts_per_ring];
 
-			cvector s0, s1, s2, s3;
-			if (w2s(p0, s0) && w2s(p1, s1) && w2s(p2, s2) && w2s(p3, s3))
+			for (int r = 0; r < num_rings; r++)
 			{
-				// Horn Spine Line
-				surf::prim::line((int)s0.x, (int)s0.y, (int)s1.x, (int)s1.y, col);
-				surf::prim::line((int)s1.x, (int)s1.y, (int)s2.x, (int)s2.y, col);
-				surf::prim::line((int)s2.x, (int)s2.y, (int)s3.x, (int)s3.y, col);
+				float frac = (float)r / (float)(num_rings - 1);
+				float ring_radius = (3.2f * (1.0f - frac * 0.85f)) * sc;
 
-				// Outer Tapered Ring Cross-ribs
-				cvector p0_w = p0 + cvector(s * 1.5f, 1.2f, 0.0f);
-				cvector p1_w = p1 + cvector(s * 1.2f, 1.0f, 0.0f);
-				cvector p2_w = p2 + cvector(s * 0.8f, 0.6f, 0.0f);
-				cvector s0_w, s1_w, s2_w;
-				if (w2s(p0_w, s0_w) && w2s(p1_w, s1_w) && w2s(p2_w, s2_w))
+				float cx = s * (5.5f + sinf(frac * 1.8f) * 6.5f) * sc;
+				float cy = (2.0f - frac * 12.0f - sinf(frac * (float)M_PI) * 2.0f) * sc;
+				float cz = (2.0f + frac * 14.0f + powf(frac, 2.0f) * 4.0f) * sc;
+
+				for (int p = 0; p < pts_per_ring; p++)
 				{
-					surf::prim::line((int)s0_w.x, (int)s0_w.y, (int)s1_w.x, (int)s1_w.y, col.with_alpha(180));
-					surf::prim::line((int)s1_w.x, (int)s1_w.y, (int)s2_w.x, (int)s2_w.y, col.with_alpha(180));
-					surf::prim::line((int)s2_w.x, (int)s2_w.y, (int)s3.x, (int)s3.y, col.with_alpha(220));
+					float angle = (float)p * (2.0f * (float)M_PI / (float)pts_per_ring);
+					float px = cx + cosf(angle) * ring_radius;
+					float py = cy + sinf(angle) * (ring_radius * 0.85f);
+					float pz = cz + sinf(angle * 2.0f) * 0.4f * sc;
 
-					surf::prim::line((int)s0.x, (int)s0.y, (int)s0_w.x, (int)s0_w.y, col.with_alpha(140));
-					surf::prim::line((int)s1.x, (int)s1.y, (int)s1_w.x, (int)s1_w.y, col.with_alpha(140));
-					surf::prim::line((int)s2.x, (int)s2.y, (int)s2_w.x, (int)s2_w.y, col.with_alpha(140));
+					rings[r][p] = head_pos + cvector(px, py, pz + 4.0f);
+					v_rings[r][p] = w2s(rings[r][p], s_rings[r][p]);
 				}
+			}
 
-				// Glowing Horn Tip Sparkle
-				surf::prim::filled_box((int)s3.x - 2, (int)s3.y - 2, (int)s3.x + 3, (int)s3.y + 3, color(255, 255, 255, col.a));
+			cvector tip = head_pos + cvector(s * 12.2f * sc, -10.5f * sc, (21.0f * sc) + 4.0f);
+			cvector s_tip;
+			bool v_tip = w2s(tip, s_tip);
+
+			for (int r = 0; r < num_rings; r++)
+			{
+				float frac = (float)r / (float)(num_rings - 1);
+				int cr = min(255, (int)(30.0f + frac * (float)col.r));
+				int cg = min(255, (int)(15.0f + frac * (float)col.g));
+				int cb = min(255, (int)(20.0f + frac * (float)col.b));
+				color ring_col(cr, cg, cb, col.a);
+
+				for (int p = 0; p < pts_per_ring; p++)
+				{
+					int next_p = (p + 1) % pts_per_ring;
+					if (v_rings[r][p] && v_rings[r][next_p])
+						surf::prim::line((int)s_rings[r][p].x, (int)s_rings[r][p].y, (int)s_rings[r][next_p].x, (int)s_rings[r][next_p].y, ring_col);
+
+					if (r < num_rings - 1 && v_rings[r][p] && v_rings[r + 1][p])
+						surf::prim::line((int)s_rings[r][p].x, (int)s_rings[r][p].y, (int)s_rings[r + 1][p].x, (int)s_rings[r + 1][p].y, ring_col);
+				}
+			}
+
+			if (v_tip)
+			{
+				for (int p = 0; p < pts_per_ring; p++)
+				{
+					if (v_rings[num_rings - 1][p])
+						surf::prim::line((int)s_rings[num_rings - 1][p].x, (int)s_rings[num_rings - 1][p].y, (int)s_tip.x, (int)s_tip.y, col);
+				}
+				surf::prim::filled_box((int)s_tip.x - 2, (int)s_tip.y - 2, (int)s_tip.x + 3, (int)s_tip.y + 3, color(255, 255, 255, col.a));
 			}
 		}
 	}
@@ -414,49 +442,62 @@ namespace esp
 		}
 	}
 
-	void draw_3d_energy_wings(cvector origin, color col, float size)
+	void draw_3d_energy_wings(cvector origin, qangle angles, color col, float size)
 	{
 		cvector spine = origin + cvector(0.0f, 0.0f, 42.0f);
-		cvector spine_screen;
-		if (!w2s(spine, spine_screen)) return;
-
 		float s_w = (size / 30.0f) * 0.95f;
 		float t = global::realtime * 3.2f;
 		float flap = sinf(t);
+
+		Vector forward, right, up;
+		AngleVectors(angles, &forward, &right, &up);
 
 		for (int side = -1; side <= 1; side += 2)
 		{
 			float s = (float)side;
 
-			float flap_y1 = flap * 5.0f * s_w;
-			float flap_y2 = flap * 12.0f * s_w;
-			float flap_x = cosf(t) * 6.0f * s_w;
+			float flap_z1 = flap * 5.0f * s_w;
+			float flap_z2 = flap * 12.0f * s_w;
+			float flap_span = cosf(t) * 6.0f * s_w;
 
-			// Exact Points Layout
-			cvector rootL   = { spine_screen.x, spine_screen.y - (10.0f * s_w), 0.0f };
-			cvector joint1L = { spine_screen.x + s * (35.0f * s_w), spine_screen.y - (35.0f * s_w) + flap_y1, 0.0f };
-			cvector joint2L = { spine_screen.x + s * (85.0f * s_w + flap_x), spine_screen.y - (20.0f * s_w) + flap_y2, 0.0f };
+			// 3D Joint Offsets relative to spine bone in local player coordinates
+			cvector rootL_local(0.0f, -4.0f, -5.0f * s_w);
+			cvector joint1L_local(s * (18.0f * s_w), -8.0f, (16.0f * s_w) + flap_z1);
+			cvector joint2L_local(s * (42.0f * s_w + flap_span), -14.0f, (12.0f * s_w) + flap_z2);
 
-			cvector tip1L   = { spine_screen.x + s * (120.0f * s_w + flap_x * 1.2f), spine_screen.y - (55.0f * s_w) + flap_y2 * 1.3f, 0.0f };
-			cvector tip2L   = { spine_screen.x + s * (110.0f * s_w + flap_x * 1.1f), spine_screen.y - (20.0f * s_w) + flap_y2 * 1.1f, 0.0f };
-			cvector tip3L   = { spine_screen.x + s * (85.0f * s_w + flap_x * 0.9f),  spine_screen.y + (25.0f * s_w) + flap_y2 * 0.8f, 0.0f };
+			cvector tip1L_local(s * (65.0f * s_w + flap_span * 1.2f), -20.0f, (30.0f * s_w) + flap_z2 * 1.3f);
+			cvector tip2L_local(s * (58.0f * s_w + flap_span * 1.1f), -18.0f, (10.0f * s_w) + flap_z2 * 1.1f);
+			cvector tip3L_local(s * (45.0f * s_w + flap_span * 0.9f), -14.0f, (-12.0f * s_w) + flap_z2 * 0.8f);
 
-			// Khung xương chính
-			surf::prim::line((int)rootL.x, (int)rootL.y, (int)joint1L.x, (int)joint1L.y, col);
-			surf::prim::line((int)joint1L.x, (int)joint1L.y, (int)tip1L.x, (int)tip1L.y, col);
-			surf::prim::line((int)tip1L.x, (int)tip1L.y, (int)tip2L.x, (int)tip2L.y, col.with_alpha(220));
-			surf::prim::line((int)tip2L.x, (int)tip2L.y, (int)tip3L.x, (int)tip3L.y, col.with_alpha(220));
-			surf::prim::line((int)tip3L.x, (int)tip3L.y, (int)joint2L.x, (int)joint2L.y, col.with_alpha(200));
-			surf::prim::line((int)joint2L.x, (int)joint2L.y, (int)joint1L.x, (int)joint1L.y, col.with_alpha(200));
+			// Transform to 3D World Space using player angles
+			cvector w_root = spine + (right * rootL_local.x) + (forward * rootL_local.y) + (up * rootL_local.z);
+			cvector w_j1 = spine + (right * joint1L_local.x) + (forward * joint1L_local.y) + (up * joint1L_local.z);
+			cvector w_j2 = spine + (right * joint2L_local.x) + (forward * joint2L_local.y) + (up * joint2L_local.z);
+			cvector w_t1 = spine + (right * tip1L_local.x) + (forward * tip1L_local.y) + (up * tip1L_local.z);
+			cvector w_t2 = spine + (right * tip2L_local.x) + (forward * tip2L_local.y) + (up * tip2L_local.z);
+			cvector w_t3 = spine + (right * tip3L_local.x) + (forward * tip3L_local.y) + (up * tip3L_local.z);
 
-			// Gân nan quạt bên trong
-			surf::prim::line((int)joint1L.x, (int)joint1L.y, (int)tip2L.x, (int)tip2L.y, col.with_alpha(180));
-			surf::prim::line((int)joint1L.x, (int)joint1L.y, (int)tip3L.x, (int)tip3L.y, col.with_alpha(180));
+			cvector s_root, s_j1, s_j2, s_t1, s_t2, s_t3;
+			if (w2s(w_root, s_root) && w2s(w_j1, s_j1) && w2s(w_j2, s_j2) &&
+				w2s(w_t1, s_t1) && w2s(w_t2, s_t2) && w2s(w_t3, s_t3))
+			{
+				// Khung xương chính
+				surf::prim::line((int)s_root.x, (int)s_root.y, (int)s_j1.x, (int)s_j1.y, col);
+				surf::prim::line((int)s_j1.x, (int)s_j1.y, (int)s_t1.x, (int)s_t1.y, col);
+				surf::prim::line((int)s_t1.x, (int)s_t1.y, (int)s_t2.x, (int)s_t2.y, col.with_alpha(220));
+				surf::prim::line((int)s_t2.x, (int)s_t2.y, (int)s_t3.x, (int)s_t3.y, col.with_alpha(220));
+				surf::prim::line((int)s_t3.x, (int)s_t3.y, (int)s_j2.x, (int)s_j2.y, col.with_alpha(200));
+				surf::prim::line((int)s_j2.x, (int)s_j2.y, (int)s_j1.x, (int)s_j1.y, col.with_alpha(200));
 
-			// Móng vuốt nhọn phát sáng
-			surf::prim::filled_box((int)tip1L.x - 2, (int)tip1L.y - 2, (int)tip1L.x + 3, (int)tip1L.y + 3, color(255, 255, 255, col.a));
-			surf::prim::filled_box((int)tip2L.x - 2, (int)tip2L.y - 2, (int)tip2L.x + 3, (int)tip2L.y + 3, color(255, 255, 255, col.a));
-			surf::prim::filled_box((int)tip3L.x - 2, (int)tip3L.y - 2, (int)tip3L.x + 3, (int)tip3L.y + 3, color(255, 255, 255, col.a));
+				// Gân nan quạt bên trong
+				surf::prim::line((int)s_j1.x, (int)s_j1.y, (int)s_t2.x, (int)s_t2.y, col.with_alpha(180));
+				surf::prim::line((int)s_j1.x, (int)s_j1.y, (int)s_t3.x, (int)s_t3.y, col.with_alpha(180));
+
+				// Móng vuốt nhọn phát sáng
+				surf::prim::filled_box((int)s_t1.x - 2, (int)s_t1.y - 2, (int)s_t1.x + 3, (int)s_t1.y + 3, color(255, 255, 255, col.a));
+				surf::prim::filled_box((int)s_t2.x - 2, (int)s_t2.y - 2, (int)s_t2.x + 3, (int)s_t2.y + 3, color(255, 255, 255, col.a));
+				surf::prim::filled_box((int)s_t3.x - 2, (int)s_t3.y - 2, (int)s_t3.x + 3, (int)s_t3.y + 3, color(255, 255, 255, col.a));
+			}
 		}
 	}
 
@@ -1025,7 +1066,13 @@ namespace esp
 					bool allow_acc = (id == global::local_id) ? sets->visuals.thirdperson : (!is_teammate || sets->visuals.friends);
 					if (allow_acc)
 					{
-						draw_3d_energy_wings(entity->get_origin(), sets->visuals.energy_wings_color, sets->visuals.energy_wings_size);
+						qangle ang = entity->get_angles();
+						if (id == global::local_id)
+						{
+							_engine->get_viewangles(ang);
+						}
+						cvector pos = entity->get_abs_origin();
+						draw_3d_energy_wings(pos, ang, sets->visuals.energy_wings_color, sets->visuals.energy_wings_size);
 					}
 				}
 
@@ -1035,7 +1082,8 @@ namespace esp
 					bool allow_acc = (id == global::local_id) ? sets->visuals.thirdperson : (!is_teammate || sets->visuals.friends);
 					if (allow_acc)
 					{
-						draw_3d_magic_circle(entity->get_origin(), sets->visuals.magic_circle_color, sets->visuals.magic_circle_size);
+						cvector pos = entity->get_abs_origin();
+						draw_3d_magic_circle(pos, sets->visuals.magic_circle_color, sets->visuals.magic_circle_size);
 					}
 				}
 

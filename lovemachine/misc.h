@@ -129,103 +129,56 @@ namespace misc
 		//}
 	}
 
-	void autostrafer()
-	{
-		if ((global::local->get_flags() & FL_ONGROUND) || global::cmd->mousedx == 0)
-			return;
-
-		if (cvar(antismac).value)
-		{
-			return;
-		}
-
-		global::cmd->sidemove = global::cmd->mousedx < 0 ? -400.0f : 400.0f;
-
-		//if (!cvar(antismac).value)
-		/*{
-			//static bool disable = false;
-			if ((global::local->get_flags() & FL_ONGROUND) || !global::key[VK_SPACE] || global::cmd->mousedy == 0.f)
-			{
-				//if (disable)
-				//{
-				//	_engine->clientcmd_unrestricted("-forward");
-				//	_engine->clientcmd_unrestricted("-back");
-				//	_engine->clientcmd_unrestricted("-moveleft");
-				//	_engine->clientcmd_unrestricted("-moveright");
-				
-				//	disable = false;
-				//}
-				return;
-			}
-
-			if (cvar(antismac).value)
-			{
-				global::cmd->mousedy < 0 ? send_key(0x41, true) : send_key(0x44, true);
-				global::cmd->mousedy < 0 ? send_key(0x44, false) : send_key(0x41, false);
-			}
-			else global::cmd->sidemove = global::cmd->mousedy < 0.f ? -400 : 400;*/
-
-			/*if (global::key[0x41]) // A
-			{
-				if (global::cmd->buttons & IN_MOVELEFT)
-				{
-					global::cmd->command_number -= 1;
-					global::cmd->buttons &= ~IN_MOVELEFT;
-				}
-				if (global::cmd->mousedx < -1) send_key(0x53, true);//_engine->clientcmd_unrestricted("+back");
-				else if (global::cmd->mousedx > 1) send_key(0x57, true); //_engine->clientcmd_unrestricted("+forward");
-
-				//disable = true;
-			}
-			else if (global::key[0x53]) // S // íå èäåàëüíî
-			{
-				if (global::cmd->buttons & IN_BACK)
-				{
-					global::cmd->command_number -= 1;
-					global::cmd->buttons &= ~IN_BACK;
-				}
-				if (global::cmd->mousedx < -1) send_key(0x44, true);//_engine->clientcmd_unrestricted("+moveright");
-				else if (global::cmd->mousedx > 1) send_key(0x41, true);//_engine->clientcmd_unrestricted("+moveleft");
-
-				//disable = true;
-			}
-			else if (global::key[0x44]) // D // íå èäåàëüíî
-			{
-				if (global::cmd->buttons & IN_MOVERIGHT)
-				{
-					global::cmd->command_number -= 1;
-					global::cmd->buttons &= ~IN_MOVERIGHT;
-				}
-				if (global::cmd->mousedx < -1) send_key(0x57, true);//_engine->clientcmd_unrestricted("+forward");
-				else if (global::cmd->mousedx > 1) send_key(0x53, true);//_engine->clientcmd_unrestricted("+back");
-
-				//disable = true;
-			}
-			else // W èëè ïî äåôîëòó âïåðåä
-			{
-				//if (global::key[0x57]) _engine->clientcmd_unrestricted("-forward");
-				if (global::cmd->buttons & IN_FORWARD)
-				{
-					global::cmd->command_number -= 1;
-					global::cmd->buttons &= ~IN_FORWARD;
-				}
-				if (global::cmd->mousedx < -1) send_key(0x41, true);//_engine->clientcmd_unrestricted("+moveleft");
-				else if (global::cmd->mousedx > 1) send_key(0x44, true);//_engine->clientcmd_unrestricted("+moveright");
-
-				//disable = true;
-			}*/
-		//}
-	}
-
-	void autojump()
+	inline void autostrafer()
 	{
 		if (!global::cmd || !global::local || !global::local->valid()) return;
+
+		int movetype = global::local->get_movetype();
+		if (movetype == 9 || movetype == 8) return;
+
+		if (global::local->get_flags() & FL_ONGROUND) return;
+
+		cvector velocity = global::local->get_velocity();
+		float speed = velocity.Length2D();
+
+		if (speed < 1.0f) return;
+
+		static float old_yaw = 0.0f;
+		float current_yaw = global::cmd->viewangles.y;
+		float yaw_delta = current_yaw - old_yaw;
+		old_yaw = current_yaw;
+
+		while (yaw_delta > 180.0f) yaw_delta -= 360.0f;
+		while (yaw_delta < -180.0f) yaw_delta += 360.0f;
+
+		if (fabsf(yaw_delta) > 0.05f)
+		{
+			global::cmd->sidemove = (yaw_delta > 0.0f) ? -450.0f : 450.0f;
+		}
+		else if (global::cmd->mousedx != 0)
+		{
+			global::cmd->sidemove = (global::cmd->mousedx < 0) ? -450.0f : 450.0f;
+		}
+	}
+
+	inline void autojump()
+	{
+		if (!global::cmd || !global::local || !global::local->valid()) return;
+
+		int movetype = global::local->get_movetype();
+		if (movetype == 9 || movetype == 8) return;
+
 		if (global::cmd->buttons & IN_JUMP)
 		{
-			if (!(global::local->get_flags() & FL_ONGROUND))
+			static bool bWasOnGround = false;
+			int flags = global::local->get_flags();
+			bool bIsOnGround = (flags & FL_ONGROUND) != 0;
+
+			if (!bIsOnGround && !bWasOnGround)
 			{
 				global::cmd->buttons &= ~IN_JUMP;
 			}
+			bWasOnGround = bIsOnGround;
 		}
 	}
 
