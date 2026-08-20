@@ -4,95 +4,67 @@
 
 #include <windows.h>
 #include <tlhelp32.h>
-#include <shlobj.h>
-#include <d3d9.h>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
 #include <thread>
 #include <chrono>
 
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx9.h"
-#include "fatality_loader_ui.h"
-
-#pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "advapi32.lib")
 
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-static LPDIRECT3D9              g_pD3D = NULL;
-static LPDIRECT3DDEVICE9        g_pd3dDevice = NULL;
-static D3DPRESENT_PARAMETERS    g_d3dpp = {};
-
-bool CreateDeviceD3D(HWND hWnd)
+// Set console text colors
+namespace Color
 {
-	if ((g_pD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL)
-		return false;
+	enum Code {
+		RESET = 7,
+		DARK_RED = 4,
+		LIGHT_RED = 12,
+		CYAN = 11,
+		GREEN = 10,
+		WHITE = 15,
+		GREY = 8,
+		YELLOW = 14
+	};
 
-	ZeroMemory(&g_d3dpp, sizeof(g_d3dpp));
-	g_d3dpp.Windowed = TRUE;
-	g_d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-	g_d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
-	g_d3dpp.EnableAutoDepthStencil = TRUE;
-	g_d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
-	g_d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-
-	if (g_pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &g_d3dpp, &g_pd3dDevice) < 0)
-		return false;
-
-	return true;
-}
-
-void CleanupDeviceD3D()
-{
-	if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = NULL; }
-	if (g_pD3D) { g_pD3D->Release(); g_pD3D = NULL; }
-}
-
-void ResetDevice()
-{
-	ImGui_ImplDX9_InvalidateDeviceObjects();
-	HRESULT hr = g_pd3dDevice->Reset(&g_d3dpp);
-	if (hr == D3DERR_INVALIDCALL)
-		IM_ASSERT(0);
-	ImGui_ImplDX9_CreateDeviceObjects();
-}
-
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-		return true;
-
-	switch (msg)
+	void Set(WORD color)
 	{
-	case WM_SIZE:
-		if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED)
-		{
-			g_d3dpp.BackBufferWidth = LOWORD(lParam);
-			g_d3dpp.BackBufferHeight = HIWORD(lParam);
-			ResetDevice();
-		}
-		return 0;
-	case WM_SYSCOMMAND:
-		if ((wParam & 0xfff0) == SC_KEYMENU)
-			return 0;
-		break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
-	case WM_NCHITTEST:
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		SetConsoleTextAttribute(hConsole, color);
+	}
+}
+
+void PrintBanner()
+{
+	Color::Set(Color::LIGHT_RED);
+	std::cout << R"(
+  _      ______      ______ __  __          _____ _    _ _____ _   _ ______ 
+ | |    / __ \ \    / /  _ |  \/  |   /\   / ____| |  | |_   _| \ | |  ____|
+ | |   | |  | \ \  / /| |_) | \  / |  /  \ | |    | |__| | | | |  \| | |__   
+ | |   | |  | |\ \/ / |  _ <| |\/| | / /\ \| |    |  __  | | | | . ` |  __|  
+ | |___| |__| | \  /  | |_) | |  | |/ ____ \ |____| |  | |_| |_| |\  | |____ 
+ |______\____/   \/   |____/|_|  |_/_/    \_\_____|_|  |_|_____|_| \_|______|
+)" << "\n";
+	Color::Set(Color::DARK_RED);
+	std::cout << " ==========================================================================\n";
+	Color::Set(Color::WHITE);
+	std::cout << "        LOVEMACHINE // CS:S CLIENT LOADER & INJECTOR v3.5 (x86)\n";
+	Color::Set(Color::DARK_RED);
+	std::cout << " ==========================================================================\n\n";
+	Color::Set(Color::RESET);
+}
+
+BOOL IsUserAdmin()
+{
+	BOOL isAdmin = FALSE;
+	PSID adminGroup = NULL;
+	SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
+	if (AllocateAndInitializeSid(&ntAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &adminGroup))
 	{
-		// Allow dragging window from top bar
-		POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-		ScreenToClient(hWnd, &pt);
-		if (pt.y < 42 && pt.x < 680 - 40)
-			return HTCAPTION;
-		break;
+		CheckTokenMembership(NULL, adminGroup, &isAdmin);
+		FreeSid(adminGroup);
 	}
-	}
-	return DefWindowProc(hWnd, msg, wParam, lParam);
+	return isAdmin;
 }
 
 DWORD GetProcessIdByName(const char* processName)
@@ -139,22 +111,64 @@ std::string GetFullDllPath(const char* dllFilename)
 	return fullPath;
 }
 
+void DrawProgressBar(int percent)
+{
+	const int barWidth = 40;
+	Color::Set(Color::DARK_RED);
+	std::cout << " [";
+	int pos = barWidth * percent / 100;
+	for (int i = 0; i < barWidth; ++i) {
+		if (i < pos) {
+			Color::Set(Color::LIGHT_RED);
+			std::cout << "=";
+		}
+		else if (i == pos) {
+			Color::Set(Color::WHITE);
+			std::cout << ">";
+		}
+		else {
+			Color::Set(Color::GREY);
+			std::cout << " ";
+		}
+	}
+	Color::Set(Color::DARK_RED);
+	std::cout << "] ";
+	Color::Set(Color::CYAN);
+	std::cout << percent << " %\r";
+	std::cout.flush();
+}
+
 bool InjectDll(DWORD pid, const std::string& dllPath)
 {
 	if (pid == 0 || dllPath.empty()) return false;
 
+	Color::Set(Color::CYAN);
+	std::cout << "[*] Opening target process handle (PID: " << pid << ")..." << std::endl;
 	HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, FALSE, pid);
-	if (!hProcess) return false;
+	if (!hProcess)
+	{
+		Color::Set(Color::LIGHT_RED);
+		std::cout << "[-] Failed to open target process. Error Code: " << GetLastError() << std::endl;
+		return false;
+	}
 
+	Color::Set(Color::CYAN);
+	std::cout << "[*] Allocating virtual memory in target process..." << std::endl;
 	void* pAlloc = VirtualAllocEx(hProcess, NULL, dllPath.length() + 1, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if (!pAlloc)
 	{
+		Color::Set(Color::LIGHT_RED);
+		std::cout << "[-] VirtualAllocEx failed. Error Code: " << GetLastError() << std::endl;
 		CloseHandle(hProcess);
 		return false;
 	}
 
+	Color::Set(Color::CYAN);
+	std::cout << "[*] Writing DLL path payload to allocated memory (" << (void*)pAlloc << ")..." << std::endl;
 	if (!WriteProcessMemory(hProcess, pAlloc, dllPath.c_str(), dllPath.length() + 1, NULL))
 	{
+		Color::Set(Color::LIGHT_RED);
+		std::cout << "[-] WriteProcessMemory failed. Error Code: " << GetLastError() << std::endl;
 		VirtualFreeEx(hProcess, pAlloc, 0, MEM_RELEASE);
 		CloseHandle(hProcess);
 		return false;
@@ -163,18 +177,31 @@ bool InjectDll(DWORD pid, const std::string& dllPath)
 	void* pLoadLibrary = (void*)GetProcAddress(GetModuleHandleA("kernel32.dll"), "LoadLibraryA");
 	if (!pLoadLibrary)
 	{
+		Color::Set(Color::LIGHT_RED);
+		std::cout << "[-] Failed to resolve LoadLibraryA address." << std::endl;
 		VirtualFreeEx(hProcess, pAlloc, 0, MEM_RELEASE);
 		CloseHandle(hProcess);
 		return false;
 	}
 
+	Color::Set(Color::CYAN);
+	std::cout << "[*] Creating remote thread to execute DllMain..." << std::endl;
 	HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)pLoadLibrary, pAlloc, 0, NULL);
 	if (!hThread)
 	{
+		Color::Set(Color::LIGHT_RED);
+		std::cout << "[-] CreateRemoteThread failed. Error Code: " << GetLastError() << std::endl;
 		VirtualFreeEx(hProcess, pAlloc, 0, MEM_RELEASE);
 		CloseHandle(hProcess);
 		return false;
 	}
+
+	for (int i = 0; i <= 100; i += 5)
+	{
+		DrawProgressBar(i);
+		std::this_thread::sleep_for(std::chrono::milliseconds(25));
+	}
+	std::cout << std::endl;
 
 	WaitForSingleObject(hThread, 5000);
 	CloseHandle(hThread);
@@ -183,102 +210,74 @@ bool InjectDll(DWORD pid, const std::string& dllPath)
 	return true;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int main()
 {
-	// Create Application Window
-	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, "LoveMachineLoader", NULL };
-	RegisterClassEx(&wc);
-	HWND hwnd = CreateWindowA(wc.lpszClassName, "LOVEMACHINE CS:S Loader", WS_POPUP, (GetSystemMetrics(SM_CXSCREEN) - 680) / 2, (GetSystemMetrics(SM_CYSCREEN) - 480) / 2, 680, 480, NULL, NULL, wc.hInstance, NULL);
+	SetConsoleTitleA("LOVEMACHINE // CS:S Injector v3.5");
+	system("cls");
 
-	if (!CreateDeviceD3D(hwnd))
+	PrintBanner();
+
+	// 1. Check Admin Privileges
+	if (!IsUserAdmin())
 	{
-		CleanupDeviceD3D();
-		UnregisterClass(wc.lpszClassName, wc.hInstance);
-		return 1;
+		Color::Set(Color::YELLOW);
+		std::cout << "[!] WARNING: Injector is not running as Administrator.\n";
+		std::cout << "[!] Target process access may be denied.\n\n";
+	}
+	else
+	{
+		Color::Set(Color::GREEN);
+		std::cout << "[+] Privilege Check: Running with Elevated Administrator Privileges.\n\n";
 	}
 
-	ShowWindow(hwnd, SW_SHOWDEFAULT);
-	UpdateWindow(hwnd);
+	const char* processName = "hl2.exe";
+	const char* dllName = "lovemachine.dll";
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.IniFilename = NULL;
+	std::string dllPath = GetFullDllPath(dllName);
+	Color::Set(Color::WHITE);
+	std::cout << "[*] Target Payload: " << dllPath << "\n\n";
 
-	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX9_Init(g_pd3dDevice);
+	// 2. Scan for hl2.exe
+	Color::Set(Color::CYAN);
+	std::cout << "[*] Scanning for " << processName << " (Counter-Strike: Source)...\n";
+	DWORD pid = GetProcessIdByName(processName);
 
-	bool running = true;
-	float last_scan = 0.0f;
-
-	while (running)
+	while (pid == 0)
 	{
-		MSG msg;
-		while (PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-			if (msg.message == WM_QUIT)
-				running = false;
-		}
-		if (!running || !FatalityLoaderUI::show_loader)
-			break;
-
-		// Real-time Process Scanning
-		float current_time = (float)GetTickCount() / 1000.0f;
-		if (current_time - last_scan > 1.0f)
-		{
-			last_scan = current_time;
-			DWORD pid = GetProcessIdByName("hl2.exe");
-			FatalityLoaderUI::process_found = (pid != 0);
-			FatalityLoaderUI::target_pid = pid;
-
-			if (FatalityLoaderUI::current_status == FatalityLoaderUI::STATUS_MANUAL_MAPPING && pid != 0)
-			{
-				std::string dllPath = GetFullDllPath("lovemachine.dll");
-				if (InjectDll(pid, dllPath))
-				{
-					FatalityLoaderUI::current_status = FatalityLoaderUI::STATUS_SUCCESSFULLY_INJECTED;
-					FatalityLoaderUI::AddLog("[SUCCESS] Injected lovemachine.dll into hl2.exe (PID: " + std::to_string(pid) + ")", IM_COL32(46, 204, 113, 255));
-				}
-				else
-				{
-					FatalityLoaderUI::AddLog("[ERROR] Failed to inject DLL into target process.", IM_COL32(255, 60, 60, 255));
-				}
-			}
-		}
-
-		ImGui_ImplDX9_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
-
-		FatalityLoaderUI::RenderLoader(&running);
-
-		ImGui::EndFrame();
-		g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
-		g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		g_pd3dDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-		g_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_RGBA(14, 14, 18, 255), 1.0f, 0);
-
-		if (g_pd3dDevice->BeginScene() >= 0)
-		{
-			ImGui::Render();
-			ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-			g_pd3dDevice->EndScene();
-		}
-
-		HRESULT result = g_pd3dDevice->Present(NULL, NULL, NULL, NULL);
-		if (result == D3DERR_DEVICELOST && g_pd3dDevice->TestCooperativeLevel() == D3DERR_DEVICENOTRESET)
-			ResetDevice();
+		Color::Set(Color::YELLOW);
+		std::cout << "\r[!] Waiting for " << processName << " to launch... (Press Ctrl+C to cancel)";
+		std::cout.flush();
+		std::this_thread::sleep_for(std::chrono::milliseconds(800));
+		pid = GetProcessIdByName(processName);
 	}
 
-	ImGui_ImplDX9_Shutdown();
-	ImGui_ImplWin32_Shutdown();
-	ImGui::DestroyContext();
+	std::cout << "\n\n";
+	Color::Set(Color::GREEN);
+	std::cout << "[+] Found " << processName << " with Process ID: " << pid << "\n\n";
 
-	CleanupDeviceD3D();
-	DestroyWindow(hwnd);
-	UnregisterClass(wc.lpszClassName, wc.hInstance);
+	// 3. Perform Injection
+	Color::Set(Color::LIGHT_RED);
+	std::cout << "[>>>] STARTING INJECTION SEQUENCE [<<<]\n\n";
+
+	if (InjectDll(pid, dllPath))
+	{
+		Color::Set(Color::GREEN);
+		std::cout << "\n==========================================================================\n";
+		std::cout << " [SUCCESS] LOVEMACHINE INJECTED SUCCESSFULLY INTO CS:S!\n";
+		std::cout << " [INFO] Press [INSERT] or [F2] in game to open cheat menu.\n";
+		std::cout << "==========================================================================\n\n";
+	}
+	else
+	{
+		Color::Set(Color::LIGHT_RED);
+		std::cout << "\n==========================================================================\n";
+		std::cout << " [ERROR] Failed to inject lovemachine.dll.\n";
+		std::cout << "==========================================================================\n\n";
+	}
+
+	Color::Set(Color::GREY);
+	std::cout << "Closing injector in 5 seconds...";
+	std::this_thread::sleep_for(std::chrono::seconds(5));
 
 	return 0;
 }
