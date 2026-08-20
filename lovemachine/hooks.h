@@ -889,12 +889,7 @@ namespace hooks
 					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
 					{
 						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
-						int custom_idx = _model_info->get_model_index(m_path);
-						if (custom_idx <= 0)
-						{
-							const model_t* m = _model_info->find_or_load_model(m_path);
-							if (m) custom_idx = _model_info->get_model_index(m_path);
-						}
+						int custom_idx = _model_info->precache_model(m_path);
 
 						if (custom_idx > 0)
 						{
@@ -926,12 +921,7 @@ namespace hooks
 					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
 					{
 						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
-						int custom_idx = _model_info->get_model_index(m_path);
-						if (custom_idx <= 0)
-						{
-							const model_t* m = _model_info->find_or_load_model(m_path);
-							if (m) custom_idx = _model_info->get_model_index(m_path);
-						}
+						int custom_idx = _model_info->precache_model(m_path);
 
 						if (custom_idx > 0 && sets->visuals.custom_model_local_only)
 						{
@@ -1240,22 +1230,6 @@ namespace hooks
 		if (_client && !IsBadReadPtr((void*)_client, sizeof(DWORD))) {
 			client = new memory::vthook((dword**)_client);
 			log << "[+] client hooked" << std::endl;
-
-			PDWORD func_addr = (PDWORD)client->get_func_address(21);
-			if (func_addr && !IsBadReadPtr(func_addr, sizeof(DWORD)))
-			{
-				DWORD input_ptr_addr = *(PDWORD)((DWORD)func_addr + INPUTOFFSET);
-				if (input_ptr_addr && !IsBadReadPtr((void*)input_ptr_addr, sizeof(DWORD)))
-				{
-					_input = *(cinput**)input_ptr_addr;
-					if (_input && !IsBadReadPtr((void*)_input, sizeof(DWORD)))
-					{
-						input = new memory::vthook((dword**)_input);
-						o_get_usercmd = (get_usercmd_fn)input->hook_function((dword)get_usercmd_hook, 8);
-						log << "[+] input hooked" << std::endl;
-					}
-				}
-			}
 
 			o_create_move = (create_move_fn)client->hook_function((dword)create_move_hook, 21);
 			log << "[+] create_move hooked" << std::endl;

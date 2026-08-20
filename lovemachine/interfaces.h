@@ -7,6 +7,32 @@
 #include "game def's.h"
 #include "model shit.h"
 
+class INetworkStringTable
+{
+public:
+	virtual ~INetworkStringTable(void) {}
+	virtual const char* GetTableName(void) const = 0;
+	virtual int GetTableId(void) const = 0;
+	virtual int GetNumStrings(void) const = 0;
+	virtual int GetMaxStrings(void) const = 0;
+	virtual int GetEntryBits(void) const = 0;
+	virtual void SetTick(int tick) = 0;
+	virtual bool ChangedSinceTick(int tick) const = 0;
+	virtual int AddString(bool bIsServer, const char* value, int length = -1, const void* userdata = 0) = 0;
+	virtual const char* GetString(int stringNumber) = 0;
+	virtual int FindStringIndex(char const* string) = 0;
+};
+
+class INetworkStringTableContainer
+{
+public:
+	virtual ~INetworkStringTableContainer(void) {}
+	virtual INetworkStringTable* CreateStringTable(const char* tableName, int maxentries, int userdatafixedsize = 0, int userdatanetworkbits = 0) = 0;
+	virtual INetworkStringTable* FindTable(const char* tableName) const = 0;
+	virtual INetworkStringTable* GetTable(int tableId) const = 0;
+	virtual int GetNumTables(void) const = 0;
+};
+
 class ivpanel
 {
 public:
@@ -625,25 +651,8 @@ public:
 		vfunc< get_model_materials_fn >(this, 16)(this, model, count, ppMaterial);
 	}
 
-	model_t* find_or_load_model(const char* name)
-	{
-		typedef model_t*(__thiscall* find_or_load_model_fn)(void*, const char*);
-		model_t* result = vfunc< find_or_load_model_fn >(this, 43)(this, name);
-		if (!result)
-		{
-			result = vfunc< find_or_load_model_fn >(this, 39)(this, name);
-		}
-		if (!result)
-		{
-			int idx = get_model_index(name);
-			if (idx > 0)
-			{
-				const model_t* mdl = get_model(idx);
-				if (mdl) result = const_cast<model_t*>(mdl);
-			}
-		}
-		return result;
-	}
+	int precache_model(const char* name);
+	const model_t* find_or_load_model(const char* name);
 };
 
 class ivrenderview

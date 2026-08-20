@@ -27,6 +27,7 @@ namespace game
 		cglobalvars* globals;
 		cinput* input;
 		iphysicssurfaceprops* physics;
+		INetworkStringTableContainer* string_table_container;
 
 		template<typename T>
 		T* CaptureInterface(const char* moduleName, const char* interfaceName)
@@ -64,6 +65,7 @@ namespace game
 			engine_sound = CaptureInterface<ienginesound>("engine.dll", "IEngineSoundClient003");
 			event_manager = CaptureInterface<igameeventmanager>("engine.dll", "GAMEEVENTSMANAGER002");
 			physics = CaptureInterface<iphysicssurfaceprops>("vphysics.dll", "VPhysicsSurfaceProps001");
+			string_table_container = CaptureInterface<INetworkStringTableContainer>("engine.dll", "VEngineClientStringTable001");
 		}
 	}
 
@@ -155,3 +157,4 @@ namespace game
 #define _clientmode game::signatures::clientmode
 #define _phys game::interfaces::physics
 #define _clientstate game::signatures::clientstate
+#define _string_table_container game::interfaces::string_table_container
