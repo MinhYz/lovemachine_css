@@ -30,6 +30,7 @@ namespace global
 	inline float curtime = 0.0f;
 	inline float realtime = 0.0f;
 	inline bool unhook = false;
+	inline qangle last_sent_angles = qangle(0, 0, 0);
 }
 
 namespace server

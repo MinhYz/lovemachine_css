@@ -43,6 +43,24 @@ typedef enum
 class DVariant
 {
 public:
+	union
+	{
+		float	m_Float;
+		int		m_Int;
+		const char* m_pString;
+		void* m_pData;	// For DataTables.
+#if 0 // We can't ship this since it changes the size of DTVariant to be 20 bytes instead of 16 and that breaks MODs!!!
+		float	m_Vector[4];
+#else
+		float	m_Vector[3];
+#endif
+
+//#ifdef SUPPORTS_INT64
+		__int64	m_Int64;
+//#endif
+	};
+	SendPropType	m_Type;
+
 	DVariant() { m_Type = DPT_Float; }
 	DVariant(float val) { m_Type = DPT_Float; m_Float = val; }
 
@@ -96,24 +114,6 @@ public:
 
 		return text;
 	}
-
-	union
-	{
-		float	m_Float;
-		int		m_Int;
-		const char* m_pString;
-		void* m_pData;	// For DataTables.
-#if 0 // We can't ship this since it changes the size of DTVariant to be 20 bytes instead of 16 and that breaks MODs!!!
-		float	m_Vector[4];
-#else
-		float	m_Vector[3];
-#endif
-
-//#ifdef SUPPORTS_INT64
-		__int64	m_Int64;
-//#endif
-	};
-	SendPropType	m_Type;
 };
 
 class CRecvProxyData

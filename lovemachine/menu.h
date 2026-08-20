@@ -16,7 +16,8 @@ namespace Menu
 		THEME_SKEET = 0,
 		THEME_CYBERPUNK,
 		THEME_ONYX,
-		THEME_NEVERLOSE
+		THEME_NEVERLOSE,
+		THEME_FATALITY
 	};
 
 	enum UILayout
@@ -24,7 +25,8 @@ namespace Menu
 		LAYOUT_GAMESENSE = 0, // Gamesense (Skeet Classic)
 		LAYOUT_NEVERLOSE,     // Neverlose Official
 		LAYOUT_ATERNOS,       // Release 16: Imgui Aternos (3D Skeleton Visualizer)
-		LAYOUT_SYNTHETIC      // Release 19: Synthetic / Space Galaxy Honeycomb
+		LAYOUT_SYNTHETIC,     // Release 19: Synthetic / Space Galaxy Honeycomb
+		LAYOUT_FATALITY       // Fatality.win Native UI Layout (Deep Crimson / Cyber Pink)
 	};
 
 	extern bool show_menu;

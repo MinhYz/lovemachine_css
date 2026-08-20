@@ -140,15 +140,13 @@ public:
 		int body_aim_mode = 0; // 0: Default, 1: Prefer, 2: Force
 		bool override_resolver = false;
 
-		// Anti-Aim / Spinbot / Magic Bullet
+		// Anti-Aim (Pitch & Yaw Angles including Spinbot)
+		bool anti_aim = false;
 		bool spinbot = false;
-		int spinbot_mode = 0; // 0: Disabled, 1: Server-Side, 2: Client-Side
-		bool magic_bullet = false;
+		int pitch_aa = 0; // 0: Off, 1: Down (Emotion 89°), 2: Up (-89°), 3: Zero (0°)
+		int yaw_aa = 0;   // 0: Off, 1: Backwards (180°), 2: Spinbot (360°), 3: Jitter (±90°), 4: Sideways (90°)
 		float spin_speed = 25.0f;
-		float spin_speed_client = 25.0f;
-		float spin_speed_server = 45.0f;
-		int pitch_aa = 0;
-		int yaw_aa = 0;
+		bool magic_bullet = false;
 	} rage;
 
 	struct
@@ -182,65 +180,100 @@ public:
 		float viewmodel_fov = 90.0f;
 		float fov = 0.0f;
 
-		// Asian Hat (Mũ Asian / Rice Hat)
-		bool asian_hat = false;
-		color asian_hat_color = color(255, 200, 50);
-		float asian_hat_size = 20.0f;
-		float asian_hat_height = 10.0f;
-
 		// Custom 3D Character Model (Cissia ZZZ / Phoenix)
 		bool enable_custom_model = false;
-		bool custom_model_local_only = true; // Only apply 3D model to LocalPlayer (self)
-		int model_selection = 0; // 0: Phoenix Terrorist, 1: Cissia ZZZ (Zenless Zone Zero)
+		bool custom_model_local_only = true;
+		int model_selection = 0;
 
-		// Skeleton & Nightmode & Advanced ESP (Neverlose)
+		// Skeleton & Nightmode & Advanced ESP
 		bool skeleton = true;
 		bool nightmode = false;
+		float asus_walls = 100.0f;
 		bool offscreen_esp = false;
 		float oof_size = 15.0f;
 		float oof_radius = 120.0f;
 		bool footstep_rings = false;
-		bool armor_bar = true;
-		bool ammo_bar = true;
 		bool flag_hk = true;
 		bool flag_scoped = true;
 		bool flag_reloading = true;
 		bool flag_flashed = true;
 		bool sound_esp = false;
-		bool glow_esp = false;
 
-		// World Modulation & Atmosphere (Neverlose Image 4)
-		float asus_walls = 100.0f; // 0-100% Wall Opacity (ASUS Wallhack)
-		float asus_props = 100.0f; // 0-100% Props Opacity
-		int skybox_mode = 0;       // 0: Default, 1: Night, 2: Baggage, 3: Cold, 4: Clear
-		bool enable_fog = false;
-		float fog_start = 0.0f;
-		float fog_end = 2000.0f;
-		float fog_density = 0.5f;
+		// 3D Head Accessories & Attachments (Unified Selection)
+		int head_accessory = 0; // 0: Disabled, 1: Asian Rice Hat, 2: Angel Halo, 3: Devil Horns, 4: Royal Crown, 5: Cyber Cat Ears
+		color head_accessory_color = color(230, 215, 175);
+		float head_accessory_size = 20.0f;
+		float head_accessory_height = 10.0f;
 
-		// Crosshairs, Indicators & FX (Neverlose Image 4)
-		bool noscope_crosshair = false;
-		bool autowall_crosshair = false;
-		bool damage_indicator = false;
-		bool hit_sound = false;
-		float hit_sound_volume = 50.0f;
-		bool bullet_impacts = false;
+		bool asian_hat = false;
+		color asian_hat_color = color(230, 215, 175);
+		float asian_hat_size = 20.0f;
+		float asian_hat_height = 10.0f;
 
-		// Grenades & C4 Bomb (Neverlose Image 2 & 3)
-		bool grenade_esp = true;
+		bool halo_ring = false;
+		color halo_color = color(255, 230, 80);
+		float halo_radius = 12.0f;
+
+		bool devil_horns = false;
+		color devil_horns_color = color(255, 25, 40);
+		float devil_horns_size = 10.0f;
+
+		bool crown = false;
+		color crown_color = color(255, 215, 0);
+		float crown_size = 14.0f;
+
+		bool cat_ears = false;
+		color cat_ears_color = color(255, 105, 180);
+		float cat_ears_size = 10.0f;
+
+		// 3D Body & Ground FX (Energy Wings, Magic Circle Runes)
+		bool energy_wings = false;
+		color energy_wings_color = color(190, 20, 35);
+		float energy_wings_size = 30.0f;
+
+		bool magic_circle = false;
+		color magic_circle_color = color(0, 220, 255);
+		float magic_circle_size = 35.0f;
+
+		// 3D Laser Bullet Tracers & Bullet Impact Rings
+		bool bullet_tracers = false;
+		color bullet_tracers_color = color(0, 235, 255);
+		float bullet_tracers_duration = 2.5f;
+		bool impact_rings = false;
+		color impact_rings_color = color(255, 60, 120);
+
+		// 3D Weapon Laser Sight (Nòng súng phát tia laser 3D)
+		bool laser_sight = false;
+		color laser_sight_color = color(255, 0, 80);
+		float laser_sight_length = 1500.0f;
+
+		// Kill Visual Effects (Hiệu ứng hạ gục kẻ địch)
+		int kill_effect = 1; // 0: Off, 1: 3D Lightning Strike, 2: Blood Particle Fountain, 3: Ascending Skull, 4: Cyber Implosion
+		color kill_effect_color = color(0, 255, 255);
+
+		// 3D Dropped Items & C4 Sky Beams (Cột sáng đồ rơi)
+		bool item_light_beams = false;
+		color item_light_beams_color = color(0, 200, 255);
+
+		// 3D Hitbox Capsule on Hit (Lồng hitbox trúng đạn)
+		bool hit_capsules = false;
+		color hit_capsules_color = color(255, 255, 255);
+		float hit_capsules_duration = 2.0f;
+
+		// Screen Hit Pulse & Vignette FX (Hiệu ứng viền màn hình khi bắn)
+		bool screen_hit_pulse = false;
+		color screen_hit_pulse_color = color(0, 255, 180);
+
+		// Grenade Trajectory & FOV Circle
 		bool grenade_trajectory = false;
+		color grenade_trajectory_color = color(255, 50, 50);
 		bool grenade_warning = false;
-		bool bomb_esp = true;
-		bool bomb_defuse_radius = false;
+		bool fov_circle = false;
+		color fov_circle_color = color(255, 255, 255);
 
-		// Viewmodel XYZ Offsets & Camera (Neverlose Image 5)
-		float viewmodel_x = 0.0f;
-		float viewmodel_y = 0.0f;
-		float viewmodel_z = 0.0f;
-		bool force_fov_in_scope = false;
-		bool remove_scope = false;
-		bool aspect_ratio_override = false;
-		float aspect_ratio_val = 1.77f;
+		// Floating 3D Damage Indicator Numbers
+		bool damage_indicator = false;
+		color damage_indicator_color = color(255, 220, 0);
 
 		// Customizable ESP Bar & Element Positions
 		int health_bar_pos = 0; // 0: Left, 1: Right, 2: Top, 3: Bottom
@@ -249,11 +282,13 @@ public:
 		int weapon_pos = 1;     // 0: Top, 1: Bottom, 2: Right, 3: Left
 		int hp_text_style = 0;  // 0: Next to Bar, 1: Inside Bar, 2: Bottom Text
 
-		// Thirdperson & Inverted Angle & Rainbow Trail
+		// Thirdperson & Inverted Angle & Dynamic Trail Modes
 		bool thirdperson = false;
 		float thirdperson_dist = 120.0f;
 		bool thirdperson_reverse = false;
 		bool rainbow_trail = false;
+		int trail_mode = 1; // 0: Off, 1: Rainbow Wave, 2: Electric Cyan, 3: Inferno Fire, 4: Cyber Violet Plasma
+		float trail_length = 30.0f;
 		float rainbow_trail_speed = 1.0f;
 	} visuals;
 

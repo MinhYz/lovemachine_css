@@ -39,6 +39,11 @@ typedef long LONG;
 typedef void* WNDPROC;
 typedef unsigned long WPARAM;
 typedef unsigned long LPARAM;
+typedef int __int32;
+typedef long long __int64;
+typedef DWORD* PDWORD;
+typedef int* PINT;
+typedef float* PFLOAT;
 typedef struct { LONG left, top, right, bottom; } RECT;
 typedef struct { LONG x, y; } POINT;
 #define VK_INSERT 0x2D
@@ -62,6 +67,17 @@ typedef struct { LONG x, y; } POINT;
 #define WritePrivateProfileStringA(app, key, val, file) (0)
 #define D3DCOLOR_RGBA(r,g,b,a) ((((a)&0xff)<<24)|(((r)&0xff)<<16)|(((g)&0xff)<<8)|((b)&0xff))
 #define _access access
+typedef void* PVOID;
+typedef void** PPVOID;
+#define STD_OUTPUT_HANDLE ((DWORD)-11)
+#define GetStdHandle(n) ((HANDLE)1)
+#define SetConsoleTextAttribute(h, attr) ((void)0)
+#define IsBadReadPtr(p, sz) ((p) == nullptr)
+#define _stricmp strcasecmp
+#define AllocConsole() ((void)0)
+#define FreeConsole() ((void)0)
+#define SetConsoleTitleA(s) ((void)0)
+#define freopen_s(p, n, m, f) ((void)0)
 #define FindFirstFileA(path, data) ((HANDLE)-1)
 #define FindNextFileA(handle, data) (0)
 #define FindClose(handle) (0)
@@ -78,6 +94,7 @@ typedef struct { char cFileName[260]; } WIN32_FIND_DATAA;
 #endif
 
 #include <cmath>
+#include <cfloat>
 #include <string>
 #include <array>
 #include <cstdarg>

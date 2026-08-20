@@ -3,6 +3,8 @@
 #include "imgui_internal.h"
 #include "configs.h"
 #include "phoenix_mesh.h"
+#include "wings_mesh.h"
+#include "accessories_mesh.h"
 #include "models_shared.h"
 #include <vector>
 #include <string>
@@ -243,15 +245,301 @@ namespace Menu
 				}
 			}
 
-			// Painter's Algorithm: Sort Triangles Back-to-Front by Depth
+			// 2. TRUE 3D DEMON WINGS MESH INJECTION (Depth-sorted with 3D model)
+			static std::vector<WingsMesh::Vertex3D> wing_verts;
+			static std::vector<WingsMesh::Triangle3D> wing_tris;
+			static std::vector<ImVec2> proj_wing;
+			static std::vector<float> depth_wing;
+
+			if (sets->visuals.energy_wings)
+			{
+				WingsMesh::GenerateDemonWings(model_angle * 3.2f, (sets->visuals.energy_wings_size / 30.0f), wing_verts, wing_tris);
+				proj_wing.resize(wing_verts.size());
+				depth_wing.resize(wing_verts.size());
+
+				const auto& spine_vert = g_phoenix_vertices[1022];
+
+				for (size_t w = 0; w < wing_verts.size(); w++)
+				{
+					float wx = spine_vert.x + wing_verts[w].x;
+					float wy = spine_vert.y + wing_verts[w].y;
+					float wz = spine_vert.z + wing_verts[w].z;
+
+					float rx = wx * cos_a - wy * sin_a;
+					float ry = wx * sin_a + wy * cos_a;
+					float rz = wz;
+
+					proj_wing[w] = ImVec2(center_x + rx * scale, center_y + (38.0f - rz) * scale);
+					depth_wing[w] = ry;
+				}
+
+				ImU32 wing_skin = IM_COL32(sets->visuals.energy_wings_color.r, sets->visuals.energy_wings_color.g, sets->visuals.energy_wings_color.b, 210);
+				ImU32 wing_dark = IM_COL32(28, 8, 14, 235);
+
+				for (size_t t = 0; t < wing_tris.size(); t++)
+				{
+					uint16_t i0 = wing_tris[t].i0;
+					uint16_t i1 = wing_tris[t].i1;
+					uint16_t i2 = wing_tris[t].i2;
+
+					ImVec2 p0 = proj_wing[i0];
+					ImVec2 p1 = proj_wing[i1];
+					ImVec2 p2 = proj_wing[i2];
+
+					float avg_depth = depth_wing[i0] + depth_wing[i1] + depth_wing[i2];
+					ImU32 col = (t % 2 == 0) ? wing_skin : wing_dark;
+
+					tri_list.push_back({ p0, p1, p2, avg_depth, col });
+				}
+			}
+
+			// 3. TRUE 3D HEAD ACCESSORIES MESH INJECTION
+			const auto& head_vert = g_phoenix_vertices[2674];
+			static std::vector<AccessoriesMesh::Vertex3D> acc_verts;
+			static std::vector<AccessoriesMesh::Triangle3D> acc_tris;
+			static std::vector<ImVec2> proj_acc;
+			static std::vector<float> depth_acc;
+
+			if (sets->visuals.head_accessory == 1 || sets->visuals.asian_hat) // 1. 3D Asian Rice Hat
+			{
+				float hat_sz = (sets->visuals.head_accessory_size > 0.0f) ? sets->visuals.head_accessory_size : sets->visuals.asian_hat_size;
+				float hat_ht = (sets->visuals.head_accessory_height > 0.0f) ? sets->visuals.head_accessory_height : sets->visuals.asian_hat_height;
+				AccessoriesMesh::GenerateNonLa(hat_sz, hat_ht, acc_verts, acc_tris);
+				proj_acc.resize(acc_verts.size());
+				depth_acc.resize(acc_verts.size());
+
+				for (size_t a = 0; a < acc_verts.size(); a++)
+				{
+					float wx = head_vert.x + acc_verts[a].x;
+					float wy = head_vert.y + acc_verts[a].y;
+					float wz = head_vert.z + acc_verts[a].z;
+
+					float rx = wx * cos_a - wy * sin_a;
+					float ry = wx * sin_a + wy * cos_a;
+					float rz = wz;
+
+					proj_acc[a] = ImVec2(center_x + rx * scale, center_y + (38.0f - rz) * scale);
+					depth_acc[a] = ry;
+				}
+
+				color hat_col = (sets->visuals.head_accessory_color.r != 0 || sets->visuals.head_accessory_color.g != 0) ? sets->visuals.head_accessory_color : sets->visuals.asian_hat_color;
+				int base_r = (int)hat_col.r;
+				int base_g = (int)hat_col.g;
+				int base_b = (int)hat_col.b;
+
+				for (size_t t = 0; t < acc_tris.size(); t++)
+				{
+					uint16_t i0 = acc_tris[t].i0;
+					uint16_t i1 = acc_tris[t].i1;
+					uint16_t i2 = acc_tris[t].i2;
+
+					ImVec2 p0 = proj_acc[i0];
+					ImVec2 p1 = proj_acc[i1];
+					ImVec2 p2 = proj_acc[i2];
+
+					float cross = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
+					if (cross > 0.0f)
+					{
+						float avg_depth = depth_acc[i0] + depth_acc[i1] + depth_acc[i2];
+						float light = ImClamp(0.70f + cross * 0.003f, 0.55f, 1.25f);
+						ImU32 col = IM_COL32(ImMin(255, (int)(base_r * light)), ImMin(255, (int)(base_g * light)), ImMin(255, (int)(base_b * light)), 245);
+						tri_list.push_back({ p0, p1, p2, avg_depth, col });
+					}
+				}
+			}
+			else if (sets->visuals.head_accessory == 2) // 2. 3D Angelic Holy Halo
+			{
+				AccessoriesMesh::GenerateHalo(sets->visuals.head_accessory_size, sets->visuals.head_accessory_height, model_angle, acc_verts, acc_tris);
+				proj_acc.resize(acc_verts.size());
+				depth_acc.resize(acc_verts.size());
+
+				for (size_t a = 0; a < acc_verts.size(); a++)
+				{
+					float wx = head_vert.x + acc_verts[a].x;
+					float wy = head_vert.y + acc_verts[a].y;
+					float wz = head_vert.z + acc_verts[a].z;
+
+					float rx = wx * cos_a - wy * sin_a;
+					float ry = wx * sin_a + wy * cos_a;
+					float rz = wz;
+
+					proj_acc[a] = ImVec2(center_x + rx * scale, center_y + (38.0f - rz) * scale);
+					depth_acc[a] = ry;
+				}
+
+				int hr = sets->visuals.head_accessory_color.r;
+				int hg = sets->visuals.head_accessory_color.g;
+				int hb = sets->visuals.head_accessory_color.b;
+
+				for (size_t t = 0; t < acc_tris.size(); t++)
+				{
+					uint16_t i0 = acc_tris[t].i0;
+					uint16_t i1 = acc_tris[t].i1;
+					uint16_t i2 = acc_tris[t].i2;
+
+					float avg_depth = depth_acc[i0] + depth_acc[i1] + depth_acc[i2];
+					ImU32 col = IM_COL32(hr, hg, hb, 240);
+					tri_list.push_back({ proj_acc[i0], proj_acc[i1], proj_acc[i2], avg_depth, col });
+				}
+			}
+			else if (sets->visuals.head_accessory == 3) // 3. 3D Gothic Demon Horns
+			{
+				AccessoriesMesh::GenerateDevilHorns(sets->visuals.head_accessory_size, acc_verts, acc_tris);
+				proj_acc.resize(acc_verts.size());
+				depth_acc.resize(acc_verts.size());
+
+				for (size_t a = 0; a < acc_verts.size(); a++)
+				{
+					float wx = head_vert.x + acc_verts[a].x;
+					float wy = head_vert.y + acc_verts[a].y;
+					float wz = head_vert.z + acc_verts[a].z;
+
+					float rx = wx * cos_a - wy * sin_a;
+					float ry = wx * sin_a + wy * cos_a;
+					float rz = wz;
+
+					proj_acc[a] = ImVec2(center_x + rx * scale, center_y + (38.0f - rz) * scale);
+					depth_acc[a] = ry;
+				}
+
+				int hr = sets->visuals.head_accessory_color.r;
+				int hg = sets->visuals.head_accessory_color.g;
+				int hb = sets->visuals.head_accessory_color.b;
+
+				for (size_t t = 0; t < acc_tris.size(); t++)
+				{
+					uint16_t i0 = acc_tris[t].i0;
+					uint16_t i1 = acc_tris[t].i1;
+					uint16_t i2 = acc_tris[t].i2;
+
+					float avg_depth = depth_acc[i0] + depth_acc[i1] + depth_acc[i2];
+					float u_frac = acc_verts[i0].u;
+					int cr = ImMin(255, (int)(25.0f + u_frac * (float)hr));
+					int cg = ImMin(255, (int)(15.0f + u_frac * (float)hg));
+					int cb = ImMin(255, (int)(20.0f + u_frac * (float)hb));
+					ImU32 col = IM_COL32(cr, cg, cb, 255);
+					tri_list.push_back({ proj_acc[i0], proj_acc[i1], proj_acc[i2], avg_depth, col });
+				}
+			}
+			else if (sets->visuals.head_accessory == 4) // 4. 3D Royal Gold Crown
+			{
+				AccessoriesMesh::GenerateCrown(sets->visuals.head_accessory_size, sets->visuals.head_accessory_height, acc_verts, acc_tris);
+				proj_acc.resize(acc_verts.size());
+				depth_acc.resize(acc_verts.size());
+
+				for (size_t a = 0; a < acc_verts.size(); a++)
+				{
+					float wx = head_vert.x + acc_verts[a].x;
+					float wy = head_vert.y + acc_verts[a].y;
+					float wz = head_vert.z + acc_verts[a].z;
+
+					float rx = wx * cos_a - wy * sin_a;
+					float ry = wx * sin_a + wy * cos_a;
+					float rz = wz;
+
+					proj_acc[a] = ImVec2(center_x + rx * scale, center_y + (38.0f - rz) * scale);
+					depth_acc[a] = ry;
+				}
+
+				int hr = sets->visuals.head_accessory_color.r;
+				int hg = sets->visuals.head_accessory_color.g;
+				int hb = sets->visuals.head_accessory_color.b;
+
+				for (size_t t = 0; t < acc_tris.size(); t++)
+				{
+					uint16_t i0 = acc_tris[t].i0;
+					uint16_t i1 = acc_tris[t].i1;
+					uint16_t i2 = acc_tris[t].i2;
+
+					float avg_depth = depth_acc[i0] + depth_acc[i1] + depth_acc[i2];
+					ImU32 col = (t % 3 == 0) ? IM_COL32(hr, hg, hb, 255) : IM_COL32((int)(hr * 0.85f), (int)(hg * 0.85f), (int)(hb * 0.85f), 255);
+					tri_list.push_back({ proj_acc[i0], proj_acc[i1], proj_acc[i2], avg_depth, col });
+				}
+			}
+			else if (sets->visuals.head_accessory == 5) // 5. 3D Cute Neko Cat Ears
+			{
+				AccessoriesMesh::GenerateCatEars(sets->visuals.head_accessory_size, acc_verts, acc_tris);
+				proj_acc.resize(acc_verts.size());
+				depth_acc.resize(acc_verts.size());
+
+				for (size_t a = 0; a < acc_verts.size(); a++)
+				{
+					float wx = head_vert.x + acc_verts[a].x;
+					float wy = head_vert.y + acc_verts[a].y;
+					float wz = head_vert.z + acc_verts[a].z;
+
+					float rx = wx * cos_a - wy * sin_a;
+					float ry = wx * sin_a + wy * cos_a;
+					float rz = wz;
+
+					proj_acc[a] = ImVec2(center_x + rx * scale, center_y + (38.0f - rz) * scale);
+					depth_acc[a] = ry;
+				}
+
+				int hr = sets->visuals.head_accessory_color.r;
+				int hg = sets->visuals.head_accessory_color.g;
+				int hb = sets->visuals.head_accessory_color.b;
+
+				for (size_t t = 0; t < acc_tris.size(); t++)
+				{
+					uint16_t i0 = acc_tris[t].i0;
+					uint16_t i1 = acc_tris[t].i1;
+					uint16_t i2 = acc_tris[t].i2;
+
+					float avg_depth = depth_acc[i0] + depth_acc[i1] + depth_acc[i2];
+					ImU32 col = (acc_tris[t].color_override != 0) ? (ImU32)acc_tris[t].color_override : IM_COL32(hr, hg, hb, 255);
+					tri_list.push_back({ proj_acc[i0], proj_acc[i1], proj_acc[i2], avg_depth, col });
+				}
+			}
+
+			// Painter's Algorithm: Sort All Triangles (Player + 3D Wings + 3D Accessories) Back-to-Front by Depth
 			std::sort(tri_list.begin(), tri_list.end(), [](const TriangleDraw& a, const TriangleDraw& b) {
 				return a.depth < b.depth;
 			});
 
-			// Render Triangles
+			// Render 3D Triangles
 			for (const auto& tri : tri_list)
 			{
 				draw_list->AddTriangleFilled(tri.p0, tri.p1, tri.p2, tri.fill_color);
+			}
+
+			// Render 3D Demon Wing Structural Outlines & Fan Veins
+			if (sets->visuals.energy_wings && !proj_wing.empty())
+			{
+				ImU32 line_col = IM_COL32(sets->visuals.energy_wings_color.r, sets->visuals.energy_wings_color.g, sets->visuals.energy_wings_color.b, 255);
+				ImU32 bone_col = IM_COL32(20, 15, 24, 255);
+				ImU32 claw_col = IM_COL32(255, 255, 255, 255);
+
+				for (int s_idx = 0; s_idx < 2; s_idx++)
+				{
+					int b = s_idx * 12; // 12 vertices per wing
+					// Main Bone Outlines
+					draw_list->AddLine(proj_wing[b + 0], proj_wing[b + 1], bone_col, 3.2f);
+					draw_list->AddLine(proj_wing[b + 1], proj_wing[b + 2], bone_col, 2.8f);
+					draw_list->AddLine(proj_wing[b + 0], proj_wing[b + 1], line_col, 1.8f);
+					draw_list->AddLine(proj_wing[b + 1], proj_wing[b + 2], line_col, 1.5f);
+
+					// Finger Bone Rays & Scallops
+					draw_list->AddLine(proj_wing[b + 1], proj_wing[b + 3], line_col, 1.8f);
+					draw_list->AddLine(proj_wing[b + 3], proj_wing[b + 4], line_col, 1.5f);
+					draw_list->AddLine(proj_wing[b + 4], proj_wing[b + 5], line_col, 1.5f);
+					draw_list->AddLine(proj_wing[b + 5], proj_wing[b + 6], line_col, 1.5f);
+					draw_list->AddLine(proj_wing[b + 6], proj_wing[b + 7], line_col, 1.5f);
+					draw_list->AddLine(proj_wing[b + 7], proj_wing[b + 8], line_col, 1.5f);
+					draw_list->AddLine(proj_wing[b + 8], proj_wing[b + 9], line_col, 1.5f);
+					draw_list->AddLine(proj_wing[b + 9], proj_wing[b + 0], line_col, 1.2f);
+
+					// Internal Fan Veins
+					draw_list->AddLine(proj_wing[b + 1], proj_wing[b + 5], line_col, 1.2f);
+					draw_list->AddLine(proj_wing[b + 1], proj_wing[b + 7], line_col, 1.2f);
+
+					// Glowing Talon Claws
+					draw_list->AddCircleFilled(proj_wing[b + 3], 2.5f, claw_col);
+					draw_list->AddCircleFilled(proj_wing[b + 5], 2.5f, claw_col);
+					draw_list->AddCircleFilled(proj_wing[b + 7], 2.5f, claw_col);
+					draw_list->AddCircleFilled(proj_wing[b + 9], 2.5f, claw_col);
+					draw_list->AddCircleFilled(proj_wing[b + 1], 3.0f, claw_col);
+				}
 			}
 
 			// Mode-specific Edge Overlay
@@ -292,76 +580,127 @@ namespace Menu
 			ImVec2 j_l_foot = projected_pts[2370];
 			ImVec2 j_r_foot = projected_pts[981];
 
-			// 3D Skeleton ESP (100% Perfectly Attached to rotating character mesh)
+			// 3D Skeleton ESP (Sleek, subtle, high-precision joint tracking)
 			if (sets->visuals.skeleton)
 			{
-				ImU32 skel_col = IM_COL32(sets->visuals.esp_t.r, sets->visuals.esp_t.g, sets->visuals.esp_t.b, 255);
-				draw_list->AddLine(j_head, j_neck, skel_col, 2.5f);
-				draw_list->AddLine(j_neck, j_pelvis, skel_col, 2.5f);
-				draw_list->AddLine(j_neck, j_l_shoulder, skel_col, 2.5f);
-				draw_list->AddLine(j_l_shoulder, j_l_elbow, skel_col, 2.0f);
-				draw_list->AddLine(j_l_elbow, j_l_hand, skel_col, 2.0f);
-				draw_list->AddLine(j_neck, j_r_shoulder, skel_col, 2.5f);
-				draw_list->AddLine(j_r_shoulder, j_r_elbow, skel_col, 2.0f);
-				draw_list->AddLine(j_r_elbow, j_r_hand, skel_col, 2.0f);
-				draw_list->AddLine(j_pelvis, j_l_knee, skel_col, 2.5f);
-				draw_list->AddLine(j_l_knee, j_l_foot, skel_col, 2.5f);
-				draw_list->AddLine(j_pelvis, j_r_knee, skel_col, 2.5f);
-				draw_list->AddLine(j_r_knee, j_r_foot, skel_col, 2.5f);
+				ImU32 skel_col = IM_COL32(sets->visuals.esp_t.r, sets->visuals.esp_t.g, sets->visuals.esp_t.b, 200);
+				ImU32 joint_glow = IM_COL32(255, 255, 255, 220);
 
-				// Glowing Neon Joint Spheres
-				ImU32 joint_glow = IM_COL32(255, 255, 255, 255);
-				draw_list->AddCircleFilled(j_head, 4.0f, joint_glow);
-				draw_list->AddCircleFilled(j_neck, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_l_shoulder, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_r_shoulder, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_l_elbow, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_r_elbow, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_l_hand, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_r_hand, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_pelvis, 3.5f, joint_glow);
-				draw_list->AddCircleFilled(j_l_knee, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_r_knee, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_l_foot, 3.0f, joint_glow);
-				draw_list->AddCircleFilled(j_r_foot, 3.0f, joint_glow);
+				draw_list->AddLine(j_head, j_neck, skel_col, 1.5f);
+				draw_list->AddLine(j_neck, j_pelvis, skel_col, 1.5f);
+				draw_list->AddLine(j_neck, j_l_shoulder, skel_col, 1.2f);
+				draw_list->AddLine(j_l_shoulder, j_l_elbow, skel_col, 1.2f);
+				draw_list->AddLine(j_l_elbow, j_l_hand, skel_col, 1.2f);
+				draw_list->AddLine(j_neck, j_r_shoulder, skel_col, 1.2f);
+				draw_list->AddLine(j_r_shoulder, j_r_elbow, skel_col, 1.2f);
+				draw_list->AddLine(j_r_elbow, j_r_hand, skel_col, 1.2f);
+				draw_list->AddLine(j_pelvis, j_l_knee, skel_col, 1.2f);
+				draw_list->AddLine(j_l_knee, j_l_foot, skel_col, 1.2f);
+				draw_list->AddLine(j_pelvis, j_r_knee, skel_col, 1.2f);
+				draw_list->AddLine(j_r_knee, j_r_foot, skel_col, 1.2f);
+
+				// Subtle Joint Dots
+				draw_list->AddCircleFilled(j_head, 2.5f, joint_glow);
+				draw_list->AddCircleFilled(j_neck, 2.0f, joint_glow);
+				draw_list->AddCircleFilled(j_l_elbow, 1.8f, joint_glow);
+				draw_list->AddCircleFilled(j_r_elbow, 1.8f, joint_glow);
+				draw_list->AddCircleFilled(j_l_hand, 1.8f, joint_glow);
+				draw_list->AddCircleFilled(j_r_hand, 1.8f, joint_glow);
+				draw_list->AddCircleFilled(j_l_knee, 1.8f, joint_glow);
+				draw_list->AddCircleFilled(j_r_knee, 1.8f, joint_glow);
 			}
 
-			// 3D Conical Asian Rice Hat (Anchored right above top head vertex 2674)
-			if (sets->visuals.asian_hat)
-			{
-				float hat_h = sets->visuals.asian_hat_height * 2.2f;
-				float hat_r = sets->visuals.asian_hat_size * 1.4f;
+			// 1. Natural Ground Contact Shadow
+			ImVec2 floor_c(center_x, box_max.y + 3.0f);
+			draw_list->AddEllipseFilled(floor_c, ImVec2(model_w * 0.42f, model_w * 0.11f), IM_COL32(0, 0, 0, 110), 0.0f, 24);
 
+			// 3. 3D Arcane Magic Circle Runes (Ground - ONLY rendered when enabled)
+			if (sets->visuals.magic_circle)
+			{
+				float rad = (sets->visuals.magic_circle_size * 1.3f + 15.0f) * scale;
+				ImVec2 feet_pos(center_x, box_max.y + 4.0f);
+				ImU32 rune_core = IM_COL32(sets->visuals.magic_circle_color.r, sets->visuals.magic_circle_color.g, sets->visuals.magic_circle_color.b, 240);
+				ImU32 rune_glow = IM_COL32(sets->visuals.magic_circle_color.r, sets->visuals.magic_circle_color.g, sets->visuals.magic_circle_color.b, 75);
+
+				// Outer Radiant Floor Bloom
+				draw_list->AddEllipseFilled(feet_pos, ImVec2(rad * 1.22f, rad * 0.36f), rune_glow, 0.0f, 32);
+
+				// Concentric Arcane Rings (Precision Astrological Dial)
+				draw_list->AddEllipse(feet_pos, ImVec2(rad, rad * 0.30f), rune_core, 0.0f, 32, 2.2f);
+				draw_list->AddEllipse(feet_pos, ImVec2(rad * 0.92f, rad * 0.276f), rune_core, 0.0f, 32, 1.0f);
+				draw_list->AddEllipse(feet_pos, ImVec2(rad * 0.65f, rad * 0.195f), rune_core, 0.0f, 24, 1.5f);
+				draw_list->AddEllipse(feet_pos, ImVec2(rad * 0.32f, rad * 0.096f), IM_COL32(255, 255, 255, 220), 0.0f, 16, 1.2f);
+
+				// 16 Rotating Elder Futhark Runic Glyphs on Outer Ring
+				int rune_pts = 16;
+				for (int r = 0; r < rune_pts; r++)
+				{
+					float a = model_angle * 1.2f + (float)r * (2.0f * 3.14159f / (float)rune_pts);
+					ImVec2 p_outer(feet_pos.x + std::cos(a) * rad, feet_pos.y + std::sin(a) * (rad * 0.30f));
+					ImVec2 p_inner(feet_pos.x + std::cos(a) * (rad * 0.92f), feet_pos.y + std::sin(a) * (rad * 0.276f));
+					draw_list->AddLine(p_outer, p_inner, rune_core, 1.2f);
+					draw_list->AddCircleFilled(p_outer, 2.0f, IM_COL32(255, 255, 255, 240));
+				}
+
+				// Sacred Octagram (Dual Rotating Overlapping Squares - Counter Clockwise)
+				int oct_pts = 8;
+				std::vector<ImVec2> oct(oct_pts);
+				for (int s = 0; s < oct_pts; s++)
+				{
+					float sa = -model_angle * 1.4f + (float)s * (2.0f * 3.14159f / 8.0f);
+					oct[s] = ImVec2(feet_pos.x + std::cos(sa) * (rad * 0.65f), feet_pos.y + std::sin(sa) * (rad * 0.195f));
+				}
+				for (int s = 0; s < oct_pts; s++)
+				{
+					draw_list->AddLine(oct[s], oct[(s + 2) % oct_pts], rune_core, 1.5f);
+				}
+
+				// Floating Rune Energy Motes Rising Upward
+				for (int ep = 0; ep < 6; ep++)
+				{
+					float ep_t = model_angle * 2.0f + (float)ep * 1.1f;
+					float ep_y = std::fmod(ep_t * 20.0f, 45.0f * scale);
+					float ep_x = std::sin(ep_t * 1.8f) * (rad * 0.75f);
+					float ep_a = (1.0f - (ep_y / (45.0f * scale))) * 220.0f;
+					draw_list->AddCircleFilled(ImVec2(center_x + ep_x, feet_pos.y - ep_y), 1.8f, IM_COL32(255, 255, 255, (int)ep_a));
+				}
+			}
+
+			// 4. Subtle Silk Ribbon Chin Strap for Nón Lá (Only when Nón Lá is active)
+			if (sets->visuals.head_accessory == 1 || sets->visuals.asian_hat)
+			{
 				const auto& hv = g_phoenix_vertices[2674];
 				float rx = hv.x * cos_a - hv.y * sin_a;
-				float rz = hv.z + hat_h;
-				ImVec2 apex(center_x + rx * scale, center_y + (38.0f - rz) * scale);
+				float rz = hv.z - 3.2f;
+				ImVec2 rim_l(center_x + (rx - 16.0f) * scale, center_y + (38.0f - rz) * scale);
+				ImVec2 rim_r(center_x + (rx + 16.0f) * scale, center_y + (38.0f - rz) * scale);
 
-				ImU32 hat_fill = IM_COL32(sets->visuals.asian_hat_color.r, sets->visuals.asian_hat_color.g, sets->visuals.asian_hat_color.b, 175);
-				ImU32 hat_outline = IM_COL32(sets->visuals.asian_hat_color.r, sets->visuals.asian_hat_color.g, sets->visuals.asian_hat_color.b, 255);
+				ImVec2 chin_pos = projected_pts[2709]; // Under Head/Chin
+				chin_pos.y += 8.0f * scale;
+				float strap_swing = std::sin(model_angle * 2.8f) * 3.5f;
+				ImVec2 strap_knot(chin_pos.x + strap_swing, chin_pos.y + 2.0f);
 
-				int num_pts = 16;
-				std::vector<ImVec2> base_pts(num_pts);
-				for (int i = 0; i < num_pts; i++)
-				{
-					float rad = (float)i * (2.0f * 3.14159f / (float)num_pts);
-					float bx = hv.x + std::cos(rad) * hat_r;
-					float by = hv.y + std::sin(rad) * hat_r;
-					float bz = hv.z - 2.0f;
+				ImU32 silk_col = IM_COL32(235, 55, 105, 240); // Soft Pink/Red Silk
+				draw_list->AddLine(rim_l, strap_knot, silk_col, 2.0f);
+				draw_list->AddLine(rim_r, strap_knot, silk_col, 2.0f);
+				draw_list->AddCircleFilled(strap_knot, 2.8f, silk_col);
+				draw_list->AddLine(strap_knot, ImVec2(strap_knot.x - 3.0f + strap_swing * 0.8f, strap_knot.y + 12.0f), silk_col, 1.8f);
+				draw_list->AddLine(strap_knot, ImVec2(strap_knot.x + 4.0f + strap_swing * 0.8f, strap_knot.y + 15.0f), silk_col, 1.8f);
+			}
 
-					float brx = bx * cos_a - by * sin_a;
-					base_pts[i] = ImVec2(center_x + brx * scale, center_y + (38.0f - bz) * scale);
-				}
+			// 5. Weapon Laser Sight in Preview (Projecting Volumetric Neon Beam)
+			if (sets->visuals.laser_sight)
+			{
+				ImVec2 hand_pos = projected_pts[1465]; // Right Hand
+				ImVec2 laser_end(hand_pos.x + 120.0f * cos_a, hand_pos.y + 40.0f);
+				ImU32 laser_c = IM_COL32(sets->visuals.laser_sight_color.r, sets->visuals.laser_sight_color.g, sets->visuals.laser_sight_color.b, 255);
+				ImU32 laser_glow = IM_COL32(sets->visuals.laser_sight_color.r, sets->visuals.laser_sight_color.g, sets->visuals.laser_sight_color.b, 90);
 
-				for (int i = 0; i < num_pts; i++)
-				{
-					ImVec2 p1 = base_pts[i];
-					ImVec2 p2 = base_pts[(i + 1) % num_pts];
-					draw_list->AddTriangleFilled(apex, p1, p2, hat_fill);
-					draw_list->AddTriangle(apex, p1, p2, hat_outline, 1.2f);
-				}
-
-				draw_list->AddCircleFilled(apex, 4.0f, IM_COL32(255, 255, 255, 255));
+				draw_list->AddLine(hand_pos, laser_end, laser_glow, 5.0f);
+				draw_list->AddLine(hand_pos, laser_end, laser_c, 2.2f);
+				draw_list->AddLine(hand_pos, laser_end, IM_COL32(255, 255, 255, 240), 1.0f);
+				draw_list->AddCircleFilled(laser_end, 4.0f, laser_c);
+				draw_list->AddCircleFilled(laser_end, 2.0f, IM_COL32(255, 255, 255, 255));
 			}
 
 			// --- DYNAMICALLY POSITIONED 2D ESP INDICATORS (INTERACTIVE CLICKABLE) ---
@@ -687,7 +1026,6 @@ namespace Menu
 			break;
 
 		case THEME_NEVERLOSE:
-		default: // 1. Neverlose 2.0 (Screenshots 1 & 2)
 			ui_accent_color = ImVec4(0.35f, 0.50f, 0.98f, 1.00f); // Neverlose Royal Blue #5980FA
 			style.WindowRounding    = 14.0f;
 			style.ChildRounding     = 10.0f;
@@ -729,6 +1067,50 @@ namespace Menu
 			style.Colors[ImGuiCol_SeparatorHovered]      = ui_accent_color;
 			style.Colors[ImGuiCol_SeparatorActive]       = ui_accent_color;
 			break;
+
+		case THEME_FATALITY:
+		default: // Fatality.win Official (Deep Crimson Magenta #F8004F)
+			ui_accent_color = ImVec4(0.97f, 0.00f, 0.31f, 1.00f); // Fatality Magenta Pink #F8004F
+			style.WindowRounding    = 6.0f;
+			style.ChildRounding     = 4.0f;
+			style.FrameRounding     = 3.0f;
+			style.PopupRounding     = 4.0f;
+			style.ScrollbarRounding = 3.0f;
+			style.GrabRounding      = 2.0f;
+			style.TabRounding       = 4.0f;
+			style.WindowBorderSize  = 1.0f;
+			style.ChildBorderSize   = 1.0f;
+			style.FrameBorderSize   = 1.0f;
+
+			style.Colors[ImGuiCol_Text]                  = ImVec4(0.88f, 0.86f, 0.92f, 1.00f);
+			style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.48f, 0.45f, 0.55f, 1.00f);
+			style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.067f, 0.059f, 0.090f, 0.98f);
+			style.Colors[ImGuiCol_ChildBg]               = ImVec4(0.086f, 0.075f, 0.122f, 0.96f);
+			style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.080f, 0.070f, 0.110f, 0.98f);
+			style.Colors[ImGuiCol_Border]                = ImVec4(0.160f, 0.140f, 0.220f, 1.00f);
+			style.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+			style.Colors[ImGuiCol_FrameBg]               = ImVec4(0.110f, 0.094f, 0.153f, 1.00f);
+			style.Colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.160f, 0.135f, 0.220f, 1.00f);
+			style.Colors[ImGuiCol_FrameBgActive]         = ImVec4(0.220f, 0.180f, 0.290f, 1.00f);
+			style.Colors[ImGuiCol_TitleBg]               = ImVec4(0.067f, 0.059f, 0.090f, 1.00f);
+			style.Colors[ImGuiCol_TitleBgActive]         = ImVec4(0.086f, 0.075f, 0.122f, 1.00f);
+			style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.067f, 0.059f, 0.090f, 0.60f);
+			style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.160f, 0.135f, 0.220f, 1.00f);
+			style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.240f, 0.190f, 0.320f, 1.00f);
+			style.Colors[ImGuiCol_ScrollbarGrabActive]   = ui_accent_color;
+			style.Colors[ImGuiCol_CheckMark]             = ui_accent_color;
+			style.Colors[ImGuiCol_SliderGrab]            = ui_accent_color;
+			style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(1.00f, 0.20f, 0.45f, 1.00f);
+			style.Colors[ImGuiCol_Button]                = ImVec4(0.120f, 0.100f, 0.165f, 1.00f);
+			style.Colors[ImGuiCol_ButtonHovered]         = ImVec4(0.180f, 0.140f, 0.240f, 1.00f);
+			style.Colors[ImGuiCol_ButtonActive]          = ui_accent_color;
+			style.Colors[ImGuiCol_Header]                = ImVec4(0.140f, 0.115f, 0.190f, 1.00f);
+			style.Colors[ImGuiCol_HeaderHovered]         = ImVec4(0.200f, 0.155f, 0.260f, 1.00f);
+			style.Colors[ImGuiCol_HeaderActive]          = ui_accent_color;
+			style.Colors[ImGuiCol_Separator]             = ImVec4(0.160f, 0.140f, 0.220f, 1.00f);
+			style.Colors[ImGuiCol_SeparatorHovered]      = ui_accent_color;
+			style.Colors[ImGuiCol_SeparatorActive]       = ui_accent_color;
+			break;
 		}
 	}
 
@@ -758,48 +1140,40 @@ namespace Menu
 		// Column 1: Aimbot Logic & Targeting
 		ImGui::BeginChild("RageCol1", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("MAIN");
+			BeginGroupbox("Aimbot Master");
 			AnimatedSwitch("Enable Ragebot##rage_main", &sets->rage.enabled);
 			AnimatedSwitch("Auto Knife (Knifebot)##rage_kb", &sets->legit.knifebot);
 			AnimatedSwitch("Silent Aim##rage_silent", &sets->rage.silent);
 			AnimatedSwitch("Automatic Fire##rage_autoshoot", &sets->rage.autoshoot);
+			AnimatedSwitch("Automatic Scope##rage_autoscope", &sets->rage.autoscope);
+			AnimatedSwitch("Automatic Stop##rage_autostop", &sets->rage.autostop);
 			AnimatedSwitch("Aim Through Walls##rage_autowall", &sets->rage.autowall);
 			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Field of View##rage_fov", &sets->rage.hitchance, 0.0f, 180.0f, "%.1f°");
-			EndGroupbox();
-
-			BeginGroupbox("SELECTION");
-			const char* hit_modes[] = { "Hit Chance", "Damage", "Distance" };
-			static int sel_hit = 0;
+			ImGui::SliderFloat("Hit Chance##rage_hc", &sets->rage.hitchance, 0.0f, 100.0f, "%.0f%%");
 			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("Target##rage_target", &sel_hit, hit_modes, IM_ARRAYSIZE(hit_modes));
+			ImGui::SliderFloat("Min Damage (Visible)", &sets->rage.min_damage_visible, 1.0f, 100.0f, "%.0f hp");
+			ImGui::SetNextItemWidth(170);
+			ImGui::SliderFloat("Min Damage (Autowall)", &sets->rage.min_damage_autowall, 1.0f, 100.0f, "%.0f hp");
 			EndGroupbox();
 		}
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
-		// Column 2: Target Selection & Resolver
+		// Column 2: Target Selection & Accuracy
 		ImGui::BeginChild("RageCol2", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("OTHER");
-			const char* hist_modes[] = { "Low", "Medium", "High" };
-			static int sel_hist = 0;
+			BeginGroupbox("Target Selection & Accuracy");
+			const char* baim_modes[] = { "Default", "Prefer Body Aim", "Force Body Aim" };
 			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("History##rage_hist", &sel_hist, hist_modes, IM_ARRAYSIZE(hist_modes));
-			AnimatedSwitch("Delay Shot##rage_delay", &sets->rage.autostop);
-			AnimatedSwitch("Remove Recoil##rage_rcs", &sets->rage.silent);
-			AnimatedSwitch("Remove Spread##rage_nospread", &sets->rage.autoscope);
-			AnimatedSwitch("Duck Peek Assist##rage_fakeduck", &sets->misc.fake_duck);
-			AnimatedSwitch("Quick Peek Assist##rage_slowwalk", &sets->misc.slow_walk);
-			AnimatedSwitch("Double Tap##rage_dt", &sets->rage.magic_bullet);
-			EndGroupbox();
-
-			BeginGroupbox("ANTI-AIM");
-			AnimatedSwitch("Enable Anti-Aim##rage_aa_enable", &sets->rage.spinbot);
-			const char* pitch_modes[] = { "Off", "Down", "Up", "Zero" };
-			ImGui::SetNextItemWidth(170);
-			ImGui::Combo("Pitch##rage_pitch", &sets->rage.pitch_aa, pitch_modes, IM_ARRAYSIZE(pitch_modes));
+			ImGui::Combo("Body Aim##rage_baim", &sets->rage.body_aim_mode, baim_modes, IM_ARRAYSIZE(baim_modes));
+			AnimatedSwitch("Head Hitbox##rage_hb_head", &sets->rage.hitbox[0]);
+			AnimatedSwitch("Chest Hitbox##rage_hb_chest", &sets->rage.hitbox[1]);
+			AnimatedSwitch("Stomach Hitbox##rage_hb_stom", &sets->rage.hitbox[2]);
+			AnimatedSwitch("Arms Hitbox##rage_hb_arms", &sets->rage.hitbox[3]);
+			AnimatedSwitch("Legs Hitbox##rage_hb_legs", &sets->rage.hitbox[4]);
+			AnimatedSwitch("Override Resolver##rage_res", &sets->rage.override_resolver);
+			AnimatedSwitch("Magic Bullet / Double Tap##rage_mb", &sets->rage.magic_bullet);
 			EndGroupbox();
 		}
 		ImGui::EndChild();
@@ -809,38 +1183,44 @@ namespace Menu
 	{
 		float col_w = (ImGui::GetContentRegionAvail().x - 10.0f) * 0.5f;
 
-		// Column 1: Pitch & Yaw Angles
+		// Column 1: Unified Pitch & Yaw Angles (Spinbot)
 		ImGui::BeginChild("AntiAimCol1", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("SPINBOT & ANGLES");
-			AnimatedSwitch("Enable Spinbot", &sets->rage.spinbot);
+			BeginGroupbox("Unified Anti-Aim & Spinbot");
+			AnimatedSwitch("Enable Anti-Aim / Spinbot", &sets->rage.spinbot);
 			
-			const char* pitch_modes[] = { "Off", "Down (Emotion)", "Up (Fakeping)", "Zero / Untrusted" };
+			const char* pitch_modes[] = { "Off", "Down (Emotion 89°)", "Up (Fakeping -89°)", "Zero (0°)" };
 			ImGui::SetNextItemWidth(170);
 			ImGui::Combo("Pitch Angle", &sets->rage.pitch_aa, pitch_modes, IM_ARRAYSIZE(pitch_modes));
 
-			const char* yaw_modes[] = { "Off", "Backwards (180°)", "Spinbot", "Jitter", "Sideways" };
+			const char* yaw_modes[] = { "Off", "Backwards (180°)", "Spinbot (360°)", "Jitter (±90°)", "Sideways (90°)" };
 			ImGui::SetNextItemWidth(170);
 			ImGui::Combo("Yaw Angle", &sets->rage.yaw_aa, yaw_modes, IM_ARRAYSIZE(yaw_modes));
 
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Spin Speed", &sets->rage.spin_speed, 1.0f, 100.0f, "%.0f deg/s");
+			if (sets->rage.yaw_aa == 2 || sets->rage.spinbot)
+			{
+				ImGui::SetNextItemWidth(170);
+				ImGui::SliderFloat("Spin Speed", &sets->rage.spin_speed, 1.0f, 100.0f, "%.0f deg/s");
+			}
 			EndGroupbox();
 		}
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 
-		// Column 2: Desync & Fake Lag
+		// Column 2: Fake Lag & Exploits
 		ImGui::BeginChild("AntiAimCol2", ImVec2(col_w, 0), false);
 		{
-			BeginGroupbox("DESYNC & FAKE LAG");
+			BeginGroupbox("Fake Lag & Exploits");
 			AnimatedSwitch("Enable FakeLag Engine", &sets->misc.fakelag_enabled);
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("FakeLag Limit", &sets->misc.fakelag_limit, 1, 16, "%d ticks");
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("FakeLag Variance", &sets->misc.fakelag_random, 0, 8, "%d ticks");
-			AnimatedSwitch("Fake Duck Assist", &sets->misc.fake_duck);
+			if (sets->misc.fakelag_enabled)
+			{
+				ImGui::SetNextItemWidth(170);
+				ImGui::SliderInt("FakeLag Limit", &sets->misc.fakelag_limit, 1, 16, "%d ticks");
+				ImGui::SetNextItemWidth(170);
+				ImGui::SliderInt("FakeLag Variance", &sets->misc.fakelag_random, 0, 8, "%d ticks");
+			}
+			AnimatedSwitch("Fake Duck (Crouch Peek)", &sets->misc.fake_duck);
 			EndGroupbox();
 		}
 		ImGui::EndChild();
@@ -864,29 +1244,8 @@ namespace Menu
 			ImGui::SliderFloat("Aimbot Field of View", &sets->legit.aim.fov, 0.0f, 30.0f, "%.1f°");
 			ImGui::SetNextItemWidth(170);
 			ImGui::SliderFloat("Smooth Amount", &sets->legit.aim.smooth[0], 0.0f, 100.0f, "%.1f");
-			EndGroupbox();
-
-			BeginGroupbox("Recoil Control System (RCS)");
-			AnimatedSwitch("Enable RCS", &sets->legit.aim.enable_rcs);
-			AnimatedSwitch("Standalone RCS", &sets->legit.aim.standalone_rcs);
 			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("RCS Pitch Mult", &sets->legit.aim.rcs[0], 0.0f, 2.0f, "%.2fx");
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("RCS Yaw Mult", &sets->legit.aim.rcs[1], 0.0f, 2.0f, "%.2fx");
-			EndGroupbox();
-		}
-		ImGui::EndChild();
-
-		ImGui::SameLine();
-
-		// Column 2: Backtrack & Hitbox Filters
-		ImGui::BeginChild("LegitCol2", ImVec2(col_w, 0), false);
-		{
-			BeginGroupbox("Backtrack Engine");
-			AnimatedSwitch("Enable Backtrack", &sets->legit.backtrack.enabled);
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderInt("Backtrack Ticks", &sets->legit.backtrack.ticks, 1, 14, "%d ticks");
-			AnimatedSwitch("Draw Backtrack Records", &sets->legit.backtrack.style[0]);
+			ImGui::SliderFloat("FOV Humanize", &sets->legit.aim.humanize[0], 0.0f, 5.0f, "%.1fx");
 			EndGroupbox();
 
 			BeginGroupbox("Target Hitbox Filter");
@@ -898,127 +1257,292 @@ namespace Menu
 			EndGroupbox();
 		}
 		ImGui::EndChild();
+
+		ImGui::SameLine();
+
+		// Column 2: Backtrack & RCS
+		ImGui::BeginChild("LegitCol2", ImVec2(col_w, 0), false);
+		{
+			BeginGroupbox("Recoil Control System (RCS)");
+			AnimatedSwitch("Enable RCS", &sets->legit.aim.enable_rcs);
+			AnimatedSwitch("Standalone RCS", &sets->legit.aim.standalone_rcs);
+			ImGui::SetNextItemWidth(170);
+			ImGui::SliderFloat("RCS Pitch Mult", &sets->legit.aim.rcs[0], 0.0f, 2.0f, "%.2fx");
+			ImGui::SetNextItemWidth(170);
+			ImGui::SliderFloat("RCS Yaw Mult", &sets->legit.aim.rcs[1], 0.0f, 2.0f, "%.2fx");
+			EndGroupbox();
+
+			BeginGroupbox("Backtrack Engine");
+			AnimatedSwitch("Enable Backtrack", &sets->legit.backtrack.enabled);
+			ImGui::SetNextItemWidth(170);
+			ImGui::SliderInt("Backtrack Ticks", &sets->legit.backtrack.ticks, 1, 14, "%d ticks");
+			AnimatedSwitch("Draw Backtrack Records", &sets->legit.backtrack.style[0]);
+			EndGroupbox();
+		}
+		ImGui::EndChild();
 	}
 
 	static void RenderPlayersEspTab(float tab_alpha)
 	{
+		static int esp_subtab = 0;
+		const char* subtab_names[] = { "Player ESP & Chams", "3D Accessories", "Combat & World FX", "Camera & Extra" };
+		
+		// Subtab bar with smooth styling
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+		for (int s = 0; s < IM_ARRAYSIZE(subtab_names); s++)
+		{
+			if (s > 0) ImGui::SameLine();
+			bool active = (esp_subtab == s);
+			if (active)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ui_accent_color);
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 1));
+			}
+			else
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.12f, 0.16f, 0.90f));
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.70f, 0.70f, 0.78f, 1.00f));
+			}
+
+			if (ImGui::Button(subtab_names[s], ImVec2((ImGui::GetContentRegionAvail().x - (3 - s) * 6.0f) / (4.0f - s), 28.0f)))
+			{
+				esp_subtab = s;
+			}
+			ImGui::PopStyleColor(2);
+		}
+		ImGui::PopStyleVar();
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Spacing();
+
 		float col_w = (ImGui::GetContentRegionAvail().x - 10.0f) * 0.5f;
 
-		// =========================================================================
-		// CỘT 1: PLAYER INFO (BARS, FLAGS, CHAMS, ASIAN HAT)
-		// =========================================================================
-		ImGui::BeginChild("EspCol1", ImVec2(col_w, 0), false);
+		if (esp_subtab == 0) // 1. Player ESP & Chams
 		{
-			BeginGroupbox("Player Info");
-			AnimatedSwitch("Enable Visuals Engine", &sets->visuals.enabled);
-			AnimatedSwitch("Draw Teammates", &sets->visuals.friends);
-			AnimatedSwitch("Player Names", &sets->visuals.esp_show[0]);
-			AnimatedSwitch("2D Bounding Box", &sets->visuals.esp_show[1]);
-			AnimatedSwitch("Skeleton ESP (Bones)", &sets->visuals.skeleton);
-			AnimatedSwitch("Health Bar", &sets->visuals.esp_bar[0]);
-			AnimatedSwitch("Armor Bar", &sets->visuals.esp_bar[1]);
-			AnimatedSwitch("Ammo Bar", &sets->visuals.esp_bar[2]);
-			AnimatedSwitch("Active Weapon Text", &sets->visuals.esp_show[2]);
-			AnimatedSwitch("Snaplines to Enemy", &sets->visuals.esp_show[3]);
-			EndGroupbox();
-
-			BeginGroupbox("Player Flags");
-			AnimatedSwitch("Flag [HK] (Helmet/Kevlar)", &sets->visuals.flag_hk);
-			AnimatedSwitch("Flag [SCOPED]", &sets->visuals.flag_scoped);
-			AnimatedSwitch("Flag [RELOADING]", &sets->visuals.flag_reloading);
-			AnimatedSwitch("Flag [FLASHED]", &sets->visuals.flag_flashed);
-			EndGroupbox();
-
-			BeginGroupbox("World & Removals");
-			AnimatedSwitch("Remove Smoke (No Smoke)", &sets->visuals.remove[0]);
-			AnimatedSwitch("Remove Flash (No Flash)", &sets->visuals.remove[1]);
-			AnimatedSwitch("Grenades ESP", &sets->visuals.esp_filter[2]);
-			AnimatedSwitch("C4 Bomb ESP", &sets->visuals.esp_filter[3]);
-			EndGroupbox();
-
-			BeginGroupbox("Player Chams");
-			const char* chams_modes[] = { "Disabled", "Flat Colored", "Material Shaded", "Wireframe" };
-			ImGui::SetNextItemWidth(160);
-			ImGui::Combo("Chams Mode", &sets->visuals.chams, chams_modes, IM_ARRAYSIZE(chams_modes));
-			ColorEdit3Custom("Terrorist (T) Color", sets->visuals.chams_t);
-			ColorEdit3Custom("Counter-Terrorist (CT) Color", sets->visuals.chams_ct);
-			EndGroupbox();
-
-			BeginGroupbox("Custom 3D Player Model");
-			AnimatedSwitch("Add / Apply Custom 3D Model", &sets->visuals.enable_custom_model);
-			if (sets->visuals.enable_custom_model)
+			// Column 1: Player Info & Flags
+			ImGui::BeginChild("EspCol1", ImVec2(col_w, 0), false);
 			{
-				AnimatedSwitch("Local Player Only (Only You)", &sets->visuals.custom_model_local_only);
-			}
-			ModelMgr::RefreshDynamicModels();
-			std::vector<const char*> custom_models_items;
-			for (auto& item : ModelMgr::model_entries)
-			{
-				custom_models_items.push_back(item.display_name.c_str());
-			}
-			ImGui::SetNextItemWidth(180);
-			if (!custom_models_items.empty())
-			{
-				ImGui::Combo("Character Model", &sets->visuals.model_selection, custom_models_items.data(), (int)custom_models_items.size());
-			}
-			EndGroupbox();
+				BeginGroupbox("Player ESP Overlay");
+				AnimatedSwitch("Enable Visuals Engine", &sets->visuals.enabled);
+				AnimatedSwitch("Draw Teammates", &sets->visuals.friends);
+				AnimatedSwitch("Player Names", &sets->visuals.esp_show[0]);
+				AnimatedSwitch("2D Bounding Box", &sets->visuals.esp_show[1]);
+				AnimatedSwitch("Skeleton ESP (Bones)", &sets->visuals.skeleton);
+				AnimatedSwitch("Health Bar", &sets->visuals.esp_bar[0]);
+				AnimatedSwitch("Armor Bar", &sets->visuals.esp_bar[1]);
+				AnimatedSwitch("Ammo Bar", &sets->visuals.esp_bar[2]);
+				AnimatedSwitch("Active Weapon Text", &sets->visuals.esp_show[2]);
+				AnimatedSwitch("Snaplines to Enemy", &sets->visuals.esp_show[3]);
+				EndGroupbox();
 
-			BeginGroupbox("3D Asian Rice Hat");
-			AnimatedSwitch("Enable Asian Rice Hat", &sets->visuals.asian_hat);
-			ColorEdit3Custom("Hat Color", sets->visuals.asian_hat_color);
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Hat Radius Size", &sets->visuals.asian_hat_size, 10.0f, 40.0f, "%.1f");
-			ImGui::SetNextItemWidth(170);
-			ImGui::SliderFloat("Hat Cone Height", &sets->visuals.asian_hat_height, 2.0f, 25.0f, "%.1f");
-			EndGroupbox();
+				BeginGroupbox("Player Status Flags");
+				AnimatedSwitch("Flag [HK] (Helmet/Kevlar)", &sets->visuals.flag_hk);
+				AnimatedSwitch("Flag [SCOPED]", &sets->visuals.flag_scoped);
+				AnimatedSwitch("Flag [RELOADING]", &sets->visuals.flag_reloading);
+				AnimatedSwitch("Flag [FLASHED]", &sets->visuals.flag_flashed);
+				EndGroupbox();
+			}
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+
+			// Column 2: Player Chams & Custom 3D Model
+			ImGui::BeginChild("EspCol2", ImVec2(col_w, 0), false);
+			{
+				BeginGroupbox("Player Chams");
+				const char* chams_modes[] = { "Disabled", "Flat Colored", "Material Shaded", "Wireframe" };
+				ImGui::SetNextItemWidth(160);
+				ImGui::Combo("Chams Mode", &sets->visuals.chams, chams_modes, IM_ARRAYSIZE(chams_modes));
+				ColorEdit3Custom("Terrorist (T) Color", sets->visuals.chams_t);
+				ColorEdit3Custom("Counter-Terrorist (CT) Color", sets->visuals.chams_ct);
+				EndGroupbox();
+
+				BeginGroupbox("Custom 3D Player Model");
+				AnimatedSwitch("Add / Apply Custom 3D Model", &sets->visuals.enable_custom_model);
+				if (sets->visuals.enable_custom_model)
+				{
+					AnimatedSwitch("Local Player Only (Only You)", &sets->visuals.custom_model_local_only);
+				}
+				ModelMgr::RefreshDynamicModels();
+				std::vector<const char*> custom_models_items;
+				for (auto& item : ModelMgr::model_entries)
+				{
+					custom_models_items.push_back(item.display_name.c_str());
+				}
+				ImGui::SetNextItemWidth(180);
+				if (!custom_models_items.empty())
+				{
+					ImGui::Combo("Character Model", &sets->visuals.model_selection, custom_models_items.data(), (int)custom_models_items.size());
+				}
+				EndGroupbox();
+
+				RenderEspLivePreview(ImVec2(col_w, 220), 0);
+			}
+			ImGui::EndChild();
 		}
-		ImGui::EndChild();
-
-		ImGui::SameLine();
-
-		// Column 2: Advanced & Extra
-		ImGui::BeginChild("EspCol2", ImVec2(col_w, 0), false);
+		else if (esp_subtab == 1) // 2. 3D Attachments & Accessories
 		{
-			BeginGroupbox("Advanced & Extra");
-			AnimatedSwitch("OOF Arrows (Offscreen ESP)", &sets->visuals.offscreen_esp);
-			if (sets->visuals.offscreen_esp)
+			// Column 1: Head & Body Accessories
+			ImGui::BeginChild("EspCol1", ImVec2(col_w, 0), false);
 			{
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("Arrow Size", &sets->visuals.oof_size, 5.0f, 30.0f, "%.0f px");
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("Screen Radius", &sets->visuals.oof_radius, 40.0f, 300.0f, "%.0f px");
-			}
-			AnimatedSwitch("Footstep Rings", &sets->visuals.footstep_rings);
-			AnimatedSwitch("Footstep Sound ESP", &sets->visuals.sound_esp);
-			AnimatedSwitch("Hitmarker FX", &sets->visuals.hitmarker);
-			AnimatedSwitch("Nightmode (Dark Map)", &sets->visuals.nightmode);
-			if (sets->visuals.nightmode)
-			{
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("Wall Opacity", &sets->visuals.asus_walls, 0.0f, 100.0f, "%.0f%%");
-			}
-			EndGroupbox();
+				BeginGroupbox("3D Head Accessories");
+				const char* head_acc_names[] = {
+					"0. Disabled",
+					"1. Asian Rice Hat",
+					"2. Angelic Holy Halo",
+					"3. Gothic Demon Horns",
+					"4. Royal Imperial Crown",
+					"5. Cute Neko Cat Ears"
+				};
+				ImGui::SetNextItemWidth(200);
+				if (ImGui::Combo("Head Accessory", &sets->visuals.head_accessory, head_acc_names, IM_ARRAYSIZE(head_acc_names)))
+				{
+					sets->visuals.asian_hat = (sets->visuals.head_accessory == 1);
+				}
 
-			BeginGroupbox("Camera & Trail FX");
-			AnimatedSwitch("Thirdperson (No sv_cheats)", &sets->visuals.thirdperson);
-			if (sets->visuals.thirdperson)
-			{
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("Camera Distance", &sets->visuals.thirdperson_dist, 30.0f, 300.0f, "%.0f u");
-				AnimatedSwitch("Reverse Angle (Look Back)", &sets->visuals.thirdperson_reverse);
-			}
-			AnimatedSwitch("Rainbow Trail", &sets->visuals.rainbow_trail);
-			if (sets->visuals.rainbow_trail)
-			{
-				ImGui::SetNextItemWidth(170);
-				ImGui::SliderFloat("Trail Speed", &sets->visuals.rainbow_trail_speed, 0.2f, 3.0f, "%.1fx");
-			}
-			EndGroupbox();
+				if (sets->visuals.head_accessory > 0)
+				{
+					ColorEdit3Custom("Accessory Color", sets->visuals.head_accessory_color);
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Accessory Size / Radius", &sets->visuals.head_accessory_size, 5.0f, 50.0f, "%.1f");
+					if (sets->visuals.head_accessory == 1 || sets->visuals.head_accessory == 4)
+					{
+						ImGui::SetNextItemWidth(170);
+						ImGui::SliderFloat("Cone / Crown Height", &sets->visuals.head_accessory_height, 2.0f, 30.0f, "%.1f");
+					}
+				}
+				EndGroupbox();
 
-			// 3D Live Interactive Model Preview
-			RenderEspLivePreview(ImVec2(col_w, 360), 0);
+				BeginGroupbox("3D Wings & Ground Runes");
+				AnimatedSwitch("3D Demon Wings", &sets->visuals.energy_wings);
+				if (sets->visuals.energy_wings)
+				{
+					ColorEdit3Custom("Wings Color", sets->visuals.energy_wings_color);
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Wings Size", &sets->visuals.energy_wings_size, 10.0f, 60.0f, "%.1f");
+				}
+
+				AnimatedSwitch("3D Arcane Magic Circle", &sets->visuals.magic_circle);
+				if (sets->visuals.magic_circle)
+				{
+					ColorEdit3Custom("Circle Color", sets->visuals.magic_circle_color);
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Circle Radius", &sets->visuals.magic_circle_size, 15.0f, 60.0f, "%.1f");
+				}
+				EndGroupbox();
+			}
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+
+			// Column 2: Live 3D Model with Accessories
+			ImGui::BeginChild("EspCol2", ImVec2(col_w, 0), false);
+			{
+				RenderEspLivePreview(ImVec2(col_w, 380), 0);
+			}
+			ImGui::EndChild();
 		}
-		ImGui::EndChild();
+		else if (esp_subtab == 2) // 3. Combat & World FX
+		{
+			// Column 1: Combat FX
+			ImGui::BeginChild("EspCol1", ImVec2(col_w, 0), false);
+			{
+				BeginGroupbox("3D Combat FX");
+				AnimatedSwitch("Weapon Laser Sight (Tia Laser Nong Sung)", &sets->visuals.laser_sight);
+				if (sets->visuals.laser_sight)
+				{
+					ColorEdit3Custom("Laser Sight Color", sets->visuals.laser_sight_color);
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Laser Length", &sets->visuals.laser_sight_length, 200.0f, 2500.0f, "%.0f u");
+				}
+
+				AnimatedSwitch("Bullet Laser Tracers (Tia Dan Laser)", &sets->visuals.bullet_tracers);
+				if (sets->visuals.bullet_tracers)
+				{
+					ColorEdit3Custom("Tracer Color", sets->visuals.bullet_tracers_color);
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Tracer Duration", &sets->visuals.bullet_tracers_duration, 0.5f, 5.0f, "%.1f s");
+				}
+
+				AnimatedSwitch("Bullet Impact Rings (Song Dan Cham Tuong)", &sets->visuals.impact_rings);
+				if (sets->visuals.impact_rings) ColorEdit3Custom("Impact Ring Color", sets->visuals.impact_rings_color);
+
+				AnimatedSwitch("Floating Damage Numbers (So Sat Thuong 3D)", &sets->visuals.damage_indicator);
+				if (sets->visuals.damage_indicator) ColorEdit3Custom("Damage Color", sets->visuals.damage_indicator_color);
+
+				const char* kill_fx_names[] = { "Off", "3D Lightning Strike (Set Danh)", "Blood Fountain (Phun Mau)", "Ascending Skull (Dau Lau)", "Cyber Implosion (Sap Khong Gian)" };
+				ImGui::SetNextItemWidth(170);
+				ImGui::Combo("Kill Visual FX", &sets->visuals.kill_effect, kill_fx_names, IM_ARRAYSIZE(kill_fx_names));
+				if (sets->visuals.kill_effect > 0) ColorEdit3Custom("Kill FX Color", sets->visuals.kill_effect_color);
+				EndGroupbox();
+			}
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+
+			// Column 2: World & Removals
+			ImGui::BeginChild("EspCol2", ImVec2(col_w, 0), false);
+			{
+				BeginGroupbox("World & Removals");
+				AnimatedSwitch("Remove Smoke (No Smoke)", &sets->visuals.remove[0]);
+				AnimatedSwitch("Remove Flash (No Flash)", &sets->visuals.remove[1]);
+				AnimatedSwitch("Grenades ESP", &sets->visuals.esp_filter[2]);
+				AnimatedSwitch("C4 Bomb ESP", &sets->visuals.esp_filter[3]);
+				AnimatedSwitch("Nightmode (Dark Map)", &sets->visuals.nightmode);
+				if (sets->visuals.nightmode)
+				{
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Wall Opacity (ASUS)", &sets->visuals.asus_walls, 0.0f, 100.0f, "%.0f%%");
+				}
+				EndGroupbox();
+			}
+			ImGui::EndChild();
+		}
+		else // 4. Camera & Extra FX
+		{
+			// Column 1: Advanced ESP
+			ImGui::BeginChild("EspCol1", ImVec2(col_w, 0), false);
+			{
+				BeginGroupbox("Advanced Indicators");
+				AnimatedSwitch("OOF Arrows (Offscreen ESP)", &sets->visuals.offscreen_esp);
+				if (sets->visuals.offscreen_esp)
+				{
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Arrow Size", &sets->visuals.oof_size, 5.0f, 30.0f, "%.0f px");
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Screen Radius", &sets->visuals.oof_radius, 40.0f, 300.0f, "%.0f px");
+				}
+				AnimatedSwitch("Footstep Rings", &sets->visuals.footstep_rings);
+				AnimatedSwitch("Footstep Sound ESP", &sets->visuals.sound_esp);
+				AnimatedSwitch("Hitmarker FX", &sets->visuals.hitmarker);
+				EndGroupbox();
+			}
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+
+			// Column 2: Camera & Trail FX
+			ImGui::BeginChild("EspCol2", ImVec2(col_w, 0), false);
+			{
+				BeginGroupbox("Camera & Trail FX");
+				AnimatedSwitch("Thirdperson (No sv_cheats)", &sets->visuals.thirdperson);
+				if (sets->visuals.thirdperson)
+				{
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Camera Distance", &sets->visuals.thirdperson_dist, 30.0f, 300.0f, "%.0f u");
+					AnimatedSwitch("Reverse Angle (Look Back)", &sets->visuals.thirdperson_reverse);
+				}
+
+				AnimatedSwitch("Rainbow Trail", &sets->visuals.rainbow_trail);
+				if (sets->visuals.rainbow_trail)
+				{
+					ImGui::SetNextItemWidth(170);
+					ImGui::SliderFloat("Trail Speed", &sets->visuals.rainbow_trail_speed, 0.2f, 3.0f, "%.1fx");
+				}
+				EndGroupbox();
+			}
+			ImGui::EndChild();
+		}
 	}
 
 	static void RenderMiscExploitsTab(float tab_alpha)
@@ -1033,7 +1557,11 @@ namespace Menu
 			AnimatedSwitch("Auto Strafer", &sets->misc.autostrafer);
 			AnimatedSwitch("Auto Pistol", &sets->misc.autopistol);
 			AnimatedSwitch("Slowwalk", &sets->misc.slow_walk);
-			AnimatedSwitch("Fake Duck", &sets->misc.fake_duck);
+			if (sets->misc.slow_walk)
+			{
+				ImGui::SetNextItemWidth(170);
+				ImGui::SliderFloat("Slowwalk Speed", &sets->misc.slow_walk_speed, 10.0f, 120.0f, "%.0f u/s");
+			}
 			EndGroupbox();
 		}
 		ImGui::EndChild();
@@ -1060,7 +1588,7 @@ namespace Menu
 	{
 		float col_w = (ImGui::GetContentRegionAvail().x - 10.0f) * 0.5f;
 
-		// Column 1: Structural UI Layout Presets (24 LAYOUTS: Phobia, Neverlose, Gamesense, & Releases 1-21)
+		// Column 1: Structural UI Layout Presets (Gamesense, Neverlose, Aternos, Synthetic, Fatality)
 		ImGui::BeginChild("SettingsCol1", ImVec2(col_w, 0), false);
 		{
 			BeginGroupbox("Structural UI Architecture");
@@ -1068,7 +1596,8 @@ namespace Menu
 				"1. Gamesense (Skeet Classic)",
 				"2. Neverlose (Official HUD)",
 				"3. [Release 16] Imgui Aternos (3D Skeleton Visualizer)",
-				"4. [Release 19] Synthetic (Space Galaxy Honeycomb)"
+				"4. [Release 19] Synthetic (Space Galaxy Honeycomb)",
+				"5. [Fatality.win] Deep Crimson / Cyber Pink Native HUD"
 			};
 			ImGui::SetNextItemWidth(230);
 			if (ImGui::Combo("UI Architecture", &current_layout, layout_names, IM_ARRAYSIZE(layout_names)))
@@ -1079,11 +1608,13 @@ namespace Menu
 					ApplyTheme(THEME_NEVERLOSE);
 				else if (current_layout == LAYOUT_ATERNOS)
 					ApplyTheme(THEME_ONYX);
-				else
+				else if (current_layout == LAYOUT_SYNTHETIC)
 					ApplyTheme(THEME_CYBERPUNK);
+				else
+					ApplyTheme(THEME_FATALITY);
 			}
 			ImGui::Spacing();
-			ImGui::TextWrapped("Select between Gamesense, Neverlose, Aternos 3D, and Synthetic Honeycomb!");
+			ImGui::TextWrapped("Select between Gamesense, Neverlose, Aternos 3D, Synthetic, and Fatality.win!");
 			EndGroupbox();
 
 			BeginGroupbox("Color Theme Presets");
@@ -1091,7 +1622,8 @@ namespace Menu
 				"Gamesense (Skeet Emerald)",
 				"Cyberpunk (Neon Pink)",
 				"Onyx Stealth (Crimson OLED)",
-				"Neverlose (Electric Cyan)"
+				"Neverlose (Electric Cyan)",
+				"Fatality (Deep Crimson #F8004F)"
 			};
 			ImGui::SetNextItemWidth(190);
 			if (ImGui::Combo("Color Theme", &current_theme, theme_names, IM_ARRAYSIZE(theme_names)))
@@ -1549,7 +2081,6 @@ namespace Menu
 				sets->rage.hitbox[0] = true; sets->rage.hitbox[1] = true; sets->rage.hitbox[2] = true; sets->rage.hitbox[3] = true;
 				sets->rage.body_aim_mode = 1; // Prefer body aim
 				sets->rage.spinbot = true;
-				sets->rage.spinbot_mode = 1;
 				sets->rage.spin_speed = 35.0f;
 				sets->rage.pitch_aa = 1;
 				sets->rage.yaw_aa = 2;
@@ -1597,7 +2128,6 @@ namespace Menu
 				sets->rage.min_damage_autowall = 55.0f;
 				sets->rage.body_aim_mode = 2; // Force body aim
 				sets->rage.spinbot = true;
-				sets->rage.spinbot_mode = 1;
 				sets->rage.spin_speed = 50.0f;
 				sets->visuals.enabled = true;
 				sets->visuals.chams = 2;
@@ -1955,6 +2485,211 @@ namespace Menu
 		ImGui::PopStyleColor(4);
 	}
 
+	// =========================================================================
+	// LAYOUT 5: FATALITY.WIN OFFICIAL HUD (CYBER PINK / CRIMSON AESTHETIC)
+	// =========================================================================
+	static void RenderFatalityLayout()
+	{
+		static int fat_tab = 0; // 0: Rage, 1: Legit, 2: Visuals, 3: Misc, 4: Skins, 5: Configs, 6: Scripts
+		static int fat_weapon_subtab = 0; // 0: Auto, 1: Scout, 2: AWP, 3: Deagle, 4: Pistols, 5: Rifles, 6: SMG, 7: Heavy
+
+		ImGui::SetNextWindowPos(ImVec2(80, 50), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(860, 680), ImGuiCond_FirstUseEver);
+
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.067f, 0.059f, 0.090f, 0.98f));
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.180f, 0.140f, 0.250f, 1.00f));
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.086f, 0.075f, 0.122f, 0.96f));
+		ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.97f, 0.00f, 0.31f, 1.00f));
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+
+		ImGui::Begin("FATALITY.WIN - LOVEMACHINE###FatalityMainWnd", &show_menu, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+
+		ImDrawList* draw = ImGui::GetWindowDrawList();
+		ImVec2 win_pos = ImGui::GetWindowPos();
+		ImVec2 win_size = ImGui::GetWindowSize();
+
+		// 1. Fatality Background Particle System (Drifting glowing pink/crimson cubes & particles)
+		struct Particle
+		{
+			float x, y, vx, vy, sz, alpha, rot;
+		};
+		static std::vector<Particle> particles;
+		if (particles.empty())
+		{
+			for (int i = 0; i < 48; i++)
+			{
+				particles.push_back({
+					(float)(rand() % 860),
+					(float)(rand() % 680),
+					((rand() % 100) - 50) * 0.25f,
+					-((rand() % 60) + 20) * 0.35f,
+					(float)((rand() % 5) + 3),
+					(float)((rand() % 60) + 20) / 255.0f,
+					(float)(rand() % 360)
+				});
+			}
+		}
+
+		float dt = ImGui::GetIO().DeltaTime;
+		for (auto& p : particles)
+		{
+			p.x += p.vx * dt;
+			p.y += p.vy * dt;
+			p.rot += 30.0f * dt;
+			if (p.y < 0) { p.y = win_size.y; p.x = (float)(rand() % (int)win_size.x); }
+			if (p.x < 0) p.x = win_size.x;
+			if (p.x > win_size.x) p.x = 0;
+
+			ImU32 pcol = IM_COL32(248, 0, 79, (int)(p.alpha * 120));
+			draw->AddRectFilled(
+				ImVec2(win_pos.x + p.x, win_pos.y + p.y),
+				ImVec2(win_pos.x + p.x + p.sz, win_pos.y + p.y + p.sz),
+				pcol, 1.0f
+			);
+		}
+
+		// 2. Glowing Gradient Line Across Window Top
+		draw->AddRectFilledMultiColor(
+			win_pos,
+			ImVec2(win_pos.x + win_size.x, win_pos.y + 3.5f),
+			IM_COL32(248, 0, 79, 255), IM_COL32(166, 0, 53, 255),
+			IM_COL32(248, 0, 79, 255), IM_COL32(166, 0, 53, 255)
+		);
+
+		// 3. Top Header Bar (Height: 52px)
+		// Left: Glitch Logo "FATALITY" + "LOVEMACHINE"
+		static float glitch_timer = 0.0f;
+		glitch_timer += dt;
+		float glitch_offset = (std::sin(glitch_timer * 12.0f) > 0.85f) ? 1.5f : 0.0f;
+
+		// Chromatic Aberration Red/Cyan Shadow
+		draw->AddText(ImGui::GetFont(), 20.0f, ImVec2(win_pos.x + 22 - glitch_offset, win_pos.y + 14), IM_COL32(0, 220, 255, 120), "FATALITY");
+		draw->AddText(ImGui::GetFont(), 20.0f, ImVec2(win_pos.x + 22 + glitch_offset, win_pos.y + 14), IM_COL32(248, 0, 79, 255), "FATALITY");
+		draw->AddText(ImGui::GetFont(), 10.0f, ImVec2(win_pos.x + 115, win_pos.y + 20), IM_COL32(180, 160, 200, 200), "LOVEMACHINE CS:S");
+
+		// Header Separator Line
+		draw->AddLine(
+			ImVec2(win_pos.x, win_pos.y + 48),
+			ImVec2(win_pos.x + win_size.x, win_pos.y + 48),
+			IM_COL32(32, 26, 46, 255), 1.0f
+		);
+
+		// Horizontal Primary Navigation Tabs (Pills)
+		const char* tabs[] = { "RAGE", "ANTI-AIM", "LEGIT", "VISUALS", "MISC", "SETTINGS" };
+		float tab_start_x = 220.0f;
+		float tab_w = 78.0f;
+		float tab_h = 28.0f;
+
+		for (int i = 0; i < IM_ARRAYSIZE(tabs); i++)
+		{
+			bool active = (fat_tab == i);
+			ImVec2 btn_pos(win_pos.x + tab_start_x + i * (tab_w + 6), win_pos.y + 10);
+			ImRect tab_bb(btn_pos, ImVec2(btn_pos.x + tab_w, btn_pos.y + tab_h));
+
+			ImGui::SetCursorScreenPos(btn_pos);
+			if (ImGui::InvisibleButton((std::string("##FatTab_") + tabs[i]).c_str(), ImVec2(tab_w, tab_h)))
+			{
+				fat_tab = i;
+			}
+
+			bool hovered = ImGui::IsItemHovered();
+			if (active)
+			{
+				draw->AddRectFilled(tab_bb.Min, tab_bb.Max, IM_COL32(248, 0, 79, 45), 4.0f);
+				draw->AddRect(tab_bb.Min, tab_bb.Max, IM_COL32(248, 0, 79, 180), 4.0f, 0, 1.0f);
+				draw->AddRectFilled(ImVec2(tab_bb.Min.x + 10, tab_bb.Max.y - 2), ImVec2(tab_bb.Max.x - 10, tab_bb.Max.y), IM_COL32(248, 0, 79, 255), 1.0f);
+			}
+			else if (hovered)
+			{
+				draw->AddRectFilled(tab_bb.Min, tab_bb.Max, IM_COL32(255, 255, 255, 12), 4.0f);
+			}
+
+			ImVec2 txt_sz = ImGui::CalcTextSize(tabs[i]);
+			draw->AddText(
+				ImVec2(tab_bb.GetCenter().x - txt_sz.x * 0.5f, tab_bb.GetCenter().y - txt_sz.y * 0.5f),
+				active ? IM_COL32(255, 255, 255, 255) : (hovered ? IM_COL32(220, 210, 235, 255) : IM_COL32(140, 130, 155, 255)),
+				tabs[i]
+			);
+		}
+
+		// User Profile Status Badge (Right)
+		char status_buf[64];
+		snprintf(status_buf, sizeof(status_buf), "LO | %.0f FPS", ImGui::GetIO().Framerate);
+		ImVec2 stat_sz = ImGui::CalcTextSize(status_buf);
+		draw->AddRectFilled(
+			ImVec2(win_pos.x + win_size.x - stat_sz.x - 30, win_pos.y + 12),
+			ImVec2(win_pos.x + win_size.x - 14, win_pos.y + 36),
+			IM_COL32(20, 16, 28, 200), 12.0f
+		);
+		draw->AddCircleFilled(ImVec2(win_pos.x + win_size.x - stat_sz.x - 18, win_pos.y + 24), 3.5f, IM_COL32(248, 0, 79, 255));
+		draw->AddText(ImVec2(win_pos.x + win_size.x - stat_sz.x - 8, win_pos.y + 17), IM_COL32(210, 200, 225, 255), status_buf);
+
+		// 4. Secondary Sub-Tab Navigation Bar (Weapon Groups for Rage / Legit)
+		float content_y = 56.0f;
+		if (fat_tab == 0 || fat_tab == 2)
+		{
+			const char* weapons[] = { "AUTO", "SCOUT", "AWP", "DEAGLE", "PISTOLS", "RIFLES", "SMG", "HEAVY" };
+			float sub_w = 68.0f;
+			float sub_h = 24.0f;
+			float sub_start_x = 20.0f;
+
+			for (int w = 0; w < IM_ARRAYSIZE(weapons); w++)
+			{
+				bool sub_active = (fat_weapon_subtab == w);
+				ImVec2 sub_pos(win_pos.x + sub_start_x + w * (sub_w + 4), win_pos.y + 54);
+				ImRect sub_bb(sub_pos, ImVec2(sub_pos.x + sub_w, sub_pos.y + sub_h));
+
+				ImGui::SetCursorScreenPos(sub_pos);
+				if (ImGui::InvisibleButton((std::string("##FatSub_") + weapons[w]).c_str(), ImVec2(sub_w, sub_h)))
+				{
+					fat_weapon_subtab = w;
+				}
+
+				bool sub_hov = ImGui::IsItemHovered();
+				if (sub_active)
+				{
+					draw->AddRectFilled(sub_bb.Min, sub_bb.Max, IM_COL32(40, 25, 55, 255), 3.0f);
+					draw->AddRect(sub_bb.Min, sub_bb.Max, IM_COL32(248, 0, 79, 160), 3.0f, 0, 1.0f);
+				}
+				else if (sub_hov)
+				{
+					draw->AddRectFilled(sub_bb.Min, sub_bb.Max, IM_COL32(28, 22, 38, 200), 3.0f);
+				}
+
+				ImVec2 txt_sz = ImGui::CalcTextSize(weapons[w]);
+				draw->AddText(
+					ImVec2(sub_bb.GetCenter().x - txt_sz.x * 0.5f, sub_bb.GetCenter().y - txt_sz.y * 0.5f),
+					sub_active ? IM_COL32(248, 0, 79, 255) : (sub_hov ? IM_COL32(210, 200, 225, 255) : IM_COL32(120, 110, 135, 255)),
+					weapons[w]
+				);
+			}
+
+			content_y = 86.0f;
+		}
+
+		// 5. Main Body Container
+		ImGui::SetCursorPos(ImVec2(16, content_y));
+		ImGui::BeginChild("FatalityContentContainer", ImVec2(win_size.x - 32, win_size.y - content_y - 14), false);
+		{
+			switch (fat_tab)
+			{
+			case 0: RenderRagebotTab(1.0f); break;
+			case 1: RenderAntiAimTab(1.0f); break;
+			case 2: RenderLegitbotTab(1.0f); break;
+			case 3: RenderPlayersEspTab(1.0f); break;
+			case 4: RenderMiscExploitsTab(1.0f); break;
+			case 5: default: RenderSettingsTab(1.0f); break;
+			}
+		}
+		ImGui::EndChild();
+
+		ImGui::End();
+		ImGui::PopStyleVar(3);
+		ImGui::PopStyleColor(4);
+	}
+
 	void SetupStyle()
 	{
 		ApplyTheme(current_theme);
@@ -1996,10 +2731,15 @@ namespace Menu
 				ApplyTheme(THEME_ONYX);
 				ui_accent_color = ImVec4(0.00f, 0.87f, 0.72f, 1.0f);
 			}
-			else
+			else if (current_layout == LAYOUT_SYNTHETIC)
 			{
 				ApplyTheme(THEME_CYBERPUNK);
 				ui_accent_color = ImVec4(0.66f, 0.33f, 0.97f, 1.0f);
+			}
+			else
+			{
+				ApplyTheme(THEME_FATALITY);
+				ui_accent_color = ImVec4(0.97f, 0.00f, 0.31f, 1.0f);
 			}
 		}
 
@@ -2017,8 +2757,9 @@ namespace Menu
 		case LAYOUT_SYNTHETIC:
 			RenderSyntheticGalaxyLayout();
 			break;
+		case LAYOUT_FATALITY:
 		default:
-			RenderSkeetLayout();
+			RenderFatalityLayout();
 			break;
 		}
 	}

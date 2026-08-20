@@ -8,6 +8,7 @@
 #include "menu.h"
 #include "configs.h"
 #include "font_astrium.h"
+#include "fatality_loader_ui.h"
 
 int main(int argc, char* argv[])
 {
@@ -100,6 +101,7 @@ int main(int argc, char* argv[])
     // Setup custom theme
     Menu::SetupStyle();
     Menu::show_menu = true; // Open menu by default in test mode
+    FatalityLoaderUI::show_loader = true; // Show Fatality Loader UI
 
     // Main Loop
     bool done = false;
@@ -113,9 +115,17 @@ int main(int argc, char* argv[])
                 done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
                 done = true;
-            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE && !Menu::show_menu)
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE && !Menu::show_menu && !FatalityLoaderUI::show_loader)
             {
                 done = true;
+            }
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F2)
+            {
+                FatalityLoaderUI::show_loader = !FatalityLoaderUI::show_loader;
+            }
+            if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_INSERT)
+            {
+                Menu::show_menu = !Menu::show_menu;
             }
         }
 
@@ -136,10 +146,13 @@ int main(int argc, char* argv[])
         );
 
         // Watermark Banner
-        bg_draw->AddText(ImVec2(20, 20), IM_COL32(180, 120, 255, 200), "LOVEMACHINE CS:S - Standalone UI Test Preview");
+        bg_draw->AddText(ImVec2(20, 20), IM_COL32(180, 120, 255, 200), "LOVEMACHINE CS:S - Standalone UI & Fatality Loader Test Preview");
         char fps_buf[128];
-        snprintf(fps_buf, sizeof(fps_buf), "FPS: %.1f | Frame Time: %.2f ms | Press INSERT to toggle Menu", io.Framerate, 1000.0f / (io.Framerate > 0.0f ? io.Framerate : 1.0f));
+        snprintf(fps_buf, sizeof(fps_buf), "FPS: %.1f | Frame Time: %.2f ms | [INSERT]: Cheat Menu | [F2]: Fatality Loader UI", io.Framerate, 1000.0f / (io.Framerate > 0.0f ? io.Framerate : 1.0f));
         bg_draw->AddText(ImVec2(20, 40), IM_COL32(140, 140, 170, 180), fps_buf);
+
+        // Render Fatality Loader UI
+        FatalityLoaderUI::RenderLoader();
 
         // Render Main Menu UI
         Menu::Render();

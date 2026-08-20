@@ -1021,7 +1021,7 @@ class iphysicssurfaceprops
 public:
 	surfacedata_t* get_surfacedata(int surfaceDataIndex)
 	{
-		typedef surfacedata_t* (__thiscall* OriginalFn)(PVOID, int);
+		typedef surfacedata_t* (__thiscall* OriginalFn)(void*, int);
 		return vfunc<OriginalFn>(this, 5)(this, surfaceDataIndex);
 	}
 };

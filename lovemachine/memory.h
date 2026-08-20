@@ -51,6 +51,11 @@ namespace memory
 		CreateInterfaceFn CreateInterface = (CreateInterfaceFn)GetProcAddress(GetModuleHandleA(strModule.c_str()), "CreateInterface");
 		return CreateInterface ? CreateInterface(strInterface.c_str(), 0) : nullptr;
 	}
+#else
+	inline dword pattern(std::string moduleName, std::string pattern) { return 0; }
+	template< typename T >
+	T* pinterface(std::string strModule, std::string strInterface) { return nullptr; }
+#endif
 
 	class vthook
 	{
@@ -130,6 +135,7 @@ namespace memory
 		DWORD get_vt_count(DWORD* vmt)
 		{
 			DWORD dwIndex = 0;
+#ifdef _WIN32
 			if (!vmt || IsBadReadPtr(vmt, sizeof(DWORD))) return 0;
 
 			for (dwIndex = 0; vmt[dwIndex]; dwIndex++)
@@ -141,6 +147,7 @@ namespace memory
 					break;
 				}
 			}
+#endif
 			return dwIndex;
 		}
 
@@ -148,7 +155,6 @@ namespace memory
 		DWORD *newvt, *oldvt;
 		DWORD vtsize;
 	};
-#endif
 }
 
 template< typename T >

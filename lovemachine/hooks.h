@@ -819,29 +819,8 @@ namespace hooks
 
 			rage::fix_movement(global::cmd, orig_angles);
 			rage::normalize_angles(global::cmd->viewangles);
+			global::last_sent_angles = global::cmd->viewangles;
 			misc::draw::clear(true);
-
-			//auto p_weapon = global::local->get_weapon();
-			//cout << "p_weapon : " << p_weapon << endl;
-			//p_weapon->get_data();
-			//cout << "p_data : " << *(dword*)&p_data << endl;
-			//if (global::key[VK_DOWN])
-			//{
-				//auto p_data = p_weapon->get_data();
-				//cout << "p_weapon->is_pistol() : " << p_weapon->is_pistol(p_data) << endl;
-			//	cout << "////////////////\n_globals->curtime : " << _globals->curtime << endl;
-			//	cout << "p_weapon->next_prim_attack() : " << p_weapon->next_primary_attack() << endl;
-			//	cout << "p_weapon->next_sec_attack() : " << p_weapon->next_secondary_attack() << endl;
-			//}
-
-			//auto vm_handle = global::local->get_vm_handle();
-			//cbaseviewmodel* viewmodel = (cbaseviewmodel*)vm_handle;
-			//cout << "vm_handle : " << vm_handle << ", viewmodel : " << viewmodel << ", fov : " << global::local->get_fov() << endl;
-			//if (sets->visuals.crosshair)
-			//{
-			//	global::local->get_fov() += 40;
-				//viewmodel->CalcViewModelView(global::local, cvector(100, 100, 100), qangle(0, 0, 0));
-			//}
 		}
 		else
 		{
@@ -871,56 +850,40 @@ namespace hooks
 		}
 	}
 
-	/*using frame_stage_notify_fn = void(__stdcall*)(clientframestage_t stage);
+	using frame_stage_notify_fn = void(__stdcall*)(clientframestage_t stage);
 	frame_stage_notify_fn o_frame_stage_notify;
 	void __stdcall frame_stage_notify_hook(clientframestage_t stage)
 	{
-		static bool reset = true;
-		if (sets->legit.enabled && sets->legit.backtrack && _engine->is_connected() && _engine->in_game() && global::local->valid() && (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START))
+		if (_engine && _engine->is_connected() && _engine->in_game() && global::local && global::local->valid() && !sets->menu.panic)
 		{
-			legit::backtrack::run(true);			
-			if (!reset) reset = true;
+			if (stage == FRAME_RENDER_START)
+			{
+				if (global::local->get_life_state() == 0 && (sets->rage.anti_aim || sets->rage.spinbot || sets->rage.pitch_aa != 0 || sets->rage.yaw_aa != 0))
+				{
+					if (offsets::angles)
+					{
+						*(qangle*)((DWORD)global::local + offsets::angles) = global::last_sent_angles;
+					}
+				}
+			}
+			else if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
+			{
+				if (sets->legit.enabled && sets->legit.backtrack.enabled)
+				{
+					legit::backtrack::run(true);
+				}
+			}
 		}
-		else if (reset)
-		{
-			ZeroMemory(legit::backtrack::records, sizeof(legit::backtrack::records));
-			legit::backtrack::best_record = legit::backtrack::crecord();
-			legit::backtrack::best_fov = 9999.f;
-			reset = false;
-		}
 
-		o_frame_stage_notify(stage);
+		if (o_frame_stage_notify)
+			o_frame_stage_notify(stage);
 	}
-
-	using write_usercmd_delta_to_buf_fn = bool(__stdcall*)(dword* buf, int from, int to, bool isnewcommand);
-	write_usercmd_delta_to_buf_fn o_write_usercmd_delta_to_buf;
-	bool __stdcall write_usercmd_delta_to_buf_hook(dword* buf, int from, int to, bool isnewcommand)
-	{
-		//cout << "buf : " << buf << ", from : " << from << ", to : " << to << ", isnewcommand : " << isnewcommand << endl;
-		//return _client->write_usercmd_delta_to_buf(buf, from, to, isnewcommand);
-		return o_write_usercmd_delta_to_buf(buf, from, to, isnewcommand);
-	}
-
-	using render_view_fn = void(__stdcall*)(const cviewsetup & view, int nClearFlags, int whatToDraw);
-	render_view_fn o_render_view;
-	void __stdcall render_view_hook(const cviewsetup& view, int nClearFlags, int whatToDraw)
-	{
-		cout << "view.fov : " << view.fov << ", nClearFlags : " << nClearFlags << ", whatToDraw : " << whatToDraw << endl;
-
-		o_render_view(view, nClearFlags, whatToDraw);
-	}*/
 
 	memory::vthook* input;
 	using get_usercmd_fn = cusercmd*(__stdcall*)(int sequence_number);
 	get_usercmd_fn o_get_usercmd;
 	cusercmd* __stdcall get_usercmd_hook(int sequence_number)
 	{
-		//auto result = o_get_usercmd(sequence_number);
-		//auto newcmd = &(*(cusercmd**)((DWORD)_input + USERCMDOFFSET))[sequence_number % MULTIPLAYER_BACKUP];
-		//global::cmd = result;
-		//cout << "get_usercmd_hook result : " << result << endl;
-		//cout << "some shit cmd result : " << newcmd << endl;
-
 		return &(*(cusercmd**)((DWORD)_input + USERCMDOFFSET))[sequence_number % MULTIPLAYER_BACKUP];
 	}
 
@@ -931,12 +894,37 @@ namespace hooks
 	{
 		model_render->unhook();
 
-		//auto model_name = _model_info->get_model_name(p_info.pModel);
-		//cout << p_info.entity_index << " " << model_name << endl;
-
 		models::run(state, p_info, p_custom_bone_to_world);
 		
 		model_render->rehook();
+	}
+
+	inline void bypass_cheats_thirdperson()
+	{
+		if (!_cvar) return;
+		static bool bypassed = false;
+		if (!bypassed)
+		{
+			auto sv_cheats = _cvar->find_var("sv_cheats");
+			if (sv_cheats)
+			{
+				*(int*)((DWORD)sv_cheats + 0x14) &= ~FCVAR_CHEAT;
+				*(int*)((DWORD)sv_cheats + 0x14) &= ~FCVAR_NOT_CONNECTED;
+				*(int*)((DWORD)sv_cheats + 0x14) &= ~FCVAR_REPLICATED;
+				sv_cheats->set_value(1);
+			}
+
+			auto cmd_tp = _cvar->FindCommand("thirdperson");
+			if (cmd_tp) *(int*)((DWORD)cmd_tp + 0x14) &= ~FCVAR_CHEAT;
+
+			auto cmd_fp = _cvar->FindCommand("firstperson");
+			if (cmd_fp) *(int*)((DWORD)cmd_fp + 0x14) &= ~FCVAR_CHEAT;
+
+			auto cmd_cam = _cvar->FindCommand("cam_command");
+			if (cmd_cam) *(int*)((DWORD)cmd_cam + 0x14) &= ~FCVAR_CHEAT;
+
+			bypassed = true;
+		}
 	}
 
 	memory::vthook* clientmode;
@@ -952,8 +940,41 @@ namespace hooks
 			if (sets->visuals.fov > 0.0f)
 				p_setup->fov = sets->visuals.fov;
 
+			if (sets->misc.fake_duck && !sets->visuals.thirdperson)
+			{
+				p_setup->origin.z = global::local->get_origin().z + 64.0f;
+			}
+
+			static bool prev_tp_state = false;
+			if (sets->visuals.thirdperson != prev_tp_state)
+			{
+				bypass_cheats_thirdperson();
+				if (sets->visuals.thirdperson)
+				{
+					_engine->clientcmd_unrestricted("thirdperson");
+					if (_input)
+					{
+						*(bool*)((DWORD)_input + 0xAD) = true;
+					}
+				}
+				else
+				{
+					_engine->clientcmd_unrestricted("firstperson");
+					if (_input)
+					{
+						*(bool*)((DWORD)_input + 0xAD) = false;
+					}
+				}
+				prev_tp_state = sets->visuals.thirdperson;
+			}
+
 			if (sets->visuals.thirdperson)
 			{
+				if (_input)
+				{
+					*(bool*)((DWORD)_input + 0xAD) = true;
+				}
+
 				qangle cam_angles = p_setup->angles;
 				if (sets->visuals.thirdperson_reverse)
 				{
@@ -1069,7 +1090,55 @@ namespace hooks
 	fire_event_clientside_fn o_fire_event_clientside;
 	bool __stdcall fire_event_clientside_hook(igameevent* p_event)
 	{
-		events::on_fire_event(p_event, p_event->get_name());
+		if (p_event)
+		{
+			const char* name = p_event->get_name();
+			if (name)
+			{
+				if (strcmp(name, "bullet_impact") == 0)
+				{
+					int userid = p_event->get_int("userid");
+					if (_engine && _engine->get_player_for_userid(userid) == global::local_id && global::local && global::local->valid())
+					{
+						cvector impact_pos(p_event->get_float("x"), p_event->get_float("y"), p_event->get_float("z"));
+						cvector eye_pos = global::local->get_eye_pos();
+						esp::add_bullet_tracer(eye_pos, impact_pos, sets->visuals.bullet_tracers_color);
+					}
+				}
+				else if (strcmp(name, "player_hurt") == 0)
+				{
+					int attacker_id = _engine ? _engine->get_player_for_userid(p_event->get_int("attacker")) : 0;
+					if (attacker_id == global::local_id)
+					{
+						esp::trigger_screen_hit_pulse();
+						int victim_id = _engine ? _engine->get_player_for_userid(p_event->get_int("userid")) : 0;
+						centity* victim = _ent_list ? _ent_list->get_entity(victim_id) : nullptr;
+						if (victim)
+						{
+							cvector hit_pos = victim->get_eye_pos();
+							int dmg = p_event->get_int("dmg_health");
+							bool head = (p_event->get_int("hitgroup") == 1);
+							esp::add_damage_indicator(hit_pos, dmg, head);
+						}
+					}
+				}
+				else if (strcmp(name, "player_death") == 0)
+				{
+					int attacker_id = _engine ? _engine->get_player_for_userid(p_event->get_int("attacker")) : 0;
+					if (attacker_id == global::local_id)
+					{
+						int victim_id = _engine ? _engine->get_player_for_userid(p_event->get_int("userid")) : 0;
+						centity* victim = _ent_list ? _ent_list->get_entity(victim_id) : nullptr;
+						if (victim)
+						{
+							cvector death_pos = victim->get_origin();
+							esp::add_kill_effect(death_pos, sets->visuals.kill_effect, sets->visuals.kill_effect_color);
+						}
+					}
+				}
+				events::on_fire_event(p_event, name);
+			}
+		}
 
 		return o_fire_event_clientside(p_event);
 	}
@@ -1124,6 +1193,9 @@ namespace hooks
 
 			o_create_move = (create_move_fn)client->hook_function((dword)create_move_hook, 21);
 			log << "[+] create_move hooked" << std::endl;
+
+			o_frame_stage_notify = (frame_stage_notify_fn)client->hook_function((dword)frame_stage_notify_hook, 35);
+			log << "[+] frame_stage_notify hooked" << std::endl;
 		}
 
 		if (_model_render && !IsBadReadPtr((void*)_model_render, sizeof(DWORD))) {

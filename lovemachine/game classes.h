@@ -14,8 +14,8 @@ public:
 	// (c) interwebz css kolo <3
 	int get_id()
 	{
-		int id;
-
+		int id = 0;
+#ifdef _MSC_VER
 		PVOID entity = (PVOID)this;
 
 		__asm
@@ -28,7 +28,7 @@ public:
 			CALL EDX
 			MOV id, EAX
 		}
-
+#endif
 		return id;
 	}
 
@@ -285,6 +285,7 @@ public:
 
 	void get_render_bounds(Vector& vMins, Vector& vMaxs) // (c) iwebz kolo
 	{
+#ifdef _MSC_VER
 		PVOID pEnt = (PVOID)this;
 
 		_asm
@@ -298,6 +299,7 @@ public:
 			MOV ECX, ESI
 			CALL EDX
 		}
+#endif
 	}
 
 	/*const matrix3x4_t& get_coord_frame()
@@ -910,11 +912,12 @@ void get_weapon_info(int weaponid, bool silencer, weaponinfo_t& winfo)
 	}
 	}
 
-	float fPenDist;
-	float fPenPow;
+	float fPenDist = 3000.0f;
+	float fPenPow = 35.0f;
 
 	int iBulletTup = wiInfo.iBulletType;
 
+#ifdef _MSC_VER
 	__asm
 	{
 		LEA ECX, fPenDist
@@ -924,6 +927,7 @@ void get_weapon_info(int weaponid, bool silencer, weaponinfo_t& winfo)
 		PUSH iBulletTup
 		CALL game::signatures::bullet_params
 	}
+#endif
 
 	wiInfo.fPenetrationDistance = fPenDist;
 	wiInfo.fPenetrationPower = fPenPow;

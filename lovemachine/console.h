@@ -81,8 +81,7 @@ namespace console
 	{
 		cur_text = text;
 		cur_color = ccolor;
-		dword func = (dword)add_line;
-		_asm call add_line
+		add_line();
 	}
 
 	void create(string name)

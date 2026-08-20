@@ -117,6 +117,9 @@
     <ClInclude Include="esp.h" />
     <ClInclude Include="aimbot.h" />
     <ClInclude Include="rage.h" />
+    <ClInclude Include="wings_mesh.h" />
+    <ClInclude Include="accessories_mesh.h" />
+    <ClInclude Include="fatality_loader_ui.h" />
     <ClInclude Include="imgui\imgui.h" />
     <ClInclude Include="imgui\imgui_internal.h" />
     <ClInclude Include="imgui\imconfig.h" />

@@ -147,11 +147,19 @@ namespace rage
 			return false;
 
 		cvector local_eye = global::local->get_eye_pos();
+		if (local_eye.IsZero()) return false;
+
 		int max_clients = _engine->get_max_clients();
 
 		centity* best_target = nullptr;
 		cvector best_target_pos(0, 0, 0);
-		float best_distance = 999999.0f;
+		float best_priority = -999999.0f;
+
+		weaponinfo_t winfo;
+		if (sets->rage.autowall)
+		{
+			get_weapon_info(weapon->get_weaponid(), weapon->is_silenced(), winfo);
+		}
 
 		for (int i = 1; i <= max_clients; i++)
 		{
@@ -163,31 +171,91 @@ namespace rage
 			matrix3x4_t matrix[128];
 			if (!enemy->get_hitbox_matrix(matrix, global::curtime)) continue;
 
-			// Check hitboxes (Head -> Neck -> Chest -> Pelvis)
-			int hitboxes_to_check[] = { hitbox_head, hitbox_neck, hitbox_upper_chest, hitbox_chest, hitbox_pelvis };
-			cvector target_pos(0, 0, 0);
+			struct HitboxCandidate {
+				cvector pos;
+				float score_bonus;
+			};
 
-			for (int hb : hitboxes_to_check)
+			std::vector<HitboxCandidate> candidates;
+
+			// Head multi-point (Center + Multi-angles)
+			cvector head_center = enemy->get_hitbox(hitbox_head, matrix);
+			if (!head_center.IsZero())
 			{
-				cvector hb_pos = enemy->get_hitbox(hb, matrix);
-				if (!hb_pos.IsZero())
+				candidates.push_back({ head_center, 5000.0f });
+				candidates.push_back({ head_center + cvector(0, 0, 3.2f), 5000.0f }); // Top of head
+				candidates.push_back({ head_center + cvector(2.0f, 0, 0), 4800.0f });
+				candidates.push_back({ head_center + cvector(-2.0f, 0, 0), 4800.0f });
+				candidates.push_back({ head_center + cvector(0, 2.0f, 0), 4800.0f });
+				candidates.push_back({ head_center + cvector(0, -2.0f, 0), 4800.0f });
+			}
+
+			// Neck & Body Hitboxes
+			cvector neck = enemy->get_hitbox(hitbox_neck, matrix);
+			if (!neck.IsZero()) candidates.push_back({ neck, 3000.0f });
+
+			cvector upper_chest = enemy->get_hitbox(hitbox_upper_chest, matrix);
+			if (!upper_chest.IsZero()) candidates.push_back({ upper_chest, 2000.0f });
+
+			cvector chest = enemy->get_hitbox(hitbox_chest, matrix);
+			if (!chest.IsZero()) candidates.push_back({ chest, 1500.0f });
+
+			cvector stomach = enemy->get_hitbox(hitbox_stomach, matrix);
+			if (!stomach.IsZero()) candidates.push_back({ stomach, 1200.0f });
+
+			cvector pelvis = enemy->get_hitbox(hitbox_pelvis, matrix);
+			if (!pelvis.IsZero()) candidates.push_back({ pelvis, 1000.0f });
+
+			// Limbs
+			cvector l_arm = enemy->get_hitbox(hitbox_l_up_arm, matrix);
+			if (!l_arm.IsZero()) candidates.push_back({ l_arm, 500.0f });
+
+			cvector r_arm = enemy->get_hitbox(hitbox_r_up_arm, matrix);
+			if (!r_arm.IsZero()) candidates.push_back({ r_arm, 500.0f });
+
+			cvector l_leg = enemy->get_hitbox(hitbox_l_up_leg, matrix);
+			if (!l_leg.IsZero()) candidates.push_back({ l_leg, 300.0f });
+
+			cvector r_leg = enemy->get_hitbox(hitbox_r_up_leg, matrix);
+			if (!r_leg.IsZero()) candidates.push_back({ r_leg, 300.0f });
+
+			cvector found_target_pos(0, 0, 0);
+			float found_score = -999999.0f;
+
+			for (const auto& cand : candidates)
+			{
+				bool hittable = false;
+				if (is_visible(enemy, cand.pos))
 				{
-					if (sets->rage.autowall || is_hitbox_visible(enemy, hb, matrix))
+					hittable = true;
+				}
+				else if (sets->rage.autowall)
+				{
+					if (autowall::is_penetrable(winfo, local_eye, cand.pos))
 					{
-						target_pos = hb_pos;
-						break;
+						hittable = true;
 					}
+				}
+
+				if (hittable)
+				{
+					found_target_pos = cand.pos;
+					found_score = cand.score_bonus;
+					break;
 				}
 			}
 
-			if (target_pos.IsZero()) continue;
+			if (found_target_pos.IsZero()) continue;
 
-			float dist = (target_pos - local_eye).Length();
-			if (dist < best_distance)
+			float dist = (found_target_pos - local_eye).Length();
+			float enemy_hp = (float)enemy->get_hp();
+			float priority = found_score - (dist * 0.5f) - (enemy_hp * 2.0f);
+
+			if (priority > best_priority)
 			{
-				best_distance = dist;
+				best_priority = priority;
 				best_target = enemy;
-				best_target_pos = target_pos;
+				best_target_pos = found_target_pos;
 			}
 		}
 
@@ -198,6 +266,13 @@ namespace rage
 
 			global::cmd->viewangles = aim_angle;
 			global::cmd->buttons |= IN_ATTACK;
+
+			// Lag compensation backtrack tick count
+			float sim_time = best_target->get_simulation_time();
+			if (sim_time > 0.0f && _globals && _globals->interval_per_tick > 0.0f)
+			{
+				global::cmd->tick_count = (int)(0.5f + sim_time / _globals->interval_per_tick);
+			}
 
 			// Active counter-strafing autostop to guarantee 100% laser accuracy
 			if (sets->rage.autostop)
@@ -226,7 +301,7 @@ namespace rage
 
 	inline void anti_aim()
 	{
-		if (!sets->rage.enabled && !sets->rage.spinbot && sets->rage.spinbot_mode == 0 && sets->rage.pitch_aa == 0 && sets->rage.yaw_aa == 0)
+		if (!sets->rage.anti_aim && !sets->rage.spinbot && sets->rage.pitch_aa == 0 && sets->rage.yaw_aa == 0)
 			return;
 
 		if (!global::cmd || !global::local || !global::local->valid())
@@ -235,44 +310,28 @@ namespace rage
 		if (global::cmd->buttons & IN_ATTACK)
 			return;
 
-		// Pitch Anti-Aim
-		if (sets->rage.pitch_aa == 1) // Emotion (89°)
+		// 1. Pitch Anti-Aim
+		if (sets->rage.pitch_aa == 1) // Down / Emotion (89°)
 			global::cmd->viewangles.x = 89.0f;
 		else if (sets->rage.pitch_aa == 2) // Up (-89°)
 			global::cmd->viewangles.x = -89.0f;
 		else if (sets->rage.pitch_aa == 3) // Zero (0°)
 			global::cmd->viewangles.x = 0.0f;
 
-		// Yaw Anti-Aim & Dual Spinbot Modes
-		static float spin_angle_server = 0.0f;
-		static float spin_angle_client = 0.0f;
+		// 2. Yaw Anti-Aim (1: Backwards 180°, 2: Spinbot 360°, 3: Jitter ±90°, 4: Sideways 90°)
+		static float spin_angle = 0.0f;
 
-		if (sets->rage.spinbot_mode == 1 || (sets->rage.spinbot_mode == 0 && (sets->rage.spinbot || sets->rage.yaw_aa == 2))) // Server-Side Spinbot
-		{
-			float speed = sets->rage.spin_speed_server > 0.f ? sets->rage.spin_speed_server : (sets->rage.spin_speed > 0.f ? sets->rage.spin_speed : 25.0f);
-			spin_angle_server += speed;
-			if (spin_angle_server > 180.0f) spin_angle_server -= 360.0f;
-			if (spin_angle_server < -180.0f) spin_angle_server += 360.0f;
-			global::cmd->viewangles.y = spin_angle_server;
-		}
-		else if (sets->rage.spinbot_mode == 2) // Client-Side Spinbot (Visual camera spin)
-		{
-			float speed = sets->rage.spin_speed_client > 0.f ? sets->rage.spin_speed_client : 25.0f;
-			spin_angle_client += speed;
-			if (spin_angle_client > 180.0f) spin_angle_client -= 360.0f;
-			if (spin_angle_client < -180.0f) spin_angle_client += 360.0f;
-			global::cmd->viewangles.y = spin_angle_client;
-			if (_engine)
-			{
-				qangle cur_engine_angles;
-				_engine->get_viewangles(cur_engine_angles);
-				cur_engine_angles.y = spin_angle_client;
-				_engine->set_viewangles(cur_engine_angles);
-			}
-		}
-		else if (sets->rage.yaw_aa == 1) // Backward (180°)
+		if (sets->rage.yaw_aa == 1) // Backward (180°)
 		{
 			global::cmd->viewangles.y += 180.0f;
+		}
+		else if (sets->rage.yaw_aa == 2 || sets->rage.spinbot) // Spinbot (Continuous 360° rotation)
+		{
+			float speed = sets->rage.spin_speed > 0.f ? sets->rage.spin_speed : 25.0f;
+			spin_angle += speed;
+			if (spin_angle > 180.0f) spin_angle -= 360.0f;
+			if (spin_angle < -180.0f) spin_angle += 360.0f;
+			global::cmd->viewangles.y = spin_angle;
 		}
 		else if (sets->rage.yaw_aa == 3) // Jitter
 		{
@@ -287,11 +346,10 @@ namespace rage
 
 		normalize_angles(global::cmd->viewangles);
 
-		// Apply spinbot angles directly to local player render angle so thirdperson visibly rotates
-		if (global::local && global::local->valid())
+		// Apply spinbot/anti-aim angles directly to local player render angle so thirdperson visibly rotates
+		if (global::local && global::local->valid() && offsets::angles)
 		{
-			*(float*)((DWORD)global::local + 0x1404) = global::cmd->viewangles.x;
-			*(float*)((DWORD)global::local + 0x1408) = global::cmd->viewangles.y;
+			*(qangle*)((DWORD)global::local + offsets::angles) = global::cmd->viewangles;
 		}
 	}
 

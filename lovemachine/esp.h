@@ -132,21 +132,67 @@ namespace esp
 	};
 	inline std::deque<trail_node> local_trail;
 
-	void draw_rainbow_trail()
+	struct bullet_tracer_t {
+		cvector start;
+		cvector end;
+		float time;
+		color col;
+	};
+	inline std::deque<bullet_tracer_t> bullet_tracers;
+
+	struct damage_indicator_t {
+		cvector pos;
+		int damage;
+		bool headshot;
+		float time;
+	};
+	inline std::deque<damage_indicator_t> damage_popups;
+
+	inline void add_bullet_tracer(const cvector& start, const cvector& end, color col)
 	{
-		if (!sets->visuals.rainbow_trail || !global::local || !global::local->valid())
+		bullet_tracers.push_back({ start, end, global::realtime, col });
+	}
+
+	inline void add_damage_indicator(const cvector& pos, int damage, bool headshot)
+	{
+		damage_popups.push_back({ pos, damage, headshot, global::realtime });
+	}
+
+	struct kill_fx_t {
+		cvector pos;
+		float time;
+		int type;
+		color col;
+	};
+	inline std::deque<kill_fx_t> kill_effects;
+
+	inline void add_kill_effect(const cvector& pos, int type, color col)
+	{
+		kill_effects.push_back({ pos, global::realtime, type, col });
+	}
+
+	inline float screen_hit_time = 0.0f;
+	inline void trigger_screen_hit_pulse()
+	{
+		screen_hit_time = global::realtime;
+	}
+
+	void draw_dynamic_trail()
+	{
+		if (!sets->visuals.rainbow_trail || sets->visuals.trail_mode == 0 || !global::local || !global::local->valid())
 		{
 			local_trail.clear();
 			return;
 		}
 
 		cvector cur_pos = global::local->get_origin() + cvector(0.0f, 0.0f, 15.0f);
-		if (local_trail.empty() || (local_trail.back().pos - cur_pos).Length() > 6.0f)
+		if (local_trail.empty() || (local_trail.back().pos - cur_pos).Length() > 5.0f)
 		{
 			local_trail.push_back({ cur_pos, global::realtime });
 		}
 
-		while (!local_trail.empty() && (global::realtime - local_trail.front().time) > 1.8f)
+		float max_time = sets->visuals.trail_length * 0.06f;
+		while (!local_trail.empty() && (global::realtime - local_trail.front().time) > max_time)
 		{
 			local_trail.pop_front();
 		}
@@ -159,12 +205,489 @@ namespace esp
 			if (w2s(local_trail[i].pos, s1) && w2s(local_trail[i + 1].pos, s2))
 			{
 				float progress = (float)i / (float)local_trail.size();
-				float hue = fmodf(global::realtime * (sets->visuals.rainbow_trail_speed > 0.0f ? sets->visuals.rainbow_trail_speed : 1.0f) + progress * 0.8f, 1.0f);
 				int alpha = (int)(progress * 255.0f);
-				color col = color::from_hsv(hue, 1.0f, 1.0f, alpha);
+				color col;
+
+				switch (sets->visuals.trail_mode)
+				{
+				case 1: // Rainbow Wave
+				default:
+				{
+					float hue = fmodf(global::realtime * (sets->visuals.rainbow_trail_speed > 0.0f ? sets->visuals.rainbow_trail_speed : 1.0f) + progress * 0.8f, 1.0f);
+					col = color::from_hsv(hue, 1.0f, 1.0f, alpha);
+					break;
+				}
+				case 2: // Electric Neon Cyan
+				{
+					col = color(0, (int)(200 + sinf(progress * 3.14f) * 55), 255, alpha);
+					break;
+				}
+				case 3: // Inferno Fire (Red -> Orange -> Yellow)
+				{
+					int r = 255;
+					int g = (int)(progress * 200.0f);
+					int b = (int)(progress * 30.0f);
+					col = color(r, g, b, alpha);
+					break;
+				}
+				case 4: // Cyber Violet Plasma
+				{
+					int r = (int)(180 + sinf(progress * 3.14f) * 75);
+					int g = 20;
+					int b = 255;
+					col = color(r, g, b, alpha);
+					break;
+				}
+				}
+
 				surf::prim::line((int)s1.x, (int)s1.y, (int)s2.x, (int)s2.y, col);
-				surf::prim::line((int)s1.x, (int)s1.y + 1, (int)s2.x, (int)s2.y + 1, col);
+				surf::prim::line((int)s1.x, (int)s1.y + 1, (int)s2.x, (int)s2.y + 1, col.with_alpha(alpha / 2));
 			}
+		}
+	}
+
+	void draw_3d_halo(cvector head_pos, color col, float radius)
+	{
+		float bob = sinf(global::realtime * 3.5f) * 1.5f;
+		cvector center = head_pos + cvector(0.0f, 0.0f, 13.0f + bob);
+		const int points = 20;
+		cvector scr_pts[20];
+		bool valid[20];
+
+		float rot = global::realtime * 1.2f;
+		for (int i = 0; i < points; i++)
+		{
+			float a = rot + (float)i * (2.0f * (float)M_PI / (float)points);
+			cvector pt = center + cvector(cosf(a) * radius, sinf(a) * radius, sinf(a * 2.0f) * 0.8f);
+			valid[i] = w2s(pt, scr_pts[i]);
+		}
+
+		for (int i = 0; i < points; i++)
+		{
+			int next = (i + 1) % points;
+			if (valid[i] && valid[next])
+			{
+				surf::prim::line((int)scr_pts[i].x, (int)scr_pts[i].y, (int)scr_pts[next].x, (int)scr_pts[next].y, col);
+				surf::prim::line((int)scr_pts[i].x, (int)scr_pts[i].y + 1, (int)scr_pts[next].x, (int)scr_pts[next].y + 1, col.with_alpha(150));
+			}
+		}
+	}
+
+	void draw_3d_devil_horns(cvector head_pos, color col, float size)
+	{
+		// 3D Curved Segmented Devil Horns with 4 cross-sections
+		for (int side = -1; side <= 1; side += 2)
+		{
+			float s = (float)side;
+			cvector p0 = head_pos + cvector(s * 4.0f, -1.0f, 5.5f);
+			cvector p1 = head_pos + cvector(s * (5.5f + size * 0.2f), -0.5f, 7.5f + size * 0.3f);
+			cvector p2 = head_pos + cvector(s * (7.5f + size * 0.5f), 1.0f, 10.0f + size * 0.7f);
+			cvector p3 = head_pos + cvector(s * (9.0f + size * 0.8f), 2.5f, 13.0f + size);
+
+			cvector s0, s1, s2, s3;
+			if (w2s(p0, s0) && w2s(p1, s1) && w2s(p2, s2) && w2s(p3, s3))
+			{
+				// Horn Spine Line
+				surf::prim::line((int)s0.x, (int)s0.y, (int)s1.x, (int)s1.y, col);
+				surf::prim::line((int)s1.x, (int)s1.y, (int)s2.x, (int)s2.y, col);
+				surf::prim::line((int)s2.x, (int)s2.y, (int)s3.x, (int)s3.y, col);
+
+				// Outer Tapered Ring Cross-ribs
+				cvector p0_w = p0 + cvector(s * 1.5f, 1.2f, 0.0f);
+				cvector p1_w = p1 + cvector(s * 1.2f, 1.0f, 0.0f);
+				cvector p2_w = p2 + cvector(s * 0.8f, 0.6f, 0.0f);
+				cvector s0_w, s1_w, s2_w;
+				if (w2s(p0_w, s0_w) && w2s(p1_w, s1_w) && w2s(p2_w, s2_w))
+				{
+					surf::prim::line((int)s0_w.x, (int)s0_w.y, (int)s1_w.x, (int)s1_w.y, col.with_alpha(180));
+					surf::prim::line((int)s1_w.x, (int)s1_w.y, (int)s2_w.x, (int)s2_w.y, col.with_alpha(180));
+					surf::prim::line((int)s2_w.x, (int)s2_w.y, (int)s3.x, (int)s3.y, col.with_alpha(220));
+
+					surf::prim::line((int)s0.x, (int)s0.y, (int)s0_w.x, (int)s0_w.y, col.with_alpha(140));
+					surf::prim::line((int)s1.x, (int)s1.y, (int)s1_w.x, (int)s1_w.y, col.with_alpha(140));
+					surf::prim::line((int)s2.x, (int)s2.y, (int)s2_w.x, (int)s2_w.y, col.with_alpha(140));
+				}
+
+				// Glowing Horn Tip Sparkle
+				surf::prim::filled_box((int)s3.x - 2, (int)s3.y - 2, (int)s3.x + 3, (int)s3.y + 3, color(255, 255, 255, col.a));
+			}
+		}
+	}
+
+	void draw_3d_crown(cvector head_pos, color col, float size)
+	{
+		cvector center = head_pos + cvector(0.0f, 0.0f, 8.5f);
+		const int points = 10;
+		cvector base_pts[10];
+		cvector peak_pts[5];
+		cvector s_base[10];
+		cvector s_peak[5];
+		bool v_base[10], v_peak[5];
+
+		float rot = global::realtime * 0.8f;
+		for (int i = 0; i < points; i++)
+		{
+			float a = rot + (float)i * (2.0f * (float)M_PI / (float)points);
+			base_pts[i] = center + cvector(cosf(a) * size, sinf(a) * size, 0.0f);
+			v_base[i] = w2s(base_pts[i], s_base[i]);
+		}
+
+		for (int i = 0; i < 5; i++)
+		{
+			float a = rot + (float)i * (2.0f * (float)M_PI / 5.0f);
+			peak_pts[i] = center + cvector(cosf(a) * (size * 1.15f), sinf(a) * (size * 1.15f), 6.5f);
+			v_peak[i] = w2s(peak_pts[i], s_peak[i]);
+		}
+
+		// Connect base ring
+		for (int i = 0; i < points; i++)
+		{
+			int next = (i + 1) % points;
+			if (v_base[i] && v_base[next])
+			{
+				surf::prim::line((int)s_base[i].x, (int)s_base[i].y, (int)s_base[next].x, (int)s_base[next].y, col);
+			}
+		}
+
+		// Connect crown spikes
+		for (int i = 0; i < 5; i++)
+		{
+			int b_left = (i * 2);
+			int b_right = (i * 2 + 1) % points;
+			if (v_peak[i])
+			{
+				if (v_base[b_left]) surf::prim::line((int)s_base[b_left].x, (int)s_base[b_left].y, (int)s_peak[i].x, (int)s_peak[i].y, col);
+				if (v_base[b_right]) surf::prim::line((int)s_base[b_right].x, (int)s_base[b_right].y, (int)s_peak[i].x, (int)s_peak[i].y, col);
+				surf::prim::filled_box((int)s_peak[i].x - 2, (int)s_peak[i].y - 2, (int)s_peak[i].x + 3, (int)s_peak[i].y + 3, color(255, 255, 255, col.a));
+			}
+		}
+	}
+
+	void draw_3d_cat_ears(cvector head_pos, color col, float size)
+	{
+		for (int side = -1; side <= 1; side += 2)
+		{
+			float s = (float)side;
+			cvector b_in = head_pos + cvector(s * 2.5f, 0.0f, 5.0f);
+			cvector b_out = head_pos + cvector(s * 7.5f, 0.0f, 5.0f);
+			cvector tip = head_pos + cvector(s * (6.0f + size * 0.2f), 0.0f, 6.0f + size);
+
+			cvector s_in, s_out, s_tip;
+			if (w2s(b_in, s_in) && w2s(b_out, s_out) && w2s(tip, s_tip))
+			{
+				surf::prim::line((int)s_in.x, (int)s_in.y, (int)s_tip.x, (int)s_tip.y, col);
+				surf::prim::line((int)s_out.x, (int)s_out.y, (int)s_tip.x, (int)s_tip.y, col);
+				surf::prim::line((int)s_in.x, (int)s_in.y, (int)s_out.x, (int)s_out.y, col);
+
+				// Inner ear pink glow
+				cvector in_tip = head_pos + cvector(s * (5.5f + size * 0.15f), 0.5f, 5.5f + size * 0.7f);
+				cvector s_intip;
+				if (w2s(in_tip, s_intip))
+				{
+					surf::prim::line((int)s_in.x, (int)s_in.y, (int)s_intip.x, (int)s_intip.y, color(255, 180, 200, col.a));
+					surf::prim::line((int)s_out.x, (int)s_out.y, (int)s_intip.x, (int)s_intip.y, color(255, 180, 200, col.a));
+				}
+			}
+		}
+	}
+
+	void draw_3d_energy_wings(cvector origin, color col, float size)
+	{
+		cvector spine = origin + cvector(0.0f, 0.0f, 42.0f);
+		cvector spine_screen;
+		if (!w2s(spine, spine_screen)) return;
+
+		float s_w = (size / 30.0f) * 0.95f;
+		float t = global::realtime * 3.2f;
+		float flap = sinf(t);
+
+		for (int side = -1; side <= 1; side += 2)
+		{
+			float s = (float)side;
+
+			float flap_y1 = flap * 5.0f * s_w;
+			float flap_y2 = flap * 12.0f * s_w;
+			float flap_x = cosf(t) * 6.0f * s_w;
+
+			// Exact Points Layout
+			cvector rootL   = { spine_screen.x, spine_screen.y - (10.0f * s_w), 0.0f };
+			cvector joint1L = { spine_screen.x + s * (35.0f * s_w), spine_screen.y - (35.0f * s_w) + flap_y1, 0.0f };
+			cvector joint2L = { spine_screen.x + s * (85.0f * s_w + flap_x), spine_screen.y - (20.0f * s_w) + flap_y2, 0.0f };
+
+			cvector tip1L   = { spine_screen.x + s * (120.0f * s_w + flap_x * 1.2f), spine_screen.y - (55.0f * s_w) + flap_y2 * 1.3f, 0.0f };
+			cvector tip2L   = { spine_screen.x + s * (110.0f * s_w + flap_x * 1.1f), spine_screen.y - (20.0f * s_w) + flap_y2 * 1.1f, 0.0f };
+			cvector tip3L   = { spine_screen.x + s * (85.0f * s_w + flap_x * 0.9f),  spine_screen.y + (25.0f * s_w) + flap_y2 * 0.8f, 0.0f };
+
+			// Khung xương chính
+			surf::prim::line((int)rootL.x, (int)rootL.y, (int)joint1L.x, (int)joint1L.y, col);
+			surf::prim::line((int)joint1L.x, (int)joint1L.y, (int)tip1L.x, (int)tip1L.y, col);
+			surf::prim::line((int)tip1L.x, (int)tip1L.y, (int)tip2L.x, (int)tip2L.y, col.with_alpha(220));
+			surf::prim::line((int)tip2L.x, (int)tip2L.y, (int)tip3L.x, (int)tip3L.y, col.with_alpha(220));
+			surf::prim::line((int)tip3L.x, (int)tip3L.y, (int)joint2L.x, (int)joint2L.y, col.with_alpha(200));
+			surf::prim::line((int)joint2L.x, (int)joint2L.y, (int)joint1L.x, (int)joint1L.y, col.with_alpha(200));
+
+			// Gân nan quạt bên trong
+			surf::prim::line((int)joint1L.x, (int)joint1L.y, (int)tip2L.x, (int)tip2L.y, col.with_alpha(180));
+			surf::prim::line((int)joint1L.x, (int)joint1L.y, (int)tip3L.x, (int)tip3L.y, col.with_alpha(180));
+
+			// Móng vuốt nhọn phát sáng
+			surf::prim::filled_box((int)tip1L.x - 2, (int)tip1L.y - 2, (int)tip1L.x + 3, (int)tip1L.y + 3, color(255, 255, 255, col.a));
+			surf::prim::filled_box((int)tip2L.x - 2, (int)tip2L.y - 2, (int)tip2L.x + 3, (int)tip2L.y + 3, color(255, 255, 255, col.a));
+			surf::prim::filled_box((int)tip3L.x - 2, (int)tip3L.y - 2, (int)tip3L.x + 3, (int)tip3L.y + 3, color(255, 255, 255, col.a));
+		}
+	}
+
+	void draw_3d_magic_circle(cvector origin, color col, float radius)
+	{
+		cvector ground = origin + cvector(0.0f, 0.0f, 2.0f);
+		const int points = 24;
+		cvector out_pts[24], mid_pts[24], in_pts[24];
+		cvector s_out[24], s_mid[24], s_in[24];
+		bool v_out[24], v_mid[24], v_in[24];
+
+		float rot1 = global::realtime * 0.9f;
+		float rot2 = -global::realtime * 1.3f;
+
+		for (int i = 0; i < points; i++)
+		{
+			float a1 = rot1 + (float)i * (2.0f * (float)M_PI / (float)points);
+			float a2 = rot2 + (float)i * (2.0f * (float)M_PI / (float)points);
+			out_pts[i] = ground + cvector(cosf(a1) * radius, sinf(a1) * radius, 0.0f);
+			mid_pts[i] = ground + cvector(cosf(a1) * (radius * 0.90f), sinf(a1) * (radius * 0.90f), 0.0f);
+			in_pts[i] = ground + cvector(cosf(a2) * (radius * 0.65f), sinf(a2) * (radius * 0.65f), 0.0f);
+
+			v_out[i] = w2s(out_pts[i], s_out[i]);
+			v_mid[i] = w2s(mid_pts[i], s_mid[i]);
+			v_in[i] = w2s(in_pts[i], s_in[i]);
+		}
+
+		for (int i = 0; i < points; i++)
+		{
+			int next = (i + 1) % points;
+			if (v_out[i] && v_out[next]) surf::prim::line((int)s_out[i].x, (int)s_out[i].y, (int)s_out[next].x, (int)s_out[next].y, col);
+			if (v_mid[i] && v_mid[next]) surf::prim::line((int)s_mid[i].x, (int)s_mid[i].y, (int)s_mid[next].x, (int)s_mid[next].y, col.with_alpha(150));
+			if (v_in[i] && v_in[next]) surf::prim::line((int)s_in[i].x, (int)s_in[i].y, (int)s_in[next].x, (int)s_in[next].y, col.with_alpha(200));
+
+			// Radial Rune Spoke Ticks on Outer Border
+			if (v_out[i] && v_mid[i] && (i % 2 == 0))
+			{
+				surf::prim::line((int)s_out[i].x, (int)s_out[i].y, (int)s_mid[i].x, (int)s_mid[i].y, col);
+			}
+		}
+
+		// Sacred Octagram (Dual Rotating Squares)
+		cvector oct_pts[8];
+		cvector s_oct[8];
+		bool v_oct[8];
+		for (int i = 0; i < 8; i++)
+		{
+			float a = rot2 + (float)i * (2.0f * (float)M_PI / 8.0f);
+			oct_pts[i] = ground + cvector(cosf(a) * (radius * 0.65f), sinf(a) * (radius * 0.65f), 0.0f);
+			v_oct[i] = w2s(oct_pts[i], s_oct[i]);
+		}
+
+		for (int i = 0; i < 8; i++)
+		{
+			int next = (i + 2) % 8;
+			if (v_oct[i] && v_oct[next])
+			{
+				surf::prim::line((int)s_oct[i].x, (int)s_oct[i].y, (int)s_oct[next].x, (int)s_oct[next].y, col.with_alpha(210));
+			}
+		}
+	}
+
+	void draw_bullet_tracers_and_impacts()
+	{
+		while (!bullet_tracers.empty() && (global::realtime - bullet_tracers.front().time) > sets->visuals.bullet_tracers_duration)
+		{
+			bullet_tracers.pop_front();
+		}
+
+		for (auto& bt : bullet_tracers)
+		{
+			float age = global::realtime - bt.time;
+			float progress = 1.0f - (age / (sets->visuals.bullet_tracers_duration > 0.1f ? sets->visuals.bullet_tracers_duration : 2.5f));
+			if (progress <= 0.0f) continue;
+
+			int alpha = (int)(progress * 255.0f);
+			cvector s1, s2;
+			if (sets->visuals.bullet_tracers && w2s(bt.start, s1) && w2s(bt.end, s2))
+			{
+				color col = bt.col.with_alpha(alpha);
+				surf::prim::line((int)s1.x, (int)s1.y, (int)s2.x, (int)s2.y, col);
+				surf::prim::line((int)s1.x, (int)s1.y + 1, (int)s2.x, (int)s2.y + 1, col.with_alpha(alpha / 2));
+			}
+
+			if (sets->visuals.impact_rings)
+			{
+				float ring_rad = (1.0f - progress) * 22.0f;
+				draw_3d_ring(bt.end, ring_rad, sets->visuals.impact_rings_color.with_alpha(alpha));
+			}
+		}
+	}
+
+	void draw_damage_indicators()
+	{
+		if (!sets->visuals.damage_indicator)
+		{
+			damage_popups.clear();
+			return;
+		}
+
+		while (!damage_popups.empty() && (global::realtime - damage_popups.front().time) > 2.0f)
+		{
+			damage_popups.pop_front();
+		}
+
+		for (auto& dp : damage_popups)
+		{
+			float age = global::realtime - dp.time;
+			float progress = 1.0f - (age / 2.0f);
+			if (progress <= 0.0f) continue;
+
+			cvector float_pos = dp.pos + cvector(0.0f, 0.0f, age * 35.0f);
+			cvector screen_pos;
+			if (w2s(float_pos, screen_pos))
+			{
+				int alpha = (int)(progress * 255.0f);
+				string txt = (dp.headshot ? "HEAD! -" : "-") + to_string(dp.damage);
+				color col = dp.headshot ? color(255, 30, 30, alpha) : sets->visuals.damage_indicator_color.with_alpha(alpha);
+				surf::font::draw(surf::font::esp, (int)screen_pos.x, (int)screen_pos.y, col, DT_CENTER | DT_VCENTER, txt.c_str());
+			}
+		}
+	}
+
+	void draw_kill_effects()
+	{
+		if (sets->visuals.kill_effect == 0)
+		{
+			kill_effects.clear();
+			return;
+		}
+
+		while (!kill_effects.empty() && (global::realtime - kill_effects.front().time) > 2.5f)
+		{
+			kill_effects.pop_front();
+		}
+
+		for (auto& k : kill_effects)
+		{
+			float age = global::realtime - k.time;
+			float progress = 1.0f - (age / 2.5f);
+			if (progress <= 0.0f) continue;
+			int alpha = (int)(progress * 255.0f);
+			color c = k.col.with_alpha(alpha);
+
+			if (k.type == 1) // 3D Lightning Strike down from sky
+			{
+				cvector ground = k.pos;
+				cvector sky = k.pos + cvector(0.0f, 0.0f, 400.0f);
+				int segments = 8;
+				cvector prev = sky;
+				for (int s = 1; s <= segments; s++)
+				{
+					float f = (float)s / (float)segments;
+					float jx = (s < segments) ? sinf(age * 50.0f + s * 1.7f) * 16.0f : 0.0f;
+					float jy = (s < segments) ? cosf(age * 40.0f + s * 2.3f) * 16.0f : 0.0f;
+					cvector curr = sky + (ground - sky) * f + cvector(jx, jy, 0.0f);
+
+					cvector sp, sc;
+					if (w2s(prev, sp) && w2s(curr, sc))
+					{
+						surf::prim::line((int)sp.x, (int)sp.y, (int)sc.x, (int)sc.y, color(255, 255, 255, alpha));
+						surf::prim::line((int)sp.x + 1, (int)sp.y, (int)sc.x + 1, (int)sc.y, c);
+					}
+					prev = curr;
+				}
+				draw_3d_ring(ground, (1.0f - progress) * 45.0f, c);
+			}
+			else if (k.type == 2) // 3D Particle Spark / Blood Fountain
+			{
+				for (int p = 0; p < 16; p++)
+				{
+					float a = (float)p * (2.0f * (float)M_PI / 16.0f);
+					float spd = 25.0f + (float)(p % 5) * 8.0f;
+					cvector part_pos = k.pos + cvector(cosf(a) * spd * age, sinf(a) * spd * age, age * 60.0f - 0.5f * 98.0f * age * age);
+					cvector scr;
+					if (w2s(part_pos, scr))
+					{
+						surf::prim::filled_box((int)scr.x - 1, (int)scr.y - 1, (int)scr.x + 2, (int)scr.y + 2, c);
+					}
+				}
+			}
+			else if (k.type == 3) // Ascending Soul / Skull Rising
+			{
+				cvector soul_pos = k.pos + cvector(0.0f, 0.0f, age * 40.0f);
+				cvector scr;
+				if (w2s(soul_pos, scr))
+				{
+					draw_3d_halo(soul_pos, c, 10.0f);
+					surf::font::draw(surf::font::esp, (int)scr.x, (int)scr.y, color(255, 255, 255, alpha), DT_CENTER | DT_VCENTER, "☠ SOUL");
+				}
+			}
+			else if (k.type == 4) // Cyber Implosion Rings
+			{
+				draw_3d_ring(k.pos, age * 50.0f, c);
+				draw_3d_ring(k.pos + cvector(0.0f, 0.0f, 20.0f), age * 35.0f, color(255, 255, 255, alpha));
+			}
+		}
+	}
+
+	void draw_laser_sight()
+	{
+		if (!sets->visuals.laser_sight || !global::local || !global::local->valid() || !_engine || !_trace) return;
+
+		qangle va;
+		_engine->get_viewangles(va);
+		cvector fwd;
+		angle_vectors(va, &fwd);
+
+		cvector eye = global::local->get_eye_pos();
+		cvector end = eye + fwd * (sets->visuals.laser_sight_length > 100.0f ? sets->visuals.laser_sight_length : 1500.0f);
+
+		ctrace tr;
+		cray ray;
+		ray.init(eye, end);
+		_trace->trace_ray(ray, MASK_SHOT, nullptr, &tr);
+
+		cvector s_start, s_end;
+		if (w2s(eye + cvector(0.0f, 0.0f, -4.0f), s_start) && w2s(tr.endpos, s_end))
+		{
+			surf::prim::line((int)s_start.x, (int)s_start.y, (int)s_end.x, (int)s_end.y, sets->visuals.laser_sight_color);
+			surf::prim::line((int)s_start.x, (int)s_start.y + 1, (int)s_end.x, (int)s_end.y + 1, sets->visuals.laser_sight_color.with_alpha(120));
+			surf::prim::filled_box((int)s_end.x - 3, (int)s_end.y - 3, (int)s_end.x + 4, (int)s_end.y + 4, color(255, 255, 255, 255));
+		}
+	}
+
+	void draw_screen_hit_pulse()
+	{
+		if (!sets->visuals.screen_hit_pulse || screen_hit_time == 0.0f) return;
+		float age = global::realtime - screen_hit_time;
+		if (age > 0.4f) return;
+
+		float progress = 1.0f - (age / 0.4f);
+		int alpha = (int)(progress * 80.0f);
+		color col = sets->visuals.screen_hit_pulse_color.with_alpha(alpha);
+
+		int w = global::screen.right;
+		int h = global::screen.bottom;
+		int border = 8;
+		surf::prim::filled_box(0, 0, w, border, col);
+		surf::prim::filled_box(0, h - border, w, h, col);
+		surf::prim::filled_box(0, 0, border, h, col);
+		surf::prim::filled_box(w - border, 0, w, h, col);
+	}
+
+	void draw_item_sky_beam(cvector pos, color col)
+	{
+		cvector top = pos + cvector(0.0f, 0.0f, 180.0f);
+		cvector s_bottom, s_top;
+		if (w2s(pos, s_bottom) && w2s(top, s_top))
+		{
+			surf::prim::line((int)s_bottom.x, (int)s_bottom.y, (int)s_top.x, (int)s_top.y, col);
+			surf::prim::line((int)s_bottom.x - 1, (int)s_bottom.y, (int)s_top.x - 1, (int)s_top.y, col.with_alpha(140));
+			surf::prim::line((int)s_bottom.x + 1, (int)s_bottom.y, (int)s_top.x + 1, (int)s_top.y, col.with_alpha(140));
+			draw_3d_ring(pos, 16.0f + sinf(global::realtime * 4.0f) * 3.0f, col);
 		}
 	}
 
@@ -285,13 +808,15 @@ namespace esp
 		if (!sets->visuals.enabled || !_engine || !_engine->in_game() || !_ent_list)
 			return;
 
-		if (!sets->visuals.asian_hat && !sets->visuals.bomb_timer && !sets->visuals.esp_filter[0] && !sets->visuals.esp_filter[1] && !sets->visuals.esp_filter[2] && !sets->visuals.esp_filter[3] && !sets->visuals.esp_filter[4] && !sets->visuals.esp_filter[5])
-			return;
-
 		if (sets->visuals.sound_esp || sets->visuals.footstep_rings || (sets->visuals.esp_filter[0] && sets->visuals.esp_show[4]))
 			draw_sounds();
 
-		draw_rainbow_trail();
+		draw_dynamic_trail();
+		draw_bullet_tracers_and_impacts();
+		draw_damage_indicators();
+		draw_kill_effects();
+		draw_laser_sight();
+		draw_screen_hit_pulse();
 
 		centity* entity = nullptr;
 		iclientnetworkable* networkable = nullptr;
@@ -356,70 +881,131 @@ namespace esp
 				bool is_enemy = (!local_alive || local_team <= 1 || entity->get_team() != local_team);
 				p_color = visible ? (entity->get_team() == 2 ? sets->visuals.esp_t : sets->visuals.esp_ct) : (is_enemy ? (entity->get_team() == 2 ? sets->visuals.esp_t.with_alpha(180) : sets->visuals.esp_ct.with_alpha(180)) : color::disabled());
 
-				// Asian Hat 3D Conical Rice Hat (Applies to enemies, and teammates only if Draw Teammates is enabled)
-				if (sets->visuals.asian_hat && entity->valid())
+				// 3D Head Accessories & Attachments (Unified Combo Selection)
+				int acc_mode = sets->visuals.head_accessory;
+				if (acc_mode == 0)
 				{
-					bool allow_hat = false;
-					if (id == global::local_id)
-					{
-						allow_hat = sets->visuals.thirdperson;
-					}
-					else if (!is_teammate || sets->visuals.friends)
-					{
-						allow_hat = true;
-					}
+					if (sets->visuals.asian_hat) acc_mode = 1;
+					else if (sets->visuals.halo_ring) acc_mode = 2;
+					else if (sets->visuals.devil_horns) acc_mode = 3;
+					else if (sets->visuals.crown) acc_mode = 4;
+					else if (sets->visuals.cat_ears) acc_mode = 5;
+				}
 
+				if (acc_mode > 0 && entity->valid())
+				{
+					bool allow_hat = (id == global::local_id) ? sets->visuals.thirdperson : (!is_teammate || sets->visuals.friends);
 					if (allow_hat)
 					{
-						cvector head_pos(0, 0, 0);
-						if (has_matrix)
-						{
-							head_pos = entity->get_hitbox(hitbox_head, matrix);
-						}
-						if (head_pos.IsZero())
-						{
-							head_pos = entity->get_eye_pos() + cvector(0, 0, 4.0f);
-						}
-
+						cvector head_pos = has_matrix ? entity->get_hitbox(hitbox_head, matrix) : (entity->get_eye_pos() + cvector(0, 0, 4.0f));
 						if (!head_pos.IsZero())
 						{
-							head_pos.z += 6.5f;
-							cvector apex = head_pos + cvector(0.0f, 0.0f, sets->visuals.asian_hat_height);
-							cvector screen_apex;
-							bool apex_valid = w2s(apex, screen_apex);
+							color acc_col = sets->visuals.head_accessory_color;
+							float acc_sz = sets->visuals.head_accessory_size;
 
-							cvector rim_screens[24];
-							bool rim_valid[24];
-
-							for (int i = 0; i < s_hat_points; i++)
+							if (acc_mode == 1) // Asian Rice Hat (Vietnamese Non La)
 							{
-								cvector rim_pos = head_pos + cvector(s_hat_cos[i] * sets->visuals.asian_hat_size, s_hat_sin[i] * sets->visuals.asian_hat_size, 0.0f);
-								rim_valid[i] = w2s(rim_pos, rim_screens[i]);
-							}
+								head_pos.z += 6.5f;
+								cvector apex = head_pos + cvector(0.0f, 0.0f, sets->visuals.head_accessory_height);
+								cvector screen_apex;
+								bool apex_valid = w2s(apex, screen_apex);
 
-							int hat_alpha = (id == global::local_id) ? 255 : (alpha[alpha_idx] > 0 ? alpha[alpha_idx] : 255);
-							color base_col = sets->visuals.asian_hat_color.with_alpha(hat_alpha);
-							for (int i = 0; i < s_hat_points; i++)
-							{
-								int next_i = (i + 1) % s_hat_points;
+								cvector rim_screens[24];
+								bool rim_valid[24];
 
-								if (rim_valid[i] && rim_valid[next_i])
+								for (int i = 0; i < s_hat_points; i++)
 								{
-									// Render 3D Conical Hat Rim & Ribs using Engine Surface
-									surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)rim_screens[next_i].x, (int)rim_screens[next_i].y, base_col);
-									if (apex_valid)
+									cvector rim_pos = head_pos + cvector(s_hat_cos[i] * acc_sz, s_hat_sin[i] * acc_sz, 0.0f);
+									rim_valid[i] = w2s(rim_pos, rim_screens[i]);
+								}
+
+								int hat_alpha = (id == global::local_id) ? 255 : (alpha[alpha_idx] > 0 ? alpha[alpha_idx] : 255);
+								color base_col = acc_col.with_alpha(hat_alpha);
+								color ring_col = color(185, 160, 115, (int)(hat_alpha * 0.8f));
+
+								for (int i = 0; i < s_hat_points; i++)
+								{
+									int next_i = (i + 1) % s_hat_points;
+
+									if (rim_valid[i] && rim_valid[next_i])
 									{
-										surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)screen_apex.x, (int)screen_apex.y, base_col);
+										// Bamboo Outer Rim
+										surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)rim_screens[next_i].x, (int)rim_screens[next_i].y, base_col);
+
+										// Radial Palm Leaf Stitch Seams
+										if (apex_valid)
+										{
+											surf::prim::line((int)rim_screens[i].x, (int)rim_screens[i].y, (int)screen_apex.x, (int)screen_apex.y, base_col.with_alpha((int)(hat_alpha * 0.7f)));
+										}
+
+										// Concentric Bamboo Rings
+										if (apex_valid)
+										{
+											for (int r = 1; r <= 3; r++)
+											{
+												float frac = (float)r / 4.0f;
+												int rx1 = (int)(screen_apex.x + (rim_screens[i].x - screen_apex.x) * frac);
+												int ry1 = (int)(screen_apex.y + (rim_screens[i].y - screen_apex.y) * frac);
+												int rx2 = (int)(screen_apex.x + (rim_screens[next_i].x - screen_apex.x) * frac);
+												int ry2 = (int)(screen_apex.y + (rim_screens[next_i].y - screen_apex.y) * frac);
+												surf::prim::line(rx1, ry1, rx2, ry2, ring_col);
+											}
+										}
 									}
 								}
-							}
 
-							// Draw apex cap
-							if (apex_valid)
+								// Traditional Silk Chin Strap (Quai Non)
+								cvector chin_pos = head_pos - cvector(0.0f, 0.0f, 6.0f);
+								cvector s_chin;
+								if (w2s(chin_pos, s_chin) && rim_valid[6] && rim_valid[18])
+								{
+									color silk_col = color(235, 55, 105, hat_alpha);
+									surf::prim::line((int)rim_screens[6].x, (int)rim_screens[6].y, (int)s_chin.x, (int)s_chin.y, silk_col);
+									surf::prim::line((int)rim_screens[18].x, (int)rim_screens[18].y, (int)s_chin.x, (int)s_chin.y, silk_col);
+								}
+
+								if (apex_valid)
+								{
+									surf::prim::filled_box((int)screen_apex.x - 2, (int)screen_apex.y - 2, (int)screen_apex.x + 3, (int)screen_apex.y + 3, color(235, 215, 175, hat_alpha));
+								}
+							}
+							else if (acc_mode == 2) // Angel Halo Ring
 							{
-								surf::prim::filled_box((int)screen_apex.x - 2, (int)screen_apex.y - 2, (int)screen_apex.x + 3, (int)screen_apex.y + 3, color(255, 255, 255, hat_alpha));
+								draw_3d_halo(head_pos, acc_col, acc_sz * 0.6f);
+							}
+							else if (acc_mode == 3) // Devil Horns
+							{
+								draw_3d_devil_horns(head_pos, acc_col, acc_sz * 0.5f);
+							}
+							else if (acc_mode == 4) // Royal Crown
+							{
+								draw_3d_crown(head_pos, acc_col, acc_sz * 0.7f);
+							}
+							else if (acc_mode == 5) // Cyber Cat Ears
+							{
+								draw_3d_cat_ears(head_pos, acc_col, acc_sz * 0.5f);
 							}
 						}
+					}
+				}
+
+				// 3D Energy Angel/Demon Wings
+				if (sets->visuals.energy_wings && entity->valid())
+				{
+					bool allow_acc = (id == global::local_id) ? sets->visuals.thirdperson : (!is_teammate || sets->visuals.friends);
+					if (allow_acc)
+					{
+						draw_3d_energy_wings(entity->get_origin(), sets->visuals.energy_wings_color, sets->visuals.energy_wings_size);
+					}
+				}
+
+				// 3D Magic Circle Runes (Ground)
+				if (sets->visuals.magic_circle && entity->valid())
+				{
+					bool allow_acc = (id == global::local_id) ? sets->visuals.thirdperson : (!is_teammate || sets->visuals.friends);
+					if (allow_acc)
+					{
+						draw_3d_magic_circle(entity->get_origin(), sets->visuals.magic_circle_color, sets->visuals.magic_circle_size);
 					}
 				}
 
@@ -632,6 +1218,11 @@ namespace esp
 			case CC4:
 			case CPlantedC4:
 			{
+				if (sets->visuals.item_light_beams)
+				{
+					draw_item_sky_beam(entity->get_origin(), sets->visuals.item_light_beams_color);
+				}
+
 				if (events::bomb_timer::explosion_time == 0.f)
 				{
 					events::bomb_timer::f_exp_time = entity->get_c4_timer_length();
@@ -687,8 +1278,15 @@ namespace esp
 			}
 			}
 
-			if (sets->visuals.esp_filter[1] && (strstr(name, "CWeapon") || class_id == CAK47 || class_id == CDEagle))
+			if (strstr(name, "CWeapon") || class_id == CAK47 || class_id == CDEagle)
 			{
+				if (sets->visuals.item_light_beams)
+				{
+					draw_item_sky_beam(entity->get_origin(), sets->visuals.item_light_beams_color);
+				}
+
+				if (!sets->visuals.esp_filter[1]) continue;
+
 				box = cbox(entity, class_id);
 				if (!box.construct_points()) continue;
 
