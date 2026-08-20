@@ -395,34 +395,6 @@ namespace models
 			return;
 		}
 
-		// Custom 3D Player Model Override
-		if (is_player && sets->visuals.enable_custom_model && !ModelMgr::model_entries.empty())
-		{
-			if (!sets->visuals.custom_model_local_only || is_local)
-			{
-				int sel = sets->visuals.model_selection;
-				if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
-				{
-					const model_t* custom_model = _model_info->find_or_load_model(ModelMgr::model_entries[sel].model_path.c_str());
-					if (custom_model)
-					{
-						ModelRenderInfo_t custom_info = p_info;
-						custom_info.pModel = custom_model;
-
-						if (sets->visuals.chams > 0)
-						{
-							chams::players::run(model_material[0], entity, state, custom_info, p_custom_bone_to_world);
-						}
-						else
-						{
-							_model_render->draw_model_execute(state, custom_info, p_custom_bone_to_world);
-						}
-						return;
-					}
-				}
-			}
-		}
-
 		if (is_player && sets->visuals.chams > 0)
 		{
 			chams::players::run(model_material[0], entity, state, p_info, p_custom_bone_to_world);

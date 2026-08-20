@@ -30,6 +30,9 @@ namespace offsets
 	dword armor;
 	dword c4_blow;
 	dword c4_timer;
+	dword model_index = 0x8C;
+	dword rotation = 0xCC;
+	dword pose_parameters = 0x510;
 	//dword coord_frame;
 	dword move_type = 0x178;
 	dword have_defuser;
@@ -176,6 +179,12 @@ namespace offsets
 		armor = get_offset("DT_CSPlayer", "m_ArmorValue"); // TODO: ðÿäîì åñòü m_iFrags è m_iDeaths, äîáàâèòü â info
 		c4_blow = get_offset("DT_PlantedC4", "m_flC4Blow");
 		c4_timer = get_offset("DT_PlantedC4", "m_flTimerLength");
+		dword dyn_model_idx = get_offset("DT_BaseEntity", "m_nModelIndex");
+		if (dyn_model_idx) model_index = dyn_model_idx;
+		dword dyn_rot = get_offset("DT_BaseEntity", "m_angRotation");
+		if (dyn_rot) rotation = dyn_rot;
+		dword dyn_pose = get_offset("DT_BaseAnimating", "m_flPoseParameter");
+		if (dyn_pose) pose_parameters = dyn_pose;
 		//coord_frame = get_offset("DT_CSPlayer", "m_fFlags") - sizeof(Vector) - sizeof(Vector) - sizeof(matrix3x4_t);
 		have_defuser = angles + sizeof(qangle);//get_offset("CCSPlayer", "m_bHasDefuser");
 		//c4_defuse = get_offset("DT_PlantedC4", "m_flDefuseCountDown");

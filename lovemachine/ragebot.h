@@ -146,7 +146,10 @@ namespace rage
 		if (!is_attacking && !sets->rage.autoshoot)
 			return false;
 
-		cvector local_eye = global::local->get_eye_pos();
+		cvector origin = global::local->get_origin();
+		int flags = global::local->get_flags();
+		float eye_z = (flags & FL_DUCKING) ? 46.0f : 64.0f;
+		cvector local_eye = origin + cvector(0.0f, 0.0f, eye_z);
 		if (local_eye.IsZero()) return false;
 
 		int max_clients = _engine->get_max_clients();
@@ -271,7 +274,8 @@ namespace rage
 			float sim_time = best_target->get_simulation_time();
 			if (sim_time > 0.0f && _globals && _globals->interval_per_tick > 0.0f)
 			{
-				global::cmd->tick_count = (int)(0.5f + sim_time / _globals->interval_per_tick);
+				float lerp = 0.03f;
+				global::cmd->tick_count = (int)(0.5f + (sim_time + lerp) / _globals->interval_per_tick);
 			}
 
 			// Active counter-strafing autostop to guarantee 100% laser accuracy
@@ -282,6 +286,7 @@ namespace rage
 
 			// Apply NoRecoil + NoSpread for 100% pin-point headshots
 			apply_nospread_norecoil(global::cmd, global::local);
+			global::last_sent_angles = global::cmd->viewangles;
 			return true;
 		}
 
@@ -345,12 +350,6 @@ namespace rage
 		}
 
 		normalize_angles(global::cmd->viewangles);
-
-		// Apply spinbot/anti-aim angles directly to local player render angle so thirdperson visibly rotates
-		if (global::local && global::local->valid() && offsets::angles)
-		{
-			*(qangle*)((DWORD)global::local + offsets::angles) = global::cmd->viewangles;
-		}
 	}
 
 	namespace aimbot

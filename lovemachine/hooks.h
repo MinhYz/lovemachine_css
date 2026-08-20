@@ -860,15 +860,74 @@ namespace hooks
 			{
 				if (global::local->get_life_state() == 0 && (sets->rage.anti_aim || sets->rage.spinbot || sets->rage.pitch_aa != 0 || sets->rage.yaw_aa != 0))
 				{
-					if (offsets::angles)
+					if (!(global::cmd && (global::cmd->buttons & IN_ATTACK)))
 					{
-						*(qangle*)((DWORD)global::local + offsets::angles) = global::last_sent_angles;
+						if (offsets::angles)
+						{
+							*(qangle*)((DWORD)global::local + offsets::angles) = global::last_sent_angles;
+						}
+						if (offsets::rotation)
+						{
+							qangle render_rot = global::last_sent_angles;
+							render_rot.x = 0.0f; // Body yaw rotates in 3D, pitch is handled by pose parameter
+							*(qangle*)((DWORD)global::local + offsets::rotation) = render_rot;
+						}
+						if (offsets::pose_parameters)
+						{
+							float* poses = (float*)((DWORD)global::local + offsets::pose_parameters);
+							float pitch = global::last_sent_angles.x;
+							poses[0] = (pitch + 90.0f) / 180.0f;
+							poses[11] = (pitch + 90.0f) / 180.0f;
+						}
+					}
+				}
+
+				// Custom 3D Player Model Changer (Applied on Render Frame)
+				if (sets->visuals.enable_custom_model && !ModelMgr::model_entries.empty() && _model_info)
+				{
+					int sel = sets->visuals.model_selection;
+					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
+					{
+						int custom_idx = _model_info->get_model_index(ModelMgr::model_entries[sel].model_path.c_str());
+						if (custom_idx > 0)
+						{
+							if (sets->visuals.custom_model_local_only)
+							{
+								global::local->set_model_index(custom_idx);
+							}
+							else if (_ent_list)
+							{
+								for (int i = 1; i <= _engine->get_max_clients(); i++)
+								{
+									centity* ent = _ent_list->get_centity(i);
+									if (ent && ent->valid() && (sets->visuals.friends || ent->get_team() != global::local->get_team()))
+									{
+										ent->set_model_index(custom_idx);
+									}
+								}
+							}
+						}
 					}
 				}
 			}
 			else if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
 			{
-				// Backtrack record updates are handled in CreateMove
+				// Custom 3D Player Model Changer (Applied on Network Update)
+				if (sets->visuals.enable_custom_model && !ModelMgr::model_entries.empty() && _model_info)
+				{
+					int sel = sets->visuals.model_selection;
+					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
+					{
+						int custom_idx = _model_info->get_model_index(ModelMgr::model_entries[sel].model_path.c_str());
+						if (custom_idx > 0)
+						{
+							if (sets->visuals.custom_model_local_only)
+							{
+								global::local->set_model_index(custom_idx);
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -908,7 +967,6 @@ namespace hooks
 				*(int*)((DWORD)sv_cheats + 0x14) &= ~FCVAR_CHEAT;
 				*(int*)((DWORD)sv_cheats + 0x14) &= ~FCVAR_NOT_CONNECTED;
 				*(int*)((DWORD)sv_cheats + 0x14) &= ~FCVAR_REPLICATED;
-				sv_cheats->set_value(1);
 			}
 
 			auto cmd_tp = _cvar->FindCommand("thirdperson");
@@ -919,6 +977,18 @@ namespace hooks
 
 			auto cmd_cam = _cvar->FindCommand("cam_command");
 			if (cmd_cam) *(int*)((DWORD)cmd_cam + 0x14) &= ~FCVAR_CHEAT;
+
+			auto cam_idealdist = _cvar->find_var("cam_idealdist");
+			if (cam_idealdist) *(int*)((DWORD)cam_idealdist + 0x14) &= ~FCVAR_CHEAT;
+
+			auto cam_idealyaw = _cvar->find_var("cam_idealyaw");
+			if (cam_idealyaw) *(int*)((DWORD)cam_idealyaw + 0x14) &= ~FCVAR_CHEAT;
+
+			auto cam_idealpitch = _cvar->find_var("cam_idealpitch");
+			if (cam_idealpitch) *(int*)((DWORD)cam_idealpitch + 0x14) &= ~FCVAR_CHEAT;
+
+			auto cam_collision = _cvar->find_var("cam_collision");
+			if (cam_collision) *(int*)((DWORD)cam_collision + 0x14) &= ~FCVAR_CHEAT;
 
 			bypassed = true;
 		}
@@ -940,6 +1010,21 @@ namespace hooks
 			if (sets->misc.fake_duck && !sets->visuals.thirdperson)
 			{
 				p_setup->origin.z = global::local->get_origin().z + 64.0f;
+			}
+
+			static bool prev_tp_state = false;
+			if (sets->visuals.thirdperson != prev_tp_state)
+			{
+				bypass_cheats_thirdperson();
+				if (sets->visuals.thirdperson)
+				{
+					_engine->clientcmd_unrestricted("thirdperson");
+				}
+				else
+				{
+					_engine->clientcmd_unrestricted("firstperson");
+				}
+				prev_tp_state = sets->visuals.thirdperson;
 			}
 
 			if (sets->visuals.thirdperson)

@@ -113,6 +113,16 @@ public:
 		return *(int*)((dword)this + offsets::move_type);
 	}
 
+	int get_model_index()
+	{
+		return *(int*)((dword)this + offsets::model_index);
+	}
+
+	void set_model_index(int index)
+	{
+		*(int*)((dword)this + offsets::model_index) = index;
+	}
+
 	int get_money()
 	{
 		return *(int*)((dword)this + offsets::account);
