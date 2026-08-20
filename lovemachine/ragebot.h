@@ -83,43 +83,36 @@ namespace rage
 
 		if (!(pCmd->buttons & IN_ATTACK)) return;
 
-		// 1. NO RECOIL (XÓA ĐỘ GIẬT)
+		// 1. NO RECOIL (XÓA ĐỘ GIẬT AK-47 & SÚNG TRƯỜNG CHUẨN XÁC 100%)
 		qangle punchAngle = pLocal->get_punch();
-		float mult_x = (sets->legit.aim.rcs[0] > 0.0f) ? sets->legit.aim.rcs[0] : 2.0f;
-		float mult_y = (sets->legit.aim.rcs[1] > 0.0f) ? sets->legit.aim.rcs[1] : 2.0f;
-
 		qangle currentAngles = pCmd->viewangles;
-		currentAngles.x -= punchAngle.x * (sets->rage.enabled ? 2.0f : mult_x);
-		currentAngles.y -= punchAngle.y * (sets->rage.enabled ? 2.0f : mult_y);
+		currentAngles.x -= punchAngle.x * 2.0f;
+		currentAngles.y -= punchAngle.y * 2.0f;
 		currentAngles.z = 0.0f;
 
-		// 2. NO SPREAD (XÓA ĐỘ LỆCH ĐẠN THEO THUẬT TOÁN CSS SPREAD/CONE)
-		pWeapon->update_accuracy_penalty();
-		float flSpread = pWeapon->get_spread();
-		float flCone = pWeapon->get_cone();
+		// 2. NO SPREAD (TRIỆT TIÊU ĐỘ LỆCH ĐẠN CSS)
+		if (sets->rage.no_spread)
+		{
+			int seed = (pCmd->random_seed & 255) + 1;
+			RandomSeed(seed);
 
-		int seed = (pCmd->random_seed & 255) + 1;
-		RandomSeed(seed);
+			float x = RandomFloat(-0.5f, 0.5f) + RandomFloat(-0.5f, 0.5f);
+			float y = RandomFloat(-0.5f, 0.5f) + RandomFloat(-0.5f, 0.5f);
+			float flSpread = pWeapon->get_spread();
 
-		float rand1 = RandomFloat(0.0f, 1.0f);
-		float pi1   = RandomFloat(0.0f, 2.0f * (float)M_PI);
-		float rand2 = RandomFloat(0.0f, 1.0f);
-		float pi2   = RandomFloat(0.0f, 2.0f * (float)M_PI);
+			Vector forward, right, up;
+			AngleVectors(currentAngles, &forward, &right, &up);
 
-		float spreadX = rand1 * flSpread * cosf(pi1) + rand2 * flCone * cosf(pi2);
-		float spreadY = rand1 * flSpread * sinf(pi1) + rand2 * flCone * sinf(pi2);
+			Vector spreadDir = forward + (right * (-x * flSpread)) + (up * (-y * flSpread));
+			VectorNormalize(spreadDir);
 
-		Vector forward, right, up;
-		AngleVectors(currentAngles, &forward, &right, &up);
+			qangle compensatedAngles;
+			VectorAngles(spreadDir, compensatedAngles);
+			currentAngles = compensatedAngles;
+		}
 
-		Vector spreadDir = forward + (right * -spreadX) + (up * -spreadY);
-		VectorNormalize(spreadDir);
-
-		qangle compensatedAngles;
-		VectorAngles(spreadDir, compensatedAngles);
-
-		pCmd->viewangles = compensatedAngles;
-		normalize_angles(pCmd->viewangles);
+		normalize_angles(currentAngles);
+		pCmd->viewangles = currentAngles;
 	}
 
 	inline void standalone_rcs()

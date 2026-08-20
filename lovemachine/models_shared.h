@@ -18,6 +18,9 @@ namespace ModelMgr
 		{ "SAS (CT)", "models/player/ct_sas.mdl" },
 		{ "GIGN (CT)", "models/player/ct_gign.mdl" },
 		{ "Hostage 01", "models/characters/hostage_01.mdl" },
+		{ "Akame (Akame ga Kill)", "models/player/legion/akame/akame_fix.mdl" },
+		{ "Akame Fix", "models/player/legion/akame/akame_fix.mdl" },
+		{ "Akame Custom", "models/player/custom/akame/akame.mdl" },
 		{ "Cissia ZZZ (Zenless Zone Zero)", "models/sneaky_holy/neps/powered_by_nidegg/best_zombie_escape_server/thick_snake/cissia_zzz.mdl" }
 	};
 
@@ -43,7 +46,10 @@ namespace ModelMgr
 				std::string fn(fd.cFileName);
 				if (fn.length() > 4 && fn.substr(fn.length() - 4) == ".mdl")
 				{
-					std::string full_model_path = "models/" + sub_rel;
+					std::string full_model_path = sub_rel;
+					if (base_folder.find("models") != std::string::npos)
+						full_model_path = "models/" + sub_rel;
+
 					std::string display = fd.cFileName;
 					display = display.substr(0, display.length() - 4);
 					
@@ -71,6 +77,14 @@ namespace ModelMgr
 		{
 			scanned = true;
 			ScanFolderForModelsRecursive("cstrike\\models", "");
+			ScanFolderForModelsRecursive("cstrike\\script\\models", "");
+			ScanFolderForModelsRecursive("cstrike\\scripts\\models", "");
+			ScanFolderForModelsRecursive("cstrike\\script", "");
+			ScanFolderForModelsRecursive("cstrike\\scripts", "");
+			ScanFolderForModelsRecursive("cstrike_downloads\\models", "");
+			ScanFolderForModelsRecursive("cstrike\\download\\models", "");
+			ScanFolderForModelsRecursive("cstrike\\custom", "");
+			ScanFolderForModelsRecursive("cstrike_custom\\models", "");
 		}
 #endif
 	}

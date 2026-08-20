@@ -176,14 +176,20 @@ public:
 		bool hitmarker = false;
 		bool bomb_timer = false;
 
-		// Viewmodel FOV (Arm/Hand Length)
+		// Viewmodel FOV & Hand/Arm Color Customization
 		float viewmodel_fov = 90.0f;
+		float viewmodel_offset_x = 0.0f;
+		float viewmodel_offset_y = 0.0f;
+		float viewmodel_offset_z = 0.0f;
+		int hand_chams = 0; // 0: Disabled, 1: Solid Color, 2: Metallic Shaded, 3: Wireframe
+		color hand_color = color(255, 40, 90);
 		float fov = 0.0f;
 
 		// Custom 3D Character Model (Cissia ZZZ / Phoenix)
 		bool enable_custom_model = false;
 		bool custom_model_local_only = true;
 		int model_selection = 0;
+		char custom_model_path_input[256] = "models/player/cissia_zzz.mdl";
 
 		// Skeleton & Nightmode & Advanced ESP
 		bool skeleton = true;

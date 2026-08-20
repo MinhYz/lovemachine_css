@@ -400,6 +400,16 @@ namespace models
 			chams::players::run(model_material[0], entity, state, p_info, p_custom_bone_to_world);
 		}
 
+		// Custom Hand & Arm Color Chams
+		if (!is_player && sets->visuals.hand_chams > 0 && name && (strstr(name, "arms") || strstr(name, "hands") || strstr(name, "v_hands") || strstr(name, "v_sleeve") || (strstr(name, "models/weapons/v_") && !strstr(name, "w_"))))
+		{
+			imaterial* hand_mat = (sets->visuals.hand_chams == 1) ? chams::materials[0][0][0] : ((sets->visuals.hand_chams == 2) ? chams::materials[0][0][1] : chams::materials[0][0][2]);
+			if (hand_mat)
+			{
+				chams::apply_chams(hand_mat, sets->visuals.hand_color);
+			}
+		}
+
 		if (!is_player && (sets->visuals.other_chams[0] || sets->visuals.other_chams[1] || sets->visuals.other_chams[2]))
 		{
 			chams::other::run(name, model_material[0], state, p_info, p_custom_bone_to_world);

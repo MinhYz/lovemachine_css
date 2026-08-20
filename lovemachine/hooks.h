@@ -888,7 +888,14 @@ namespace hooks
 					int sel = sets->visuals.model_selection;
 					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
 					{
-						int custom_idx = _model_info->get_model_index(ModelMgr::model_entries[sel].model_path.c_str());
+						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
+						int custom_idx = _model_info->get_model_index(m_path);
+						if (custom_idx <= 0)
+						{
+							const model_t* m = _model_info->find_or_load_model(m_path);
+							if (m) custom_idx = _model_info->get_model_index(m_path);
+						}
+
 						if (custom_idx > 0)
 						{
 							if (sets->visuals.custom_model_local_only)
@@ -918,13 +925,17 @@ namespace hooks
 					int sel = sets->visuals.model_selection;
 					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
 					{
-						int custom_idx = _model_info->get_model_index(ModelMgr::model_entries[sel].model_path.c_str());
-						if (custom_idx > 0)
+						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
+						int custom_idx = _model_info->get_model_index(m_path);
+						if (custom_idx <= 0)
 						{
-							if (sets->visuals.custom_model_local_only)
-							{
-								global::local->set_model_index(custom_idx);
-							}
+							const model_t* m = _model_info->find_or_load_model(m_path);
+							if (m) custom_idx = _model_info->get_model_index(m_path);
+						}
+
+						if (custom_idx > 0 && sets->visuals.custom_model_local_only)
+						{
+							global::local->set_model_index(custom_idx);
 						}
 					}
 				}
@@ -1007,7 +1018,7 @@ namespace hooks
 			if (sets->visuals.fov > 0.0f)
 				p_setup->fov = sets->visuals.fov;
 
-			if (sets->misc.fake_duck && !sets->visuals.thirdperson)
+			if (sets->misc.fake_duck)
 			{
 				p_setup->origin.z = global::local->get_origin().z + 64.0f;
 			}

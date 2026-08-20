@@ -347,36 +347,27 @@ namespace misc
 		}
 	}
 
-	void fake_duck()
+	inline void fake_duck()
 	{
 		if (!sets->misc.fake_duck || !global::cmd || !global::local || !global::local->valid())
 			return;
 
-		// Compensate movement speed to prevent being stuck at crouch crawl speed
+		if (!(global::local->get_flags() & FL_ONGROUND))
+			return;
+
+		// Compensate movement speed
 		if (global::cmd->forwardmove != 0.0f || global::cmd->sidemove != 0.0f)
 		{
 			float move_len = sqrtf(global::cmd->forwardmove * global::cmd->forwardmove + global::cmd->sidemove * global::cmd->sidemove);
-			if (move_len > 0.0f && move_len < 250.0f)
+			if (move_len > 0.0f && move_len < 400.0f)
 			{
-				float scale = 400.0f / move_len;
+				float scale = 450.0f / move_len;
 				global::cmd->forwardmove *= scale;
 				global::cmd->sidemove *= scale;
 			}
 		}
 
-		// Fake Duck Choke Sequence (14 tick cycle):
-		// First half of choke window: Un-duck so local eye height is standing (can see & shoot over boxes)
-		// Second half of choke window: Duck down
-		// On tick 14: Send packet with duck set, resetting server duck state
-		if (global::chocked_packets <= 7)
-		{
-			global::cmd->buttons &= ~IN_DUCK;
-		}
-		else
-		{
-			global::cmd->buttons |= IN_DUCK;
-		}
-
+		// Stable Fake Duck Choking without bouncing
 		if (global::chocked_packets >= 14)
 		{
 			global::sendpacket = true;
@@ -385,6 +376,14 @@ namespace misc
 		else
 		{
 			global::sendpacket = false;
+			if (global::chocked_packets < 7)
+			{
+				global::cmd->buttons &= ~IN_DUCK;
+			}
+			else
+			{
+				global::cmd->buttons |= IN_DUCK;
+			}
 		}
 	}
 

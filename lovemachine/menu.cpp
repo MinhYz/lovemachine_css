@@ -1357,6 +1357,18 @@ namespace Menu
 				ColorEdit3Custom("Counter-Terrorist (CT) Color", sets->visuals.chams_ct);
 				EndGroupbox();
 
+				BeginGroupbox("Hands & Arm POV Customization");
+				const char* hand_chams_modes[] = { "0. Disabled", "1. Flat Color", "2. Metallic Shaded", "3. Wireframe" };
+				ImGui::SetNextItemWidth(160);
+				ImGui::Combo("Hand Chams Mode", &sets->visuals.hand_chams, hand_chams_modes, IM_ARRAYSIZE(hand_chams_modes));
+				if (sets->visuals.hand_chams > 0)
+				{
+					ColorEdit3Custom("Hand / Arm Color", sets->visuals.hand_color);
+				}
+				ImGui::SetNextItemWidth(160);
+				ImGui::SliderFloat("Viewmodel POV (Arm Length)", &sets->visuals.viewmodel_fov, 60.0f, 150.0f, "%.0f deg");
+				EndGroupbox();
+
 				BeginGroupbox("Custom 3D Player Model");
 				AnimatedSwitch("Add / Apply Custom 3D Model", &sets->visuals.enable_custom_model);
 				if (sets->visuals.enable_custom_model)
@@ -1369,10 +1381,31 @@ namespace Menu
 				{
 					custom_models_items.push_back(item.display_name.c_str());
 				}
-				ImGui::SetNextItemWidth(180);
+				ImGui::SetNextItemWidth(220);
 				if (!custom_models_items.empty())
 				{
 					ImGui::Combo("Character Model", &sets->visuals.model_selection, custom_models_items.data(), (int)custom_models_items.size());
+				}
+
+				ImGui::Spacing();
+				ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.45f, 1.0f), "Direct Custom .MDL Path:");
+				ImGui::SetNextItemWidth(220);
+				ImGui::InputText("##CustomPathInput", sets->visuals.custom_model_path_input, sizeof(sets->visuals.custom_model_path_input));
+				if (ImGui::Button("+ Load & Apply Custom Path", ImVec2(220, 24)))
+				{
+					if (strlen(sets->visuals.custom_model_path_input) > 0)
+					{
+						std::string p = sets->visuals.custom_model_path_input;
+						std::string name = p;
+						size_t slash = name.find_last_of("/\\");
+						if (slash != std::string::npos) name = name.substr(slash + 1);
+						if (name.length() > 4 && name.substr(name.length() - 4) == ".mdl")
+							name = name.substr(0, name.length() - 4);
+
+						ModelMgr::model_entries.push_back({ "[Custom] " + name, p });
+						sets->visuals.model_selection = (int)ModelMgr::model_entries.size() - 1;
+						sets->visuals.enable_custom_model = true;
+					}
 				}
 				EndGroupbox();
 
