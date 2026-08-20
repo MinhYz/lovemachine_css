@@ -27,7 +27,7 @@ if not defined CSS_PATH (
     )
 )
 
-:: 3. Check common paths (D:\css, C:\css, Steam)
+:: 3. Check common paths
 if not defined CSS_PATH (
     if exist "D:\css\hl2.exe" (
         set "CSS_PATH=D:\css"
@@ -43,7 +43,7 @@ if not defined CSS_PATH (
 :: 4. If still not found, ask user
 if not defined CSS_PATH (
     echo [!] Auto-detection could not locate CS:S directory.
-    set /p CSS_PATH="Enter your CS:S game folder path (e.g. D:\css): "
+    set /p CSS_PATH="Enter your CS:S game folder path [e.g. D:\css]: "
 )
 
 if not exist "!CSS_PATH!\cstrike" (
@@ -55,6 +55,46 @@ if not exist "!CSS_PATH!\cstrike" (
 )
 
 echo [+] Target CS:S Directory: !CSS_PATH!\cstrike
+echo.
+
+:: 5. Clean up old conflicting renamed files that freeze the loading screen
+echo [*] Cleaning up old corrupted/conflicting model files...
+del /F /Q "!CSS_PATH!\cstrike\custom\akame\models\player\ct_urban.*" 2>nul
+del /F /Q "!CSS_PATH!\cstrike\custom\akame\models\player\t_phoenix.*" 2>nul
+del /F /Q "!CSS_PATH!\cstrike\custom\cissia_zzz\models\player\ct_sas.*" 2>nul
+del /F /Q "!CSS_PATH!\cstrike\custom\cissia_zzz\models\player\t_leet.*" 2>nul
+
+:: 6. Fix sv_pure and pure_server_whitelist
+echo [*] Bypassing sv_pure and material consistency checks...
+if not exist "!CSS_PATH!\cstrike\cfg" mkdir "!CSS_PATH!\cstrike\cfg"
+
+(
+echo whitelist
+echo {
+echo 	materials\...	allow_from_disk
+echo 	models\...	allow_from_disk
+echo 	sound\...	allow_from_disk
+echo }
+) > "!CSS_PATH!\cstrike\pure_server_whitelist.txt"
+
+(
+echo whitelist
+echo {
+echo 	materials\...	allow_from_disk
+echo 	models\...	allow_from_disk
+echo 	sound\...	allow_from_disk
+echo }
+) > "!CSS_PATH!\cstrike\cfg\pure_server_whitelist.txt"
+
+echo sv_pure -1 >> "!CSS_PATH!\cstrike\cfg\autoexec.cfg"
+echo sv_consistency 0 >> "!CSS_PATH!\cstrike\cfg\autoexec.cfg"
+echo cl_consistency 0 >> "!CSS_PATH!\cstrike\cfg\autoexec.cfg"
+
+echo sv_pure -1 >> "!CSS_PATH!\cstrike\cfg\listenserver.cfg"
+echo sv_consistency 0 >> "!CSS_PATH!\cstrike\cfg\listenserver.cfg"
+echo cl_consistency 0 >> "!CSS_PATH!\cstrike\cfg\listenserver.cfg"
+
+echo [+] sv_pure bypass configured successfully!
 echo.
 
 :: Determine scripts/models folder location
@@ -70,82 +110,40 @@ if exist "scripts\models" (
 :: Create custom folder in cstrike
 if not exist "!CSS_PATH!\cstrike\custom" mkdir "!CSS_PATH!\cstrike\custom"
 
-:: Install Akame
+:: Install Akame cleanly in native path
 if exist "!MODELS_SRC!\akame" (
-    echo [*] Installing Akame (Akame ga Kill) Skin into custom/akame...
+    echo [*] Installing Akame Skin in native path [models/player/legion/akame]...
     set "AKAME_DEST=!CSS_PATH!\cstrike\custom\akame"
     
-    mkdir "!AKAME_DEST!\models\player" 2>nul
     mkdir "!AKAME_DEST!\materials" 2>nul
+    mkdir "!AKAME_DEST!\models" 2>nul
     
     xcopy /E /I /Y "!MODELS_SRC!\akame\materials" "!AKAME_DEST!\materials" >nul
-    
-    :: Copy as native legion path
-    mkdir "!AKAME_DEST!\models\player\legion\akame" 2>nul
     xcopy /E /I /Y "!MODELS_SRC!\akame\models" "!AKAME_DEST!\models" >nul
-    
-    :: Also copy as ct_urban and t_phoenix replacements for 100% offline & server instant compatibility!
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.mdl" "!AKAME_DEST!\models\player\ct_urban.mdl" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.dx90.vtx" "!AKAME_DEST!\models\player\ct_urban.dx90.vtx" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.dx80.vtx" "!AKAME_DEST!\models\player\ct_urban.dx80.vtx" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.vvd" "!AKAME_DEST!\models\player\ct_urban.vvd" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.phy" "!AKAME_DEST!\models\player\ct_urban.phy" >nul
 
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.mdl" "!AKAME_DEST!\models\player\t_phoenix.mdl" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.dx90.vtx" "!AKAME_DEST!\models\player\t_phoenix.dx90.vtx" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.dx80.vtx" "!AKAME_DEST!\models\player\t_phoenix.dx80.vtx" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.vvd" "!AKAME_DEST!\models\player\t_phoenix.vvd" >nul
-    copy /Y "!MODELS_SRC!\akame\models\player\legion\akame\akame_fix.phy" "!AKAME_DEST!\models\player\t_phoenix.phy" >nul
-
-    echo [SUCCESS] Akame skin installed successfully!
+    echo [+] Akame skin installed successfully!
 )
 
-:: Install Cissia ZZZ
+:: Install Cissia ZZZ cleanly in native path
 if exist "!MODELS_SRC!\cissia_zzz" (
     echo.
-    echo [*] Installing Cissia ZZZ (Zenless Zone Zero) Skin into custom/cissia_zzz...
+    echo [*] Installing Cissia ZZZ Skin in native path...
     set "CISSIA_DEST=!CSS_PATH!\cstrike\custom\cissia_zzz"
     
-    mkdir "!CISSIA_DEST!\models\player" 2>nul
     mkdir "!CISSIA_DEST!\materials" 2>nul
+    mkdir "!CISSIA_DEST!\models" 2>nul
     
     xcopy /E /I /Y "!MODELS_SRC!\cissia_zzz\materials" "!CISSIA_DEST!\materials" >nul
     xcopy /E /I /Y "!MODELS_SRC!\cissia_zzz\models" "!CISSIA_DEST!\models" >nul
-    
-    :: Copy as ct_sas and t_leet replacements for 100% offline & server instant compatibility!
-    set "CISSIA_SRC_MDL=!MODELS_SRC!\cissia_zzz\models\sneaky_holy\neps\powered_by_nidegg\best_zombie_escape_server\thick_snake\cissia_zzz"
-    copy /Y "!CISSIA_SRC_MDL!.mdl" "!CISSIA_DEST!\models\player\ct_sas.mdl" >nul
-    copy /Y "!CISSIA_SRC_MDL!.dx90.vtx" "!CISSIA_DEST!\models\player\ct_sas.dx90.vtx" >nul
-    copy /Y "!CISSIA_SRC_MDL!.dx80.vtx" "!CISSIA_DEST!\models\player\ct_sas.dx80.vtx" >nul
-    copy /Y "!CISSIA_SRC_MDL!.vvd" "!CISSIA_DEST!\models\player\ct_sas.vvd" >nul
 
-    copy /Y "!CISSIA_SRC_MDL!.mdl" "!CISSIA_DEST!\models\player\t_leet.mdl" >nul
-    copy /Y "!CISSIA_SRC_MDL!.dx90.vtx" "!CISSIA_DEST!\models\player\t_leet.dx90.vtx" >nul
-    copy /Y "!CISSIA_SRC_MDL!.dx80.vtx" "!CISSIA_DEST!\models\player\t_leet.dx80.vtx" >nul
-    copy /Y "!CISSIA_SRC_MDL!.vvd" "!CISSIA_DEST!\models\player\t_leet.vvd" >nul
-
-    echo [SUCCESS] Cissia ZZZ skin installed successfully!
-)
-
-:: If a file or folder was dragged and dropped onto this batch file
-if not "%~1"=="" (
-    echo.
-    echo [*] Processing Drag-and-Drop file/folder: %~1
-    if exist "%~1\materials" (
-        mkdir "!CSS_PATH!\cstrike\custom\%~n1" 2>nul
-        xcopy /E /I /Y "%~1" "!CSS_PATH!\cstrike\custom\%~n1" >nul
-        echo [SUCCESS] Drag-and-drop custom mod '%~n1' installed!
-    )
+    echo [+] Cissia ZZZ skin installed successfully!
 )
 
 echo.
 echo ==========================================================================
-echo  ALL CUSTOM SKINS (AKAME & CISSIA ZZZ) INSTALLED SUCCESSFULLY!
+echo  ALL CUSTOM SKINS [AKAME AND CISSIA ZZZ] INSTALLED AND CLEANED!
 echo ==========================================================================
 echo.
-echo [INFO] How to view in game:
-echo  1. Open CS:S and play Offline or Online.
-echo  2. Choose CT (Urban / SAS) or T (Phoenix / Leet).
-echo  3. Or open cheat menu [INSERT] -^> Visuals -^> Select [Urban / Seal (CT)] or [Phoenix (T)]!
+echo [INFO] Game will now load map in 2 seconds without freezing!
 echo.
 pause

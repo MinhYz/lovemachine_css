@@ -80,6 +80,9 @@ namespace game
 		typedef void (*ClipTraceToPlayers_t)(const Vector&, const Vector&, unsigned int, itracefilter*, trace_t*);
 		ClipTraceToPlayers_t  ClipTraceToPlayers;
 
+		typedef model_t* (*GetModelForName_t)(const char* name, int referencetype);
+		GetModelForName_t GetModelForName = nullptr;
+
 		void find_them()
 		{
 			dword pat_d3d = memory::pattern("shaderapidx9.dll", "A1 ? ? ? ? 8D 53 08");
@@ -127,6 +130,13 @@ namespace game
 			{
 				ClipTraceToPlayers = (ClipTraceToPlayers_t)(cliptracetoplayers);
 				console::write_hex("[+] ClipTraceToPlayers", (dword)ClipTraceToPlayers, darkgreen);
+			}
+
+			dword pat_gmfn = memory::pattern("engine.dll", "55 8B EC 56 8B 75 08 85 F6 74");
+			if (pat_gmfn)
+			{
+				GetModelForName = (GetModelForName_t)(pat_gmfn);
+				console::write_hex("[+] GetModelForName", (dword)GetModelForName, darkgreen);
 			}
 		}
 	}
