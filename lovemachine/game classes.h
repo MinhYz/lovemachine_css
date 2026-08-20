@@ -6,33 +6,6 @@
 #include "game shit.h"
 #include "checksum_crc.h"
 
-inline int ivmodelinfo::precache_model(const char* name)
-{
-	if (!name || !name[0]) return -1;
-	if (_string_table_container)
-	{
-		INetworkStringTable* model_precache = _string_table_container->FindTable("modelprecache");
-		if (model_precache)
-		{
-			int idx = model_precache->FindStringIndex(name);
-			if (idx != -1) return idx;
-			return model_precache->AddString(false, name);
-		}
-	}
-	return get_model_index(name);
-}
-
-inline const model_t* ivmodelinfo::find_or_load_model(const char* name)
-{
-	if (!name || !name[0]) return nullptr;
-	int idx = precache_model(name);
-	if (idx > 0)
-	{
-		return get_model(idx);
-	}
-	return nullptr;
-}
-
 class cweapon; // forward declaration meme
 
 class centity

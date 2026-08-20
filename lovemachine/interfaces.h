@@ -654,8 +654,12 @@ public:
 		vfunc< get_model_materials_fn >(this, 16)(this, model, count, ppMaterial);
 	}
 
-	int precache_model(const char* name);
-	const model_t* find_or_load_model(const char* name);
+	const model_t* find_or_load_model(const char* name)
+	{
+		if (!name || !name[0]) return nullptr;
+		typedef const model_t*(__thiscall* find_or_load_model_fn)(void*, const char*);
+		return vfunc< find_or_load_model_fn >(this, 33)(this, name);
+	}
 };
 
 class ivrenderview
