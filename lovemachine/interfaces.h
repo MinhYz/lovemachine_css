@@ -638,27 +638,23 @@ public:
 
 	int get_model_index(const char* name)
 	{
+		if (!this || !name || !name[0]) return -1;
 		typedef int(__thiscall* get_model_index_fn)(void*, const char*);
 		return vfunc< get_model_index_fn >(this, 2)(this, name);
 	}
 
 	const char* get_model_name(const model_t* model)
 	{
+		if (!this || !model) return "";
 		typedef const char*(__thiscall* get_model_name_fn)(void*, const model_t*);
 		return vfunc< get_model_name_fn >(this, 3)(this, model);
 	}
 
 	void get_model_materials(const model_t* model, int count, imaterial** ppMaterial)
 	{
+		if (!this || !model) return;
 		typedef void(__thiscall* get_model_materials_fn)(void*, const model_t*, int, imaterial**);
 		vfunc< get_model_materials_fn >(this, 16)(this, model, count, ppMaterial);
-	}
-
-	const model_t* find_or_load_model(const char* name)
-	{
-		if (!name || !name[0]) return nullptr;
-		typedef const model_t*(__thiscall* find_or_load_model_fn)(void*, const char*);
-		return vfunc< find_or_load_model_fn >(this, 33)(this, name);
 	}
 };
 

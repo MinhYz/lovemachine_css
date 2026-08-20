@@ -889,25 +889,21 @@ namespace hooks
 					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
 					{
 						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
-						const model_t* m = _model_info->find_or_load_model(m_path);
-						if (m)
+						int custom_idx = _model_info->get_model_index(m_path);
+						if (custom_idx > 0)
 						{
-							int custom_idx = _model_info->get_model_index(m_path);
-							if (custom_idx > 0)
+							if (sets->visuals.custom_model_local_only)
 							{
-								if (sets->visuals.custom_model_local_only)
+								global::local->set_model_index(custom_idx);
+							}
+							else if (_ent_list)
+							{
+								for (int i = 1; i <= _engine->get_max_clients(); i++)
 								{
-									global::local->set_model_index(custom_idx);
-								}
-								else if (_ent_list)
-								{
-									for (int i = 1; i <= _engine->get_max_clients(); i++)
+									centity* ent = _ent_list->get_centity(i);
+									if (ent && ent->valid() && (sets->visuals.friends || ent->get_team() != global::local->get_team()))
 									{
-										centity* ent = _ent_list->get_centity(i);
-										if (ent && ent->valid() && (sets->visuals.friends || ent->get_team() != global::local->get_team()))
-										{
-											ent->set_model_index(custom_idx);
-										}
+										ent->set_model_index(custom_idx);
 									}
 								}
 							}
@@ -924,14 +920,10 @@ namespace hooks
 					if (sel >= 0 && sel < (int)ModelMgr::model_entries.size())
 					{
 						const char* m_path = ModelMgr::model_entries[sel].model_path.c_str();
-						const model_t* m = _model_info->find_or_load_model(m_path);
-						if (m)
+						int custom_idx = _model_info->get_model_index(m_path);
+						if (custom_idx > 0 && sets->visuals.custom_model_local_only)
 						{
-							int custom_idx = _model_info->get_model_index(m_path);
-							if (custom_idx > 0 && sets->visuals.custom_model_local_only)
-							{
-								global::local->set_model_index(custom_idx);
-							}
+							global::local->set_model_index(custom_idx);
 						}
 					}
 				}
