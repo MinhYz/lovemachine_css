@@ -147,6 +147,8 @@ public:
 		int yaw_aa = 0;   // 0: Off, 1: Backwards (180°), 2: Spinbot (360°), 3: Jitter (±90°), 4: Sideways (90°)
 		float spin_speed = 25.0f;
 		bool magic_bullet = false;
+		bool no_recoil = true;
+		bool no_spread = true;
 	} rage;
 
 	struct
